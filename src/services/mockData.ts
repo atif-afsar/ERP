@@ -1272,3 +1272,49 @@ export const INITIAL_AUDIT_LOGS: AuditLog[] = [
   },
 ];
 
+export const INITIAL_TEACHER_ASSIGNMENTS = [
+  {
+    id: 'ta-1',
+    tenantId: 'tenant-school-1',
+    teacherId: 'staff-101',
+    classId: 'class-10',
+    sectionId: 'class-10-a',
+    subjectId: 'Physics',
+    academicYearId: '2026–2027',
+    isClassTeacher: true,
+    createdAt: '2026-04-01T08:00:00Z',
+  },
+  {
+    id: 'ta-2',
+    tenantId: 'tenant-school-1',
+    teacherId: 'staff-101',
+    classId: 'class-12',
+    sectionId: 'class-12-a',
+    subjectId: 'Physics',
+    academicYearId: '2026–2027',
+    isClassTeacher: false,
+    createdAt: '2026-04-01T08:00:00Z',
+  },
+  {
+    id: 'ta-3',
+    tenantId: 'tenant-school-1',
+    teacherId: 'staff-102',
+    classId: 'class-10',
+    sectionId: 'class-10-b',
+    subjectId: 'Mathematics',
+    academicYearId: '2026–2027',
+    isClassTeacher: true,
+    createdAt: '2026-04-01T08:00:00Z',
+  },
+  {
+    id: 'ta-4',
+    tenantId: 'tenant-coaching-1',
+    teacherId: 'staff-201',
+    batchId: 'batch-jee-alpha',
+    subjectId: 'Advanced Physics',
+    academicYearId: '2026–2027',
+    isClassTeacher: true,
+    createdAt: '2026-04-01T08:00:00Z',
+  },
+];
+

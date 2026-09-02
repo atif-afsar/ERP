@@ -33,11 +33,12 @@ import { UserInviteModal } from '../../components/auth/UserInviteModal';
 import { ApiExplorerModule } from '../apiExplorer/ApiExplorerModule';
 import { SchemaExplorerModule } from '../schemaExplorer/SchemaExplorerModule';
 import { AuthAccessStudio } from '../authExplorer/AuthAccessStudio';
+import { RolesMatrixModule } from '../rolesMatrix/RolesMatrixModule';
 
 export const SettingsModule: React.FC = () => {
   const { currentTenant, updateCurrentTenant, toggleFeature } = useTenant();
   const { currentUser, changePassword, logoutAllDevices, expireSessionSimulator } = useAuth();
-  const [activeTab, setActiveTab] = useState<'features' | 'terminology' | 'branding' | 'security' | 'api' | 'schema' | 'audit'>('features');
+  const [activeTab, setActiveTab] = useState<'features' | 'terminology' | 'branding' | 'security' | 'roles' | 'api' | 'schema' | 'audit'>('features');
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>(() => storage.getAuditLogs(currentTenant.id));
   const [auditSearch, setAuditSearch] = useState('');
@@ -129,6 +130,7 @@ export const SettingsModule: React.FC = () => {
           { id: 'terminology', label: '🔤 Dynamic Terminology Labels' },
           { id: 'branding', label: '🎨 Institution Branding & Identity' },
           { id: 'security', label: '🔐 Security, Sessions & Invites' },
+          { id: 'roles', label: '🛡️ Roles & Permissions Matrix' },
           { id: 'api', label: '🔌 API & Service Contracts' },
           { id: 'schema', label: '🗄️ Database Schema & ERD' },
           { id: 'audit', label: '🛡️ Audit Logs & Activity Timeline' },
@@ -541,6 +543,9 @@ export const SettingsModule: React.FC = () => {
           <AuthAccessStudio />
         </div>
       )}
+
+      {/* TAB 4: ROLES & PERMISSIONS MATRIX */}
+      {activeTab === 'roles' && <RolesMatrixModule />}
 
       {/* TAB 5: API & SERVICE CONTRACTS */}
       {activeTab === 'api' && <ApiExplorerModule />}

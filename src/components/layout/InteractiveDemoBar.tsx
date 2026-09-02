@@ -72,9 +72,11 @@ export const InteractiveDemoBar: React.FC<InteractiveDemoBarProps> = ({ onOpenAi
             const labels: Record<UserRole, string> = {
               SUPER_ADMIN: 'Super Admin',
               TENANT_ADMIN: isSchool ? 'Principal' : 'Director',
+              BRANCH_MANAGER: 'Branch Mgr',
               TEACHER: isSchool ? 'Teacher' : 'Faculty',
               ACCOUNTANT: 'Accountant',
-              STAFF: 'Receptionist',
+              RECEPTIONIST: 'Receptionist',
+              STAFF: 'Staff',
               PARENT: 'Parent',
               STUDENT: isSchool ? 'Student' : 'Learner',
             };

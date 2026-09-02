@@ -21,6 +21,11 @@ import {
   LeadCRM,
   NotificationItem,
   AuditLog,
+  Guardian,
+  StudentGuardian,
+  Enrollment,
+  DocumentMeta,
+  TeacherAssignment,
 } from '../types';
 import {
   INITIAL_TENANTS,
@@ -43,6 +48,7 @@ import {
   INITIAL_LEADS,
   INITIAL_NOTIFICATIONS,
   INITIAL_AUDIT_LOGS,
+  INITIAL_TEACHER_ASSIGNMENTS,
 } from './mockData';
 
 class StorageService {
@@ -102,6 +108,14 @@ class StorageService {
 
   saveUsers(users: UserProfile[]): void {
     this.setItem('users', users);
+  }
+
+  saveUser(user: UserProfile): void {
+    const all = this.getUsers();
+    const idx = all.findIndex((u) => u.id === user.id);
+    if (idx >= 0) all[idx] = user;
+    else all.unshift(user);
+    this.saveUsers(all);
   }
 
   // Classes & Batches
@@ -169,6 +183,33 @@ class StorageService {
       all.unshift(member);
     }
     this.setItem('staff', all);
+  }
+
+  deleteStaff(id: string): void {
+    const all = this.getItem<Staff[]>('staff', INITIAL_STAFF).filter((s) => s.id !== id);
+    this.setItem('staff', all);
+  }
+
+  // Teacher Assignments
+  getTeacherAssignments(tenantId?: string): TeacherAssignment[] {
+    const all = this.getItem<TeacherAssignment[]>('teacher_assignments', INITIAL_TEACHER_ASSIGNMENTS);
+    return tenantId ? all.filter((ta) => ta.tenantId === tenantId) : all;
+  }
+
+  saveTeacherAssignment(assignment: TeacherAssignment): void {
+    const all = this.getTeacherAssignments();
+    const index = all.findIndex((ta) => ta.id === assignment.id);
+    if (index >= 0) {
+      all[index] = assignment;
+    } else {
+      all.unshift(assignment);
+    }
+    this.setItem('teacher_assignments', all);
+  }
+
+  deleteTeacherAssignment(id: string): void {
+    const all = this.getTeacherAssignments().filter((ta) => ta.id !== id);
+    this.setItem('teacher_assignments', all);
   }
 
   // Attendance
@@ -430,6 +471,240 @@ class StorageService {
   clearFailedLogins(email: string): void {
     const key = `failed_logins_${email.toLowerCase()}`;
     localStorage.removeItem(`edunexus_${key}`);
+  }
+
+  // ==========================================
+  // GUARDIANS & FAMILY RELATIONSHIPS
+  // ==========================================
+
+  getGuardians(tenantId?: string): Guardian[] {
+    const defaultGuardians: Guardian[] = [
+      {
+        id: 'gua-1',
+        tenantId: 'tenant-school-1',
+        name: 'Rajesh Sharma',
+        phone: '+91 98765 43210',
+        email: 'rajesh.sharma@example.com',
+        occupation: 'Chartered Accountant',
+        address: 'B-42, South Extension, New Delhi',
+        createdAt: '2024-04-01T09:00:00Z',
+        updatedAt: '2026-04-01T09:00:00Z',
+      },
+      {
+        id: 'gua-2',
+        tenantId: 'tenant-school-1',
+        name: 'Meenakshi Sharma',
+        phone: '+91 98765 43211',
+        email: 'meenakshi.sharma@example.com',
+        occupation: 'Architect',
+        address: 'B-42, South Extension, New Delhi',
+        createdAt: '2024-04-01T09:00:00Z',
+        updatedAt: '2026-04-01T09:00:00Z',
+      },
+      {
+        id: 'gua-3',
+        tenantId: 'tenant-school-1',
+        name: 'Amit Patel',
+        phone: '+91 98111 22334',
+        email: 'amit.patel@example.com',
+        occupation: 'Software Director',
+        address: 'Flat 302, Green Park, New Delhi',
+        createdAt: '2024-04-01T09:00:00Z',
+        updatedAt: '2026-04-01T09:00:00Z',
+      },
+      {
+        id: 'gua-4',
+        tenantId: 'tenant-coaching-1',
+        name: 'Suresh Kumar',
+        phone: '+91 99887 66554',
+        email: 'suresh.kumar@example.com',
+        occupation: 'Senior Physician',
+        address: 'Sector 14, Gurugram',
+        createdAt: '2024-04-01T09:00:00Z',
+        updatedAt: '2026-04-01T09:00:00Z',
+      },
+    ];
+    const all = this.getItem<Guardian[]>('guardians', defaultGuardians);
+    return tenantId ? all.filter((g) => g.tenantId === tenantId) : all;
+  }
+
+  saveGuardian(guardian: Guardian): void {
+    const all = this.getGuardians();
+    const idx = all.findIndex((g) => g.id === guardian.id);
+    if (idx >= 0) all[idx] = guardian;
+    else all.unshift(guardian);
+    this.setItem('guardians', all);
+  }
+
+  getStudentGuardians(studentId?: string): StudentGuardian[] {
+    const defaultJunctions: StudentGuardian[] = [
+      {
+        id: 'sg-1',
+        tenantId: 'tenant-school-1',
+        studentId: 'student-1',
+        guardianId: 'gua-1',
+        relationshipType: 'FATHER',
+        isPrimary: true,
+        canPickup: true,
+        receivesFeeAlerts: true,
+        receivesAttendanceAlerts: true,
+        createdAt: '2024-04-01T09:00:00Z',
+      },
+      {
+        id: 'sg-2',
+        tenantId: 'tenant-school-1',
+        studentId: 'student-1',
+        guardianId: 'gua-2',
+        relationshipType: 'MOTHER',
+        isPrimary: false,
+        canPickup: true,
+        receivesFeeAlerts: true,
+        receivesAttendanceAlerts: true,
+        createdAt: '2024-04-01T09:00:00Z',
+      },
+      {
+        id: 'sg-3',
+        tenantId: 'tenant-school-1',
+        studentId: 'student-2',
+        guardianId: 'gua-3',
+        relationshipType: 'FATHER',
+        isPrimary: true,
+        canPickup: true,
+        receivesFeeAlerts: true,
+        receivesAttendanceAlerts: true,
+        createdAt: '2024-04-01T09:00:00Z',
+      },
+      {
+        id: 'sg-4',
+        tenantId: 'tenant-coaching-1',
+        studentId: 'student-101',
+        guardianId: 'gua-4',
+        relationshipType: 'FATHER',
+        isPrimary: true,
+        canPickup: true,
+        receivesFeeAlerts: true,
+        receivesAttendanceAlerts: true,
+        createdAt: '2024-04-01T09:00:00Z',
+      },
+    ];
+    const all = this.getItem<StudentGuardian[]>('student_guardians', defaultJunctions);
+    return studentId ? all.filter((sg) => sg.studentId === studentId) : all;
+  }
+
+  saveStudentGuardian(junction: StudentGuardian): void {
+    const all = this.getStudentGuardians();
+    const idx = all.findIndex((sg) => sg.id === junction.id);
+    if (idx >= 0) all[idx] = junction;
+    else all.unshift(junction);
+    this.setItem('student_guardians', all);
+  }
+
+  // ==========================================
+  // HISTORICAL ENROLLMENTS
+  // ==========================================
+
+  getEnrollments(studentId?: string): Enrollment[] {
+    const defaultEnrollments: Enrollment[] = [
+      {
+        id: 'enr-1',
+        tenantId: 'tenant-school-1',
+        studentId: 'student-1',
+        academicYearId: 'ay-2026',
+        classId: 'class-10',
+        sectionId: 'sec-10a',
+        status: 'ACTIVE',
+        startDate: '2026-04-01',
+        createdAt: '2026-04-01T08:00:00Z',
+        updatedAt: '2026-04-01T08:00:00Z',
+      },
+      {
+        id: 'enr-2',
+        tenantId: 'tenant-school-1',
+        studentId: 'student-1',
+        academicYearId: 'ay-2025',
+        classId: 'class-9',
+        sectionId: 'sec-9b',
+        status: 'COMPLETED',
+        startDate: '2025-04-01',
+        endDate: '2026-03-31',
+        createdAt: '2025-04-01T08:00:00Z',
+        updatedAt: '2026-03-31T08:00:00Z',
+      },
+      {
+        id: 'enr-3',
+        tenantId: 'tenant-coaching-1',
+        studentId: 'student-101',
+        academicYearId: 'ay-2026',
+        batchId: 'batch-jee-adv-morning',
+        status: 'ACTIVE',
+        startDate: '2026-04-01',
+        createdAt: '2026-04-01T08:00:00Z',
+        updatedAt: '2026-04-01T08:00:00Z',
+      },
+    ];
+    const all = this.getItem<Enrollment[]>('enrollments', defaultEnrollments);
+    return studentId ? all.filter((e) => e.studentId === studentId) : all;
+  }
+
+  saveEnrollment(enrollment: Enrollment): void {
+    const all = this.getEnrollments();
+    const idx = all.findIndex((e) => e.id === enrollment.id);
+    if (idx >= 0) all[idx] = enrollment;
+    else all.unshift(enrollment);
+    this.setItem('enrollments', all);
+  }
+
+  // ==========================================
+  // STUDENT DOCUMENTS
+  // ==========================================
+
+  getDocuments(studentId?: string): DocumentMeta[] {
+    const defaultDocs: DocumentMeta[] = [
+      {
+        id: 'doc-1',
+        tenantId: 'tenant-school-1',
+        entityType: 'STUDENT',
+        entityId: 'student-1',
+        fileName: 'Aadhaar_Card_Proof.pdf',
+        storageKey: 'docs/students/student-1/aadhaar.pdf',
+        mimeType: 'application/pdf',
+        sizeBytes: 1048576,
+        uploadedBy: 'Dr. Sunita Verma',
+        uploadedAt: '2026-04-02T10:30:00Z',
+      },
+      {
+        id: 'doc-2',
+        tenantId: 'tenant-school-1',
+        entityType: 'STUDENT',
+        entityId: 'student-1',
+        fileName: 'Birth_Certificate_Attested.pdf',
+        storageKey: 'docs/students/student-1/birth_cert.pdf',
+        mimeType: 'application/pdf',
+        sizeBytes: 524288,
+        uploadedBy: 'Admin Desk',
+        uploadedAt: '2026-04-02T10:32:00Z',
+      },
+      {
+        id: 'doc-3',
+        tenantId: 'tenant-school-1',
+        entityType: 'STUDENT',
+        entityId: 'student-1',
+        fileName: 'Transfer_Certificate_Previous_School.pdf',
+        storageKey: 'docs/students/student-1/tc.pdf',
+        mimeType: 'application/pdf',
+        sizeBytes: 786432,
+        uploadedBy: 'Admin Desk',
+        uploadedAt: '2026-04-02T10:35:00Z',
+      },
+    ];
+    const all = this.getItem<DocumentMeta[]>('documents', defaultDocs);
+    return studentId ? all.filter((d) => d.entityId === studentId) : all;
+  }
+
+  saveDocument(doc: DocumentMeta): void {
+    const all = this.getDocuments();
+    all.unshift(doc);
+    this.setItem('documents', all);
   }
 
   // Reset demo data

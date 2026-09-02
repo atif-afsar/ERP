@@ -25,11 +25,14 @@ import { SuperAdminModule } from './modules/superadmin/SuperAdminModule';
 import { SettingsModule } from './modules/settings/SettingsModule';
 import { ApiExplorerModule } from './modules/apiExplorer/ApiExplorerModule';
 import { SchemaExplorerModule } from './modules/schemaExplorer/SchemaExplorerModule';
+import { RolesMatrixModule } from './modules/rolesMatrix/RolesMatrixModule';
+import { StaffModule } from './modules/staff/StaffModule';
 import { AiAssistantModal } from './modules/ai/AiAssistantModal';
 
 const ROUTE_PERMISSIONS: Record<string, Permission> = {
   students: 'students.view',
   'students/new': 'students.create',
+  staff: 'staff.read',
   academics: 'students.view',
   attendance: 'attendance.view',
   'attendance/mark': 'attendance.mark',
@@ -44,6 +47,7 @@ const ROUTE_PERMISSIONS: Record<string, Permission> = {
   settings: 'settings.view',
   'api-docs': 'settings.view',
   schema: 'settings.view',
+  'roles-matrix': 'roles.manage',
   'superadmin-dashboard': 'tenants.manage',
   'superadmin-tenants': 'tenants.manage',
   'superadmin-plans': 'subscriptions.manage',
@@ -198,6 +202,8 @@ const MainRouter: React.FC = () => {
         );
       case 'students':
         return <StudentsModule />;
+      case 'staff':
+        return <StaffModule />;
       case 'academics':
         return <AcademicsModule />;
       case 'attendance':
@@ -248,6 +254,8 @@ const MainRouter: React.FC = () => {
         return <ApiExplorerModule />;
       case 'schema':
         return <SchemaExplorerModule />;
+      case 'roles-matrix':
+        return <RolesMatrixModule />;
       case 'settings':
       case 'superadmin-features':
         return <SettingsModule />;

@@ -17,6 +17,7 @@ import {
   Building,
   CheckSquare,
   FileSpreadsheet,
+  UserCheck,
 } from 'lucide-react';
 import { useTenant } from '../../context/TenantContext';
 import { useAuth } from '../../context/AuthContext';
@@ -95,6 +96,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeNav, onNavigate, isOpen,
       label: isTeacher ? `My ${getLabel('studentPlural')}` : getLabel('studentPlural'),
       icon: Users,
       show: !isStudent && !isParent,
+    },
+    {
+      id: 'staff',
+      label: 'Staff & Faculty',
+      icon: UserCheck,
+      show: currentUser.role === 'TENANT_ADMIN' || currentUser.role === 'SUPER_ADMIN' || currentUser.role === 'BRANCH_MANAGER',
     },
     {
       id: 'academics',

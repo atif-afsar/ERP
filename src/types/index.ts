@@ -16,41 +16,66 @@ export interface Branch {
 export type UserRole = 
   | 'SUPER_ADMIN' 
   | 'TENANT_ADMIN' 
+  | 'BRANCH_MANAGER'
   | 'TEACHER' 
   | 'ACCOUNTANT' 
+  | 'RECEPTIONIST'
   | 'STAFF' 
   | 'PARENT' 
   | 'STUDENT';
 
 export type Role = UserRole;
 
-export type PermissionScope = 'own' | 'assigned' | 'tenant' | 'platform';
+export type PermissionScope = 'GLOBAL' | 'TENANT' | 'BRANCH' | 'ASSIGNED' | 'SELF';
 
 export type Permission =
   | 'users.manage'
+  | 'users.read'
+  | 'users.invite'
   | 'roles.manage'
+  | 'roles.read'
+  | 'branches.read'
+  | 'branches.manage_access'
   | 'students.view'
+  | 'students.read'
   | 'students.create'
   | 'students.update'
   | 'students.delete'
+  | 'students.archive'
+  | 'students.export'
+  | 'guardians.read'
+  | 'guardians.create'
+  | 'guardians.update'
+  | 'staff.read'
+  | 'staff.create'
+  | 'staff.update'
+  | 'staff.manage'
   | 'attendance.view'
+  | 'attendance.read'
   | 'attendance.mark'
   | 'attendance.create'
   | 'attendance.update'
+  | 'attendance.correct'
+  | 'attendance.export'
   | 'fees.view'
+  | 'fees.read'
   | 'fees.create'
   | 'fees.update'
   | 'fees.export'
   | 'payments.view'
+  | 'payments.read'
   | 'payments.record'
   | 'payments.create'
   | 'payments.refund'
   | 'exams.view'
+  | 'exams.read'
   | 'exams.create'
   | 'exams.update'
   | 'exams.publish'
   | 'results.view'
+  | 'results.read'
   | 'results.create'
+  | 'results.correct'
   | 'results.publish'
   | 'homework.view'
   | 'homework.create'
@@ -61,12 +86,35 @@ export type Permission =
   | 'announcements.view'
   | 'announcements.create'
   | 'documents.view'
+  | 'documents.read'
+  | 'documents.upload'
+  | 'documents.delete'
   | 'reports.view'
+  | 'reports.read'
+  | 'reports.export'
+  | 'reports.financial'
+  | 'reports.academic'
   | 'audit.view'
+  | 'audit.read'
   | 'settings.view'
+  | 'settings.read'
   | 'settings.update'
   | 'tenants.manage'
   | 'subscriptions.manage';
+
+export interface CustomRoleDefinition {
+  id: string;
+  tenantId: string;
+  name: string;
+  code: string;
+  description: string;
+  scope: PermissionScope;
+  permissions: Permission[];
+  isSystemRole: boolean;
+  userCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
 
 export const PERMISSIONS = {
   USERS_MANAGE: 'users.manage' as Permission,
@@ -297,7 +345,7 @@ export interface CoachingBatch {
   enrolledCount: number;
 }
 
-export type AttendanceStatus = 'PRESENT' | 'ABSENT' | 'LATE' | 'EXCUSED';
+export type AttendanceStatus = 'PRESENT' | 'ABSENT' | 'LATE' | 'HALF_DAY' | 'EXCUSED';
 
 export interface AttendanceRecord {
   id: string;
