@@ -26,6 +26,9 @@ import {
   MessageSquare,
   Sparkles,
   UserPlus,
+  Printer,
+  ArrowDownRight,
+  Check,
 } from 'lucide-react';
 import { useTenant } from '../../context/TenantContext';
 import { useAuth } from '../../context/AuthContext';
@@ -37,6 +40,10 @@ import {
   UserRole,
   AcademicClass,
   CoachingBatch,
+  SalaryStructure,
+  PayrollRun,
+  Payslip,
+  SalaryAdvance,
 } from '../../types';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
@@ -48,10 +55,17 @@ export const StaffModule: React.FC = () => {
   const { currentUser } = useAuth();
 
   // Primary State
-  const [activeSubTab, setActiveSubTab] = useState<'teachers' | 'admin_staff' | 'assignments'>('teachers');
+  const [activeSubTab, setActiveSubTab] = useState<
+    'teachers' | 'admin_staff' | 'assignments' | 'salary_structures' | 'payroll_runs' | 'payslips'
+  >('teachers');
   const [staffList, setStaffList] = useState<Staff[]>(() => storage.getStaff(currentTenant.id));
   const [assignments, setAssignments] = useState<TeacherAssignment[]>(() => storage.getTeacherAssignments(currentTenant.id));
   const [documents, setDocuments] = useState<DocumentMeta[]>(() => storage.getDocuments());
+  const [salaryStructures, setSalaryStructures] = useState<SalaryStructure[]>(() => storage.getSalaryStructures(currentTenant.id));
+  const [payrollRuns, setPayrollRuns] = useState<PayrollRun[]>(() => storage.getPayrollRuns(currentTenant.id));
+  const [payslips, setPayslips] = useState<Payslip[]>(() => storage.getPayslips(currentTenant.id));
+  const [advances, setAdvances] = useState<SalaryAdvance[]>(() => storage.getSalaryAdvances(currentTenant.id));
+  const [selectedPayslip, setSelectedPayslip] = useState<Payslip | null>(null);
 
   // Search & Filter State
   const [searchQuery, setSearchQuery] = useState('');
@@ -66,6 +80,14 @@ export const StaffModule: React.FC = () => {
   const [isAddStaffModalOpen, setIsAddStaffModalOpen] = useState(false);
   const [isAddAssignmentModalOpen, setIsAddAssignmentModalOpen] = useState(false);
   const [isUploadDocModalOpen, setIsUploadDocModalOpen] = useState(false);
+  const [isAddStructureModalOpen, setIsAddStructureModalOpen] = useState(false);
+  const [isAddAdvanceModalOpen, setIsAddAdvanceModalOpen] = useState(false);
+  const [toastMsg, setToastMsg] = useState<string | null>(null);
+
+  const showToast = (msg: string) => {
+    setToastMsg(msg);
+    setTimeout(() => setToastMsg(null), 3500);
+  };
 
   // Aux entities
   const classes = storage.getClasses(currentTenant.id);
@@ -282,9 +304,12 @@ export const StaffModule: React.FC = () => {
       {/* Sub-Tabs */}
       <Tabs
         tabs={[
-          { id: 'teachers', label: `👨‍🏫 Faculty & Teaching Staff (${teachers.length})` },
-          { id: 'admin_staff', label: `🏢 Administrative & Support Staff (${adminStaff.length})` },
-          { id: 'assignments', label: `📚 Academic Subject Assignments (${assignments.length})` },
+          { id: 'teachers', label: `👨‍🏫 Faculty (${teachers.length})` },
+          { id: 'admin_staff', label: `🏢 Admin & Support (${adminStaff.length})` },
+          { id: 'assignments', label: `📚 Academic Assignments (${assignments.length})` },
+          { id: 'salary_structures', label: `💰 Salary Structures (${salaryStructures.length})` },
+          { id: 'payroll_runs', label: `🗓️ Payroll Runs (${payrollRuns.length})` },
+          { id: 'payslips', label: `📄 Payslips & Advances (${payslips.length})` },
         ]}
         activeTab={activeSubTab}
         onChange={(t) => setActiveSubTab(t as any)}
@@ -561,6 +586,433 @@ export const StaffModule: React.FC = () => {
               </tbody>
             </table>
           </div>
+        </div>
+      )}
+
+      {/* SUB-TAB 4: SALARY STRUCTURES & COMPENSATION */}
+      {activeSubTab === 'salary_structures' && (
+        <div className="space-y-4">
+          <div className="flex justify-between items-center">
+            <div>
+              <h3 className="text-sm font-bold text-white">Staff Compensation & Salary Structures</h3>
+              <p className="text-xs text-slate-400">
+                Configure base pay, HRA, Dearness Allowance, and statutory deductions (PF, ESI, TDS, PT).
+              </p>
+            </div>
+            <Button
+              variant="primary"
+              size="sm"
+              leftIcon={<Plus className="w-3.5 h-3.5" />}
+              onClick={() => setIsAddStructureModalOpen(true)}
+              className="bg-emerald-600 hover:bg-emerald-500"
+            >
+              Add Salary Structure
+            </Button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            {salaryStructures.map((struct) => (
+              <div key={struct.id} className="p-6 rounded-3xl bg-slate-900/60 border border-slate-800 space-y-4">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h4 className="font-bold text-white text-sm">{struct.name}</h4>
+                    <p className="text-xs text-slate-400">{struct.description}</p>
+                  </div>
+                  <Badge variant="purple">Active Scale</Badge>
+                </div>
+
+                {/* Earnings & Deductions Breakdown */}
+                <div className="space-y-2 text-xs">
+                  <div className="p-3 rounded-2xl bg-slate-950 border border-slate-800 space-y-1.5">
+                    <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider block">
+                      Monthly Earnings
+                    </span>
+                    <div className="flex justify-between text-slate-300">
+                      <span>Basic Pay:</span>
+                      <span className="font-mono font-bold text-white">₹{struct.basicSalary.toLocaleString('en-IN')}</span>
+                    </div>
+                    <div className="flex justify-between text-slate-300">
+                      <span>HRA (40%):</span>
+                      <span className="font-mono text-slate-200">₹{struct.hra.toLocaleString('en-IN')}</span>
+                    </div>
+                    <div className="flex justify-between text-slate-300">
+                      <span>Dearness Allowance (DA):</span>
+                      <span className="font-mono text-slate-200">₹{struct.da.toLocaleString('en-IN')}</span>
+                    </div>
+                    <div className="flex justify-between text-slate-300">
+                      <span>Special & Travel:</span>
+                      <span className="font-mono text-slate-200">
+                        ₹{(struct.specialAllowance + struct.conveyanceAllowance).toLocaleString('en-IN')}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="p-3 rounded-2xl bg-slate-950 border border-slate-800 space-y-1.5">
+                    <span className="text-[10px] font-bold text-rose-400 uppercase tracking-wider block">
+                      Statutory Deductions
+                    </span>
+                    <div className="flex justify-between text-slate-300">
+                      <span>Provident Fund (PF 12%):</span>
+                      <span className="font-mono text-rose-300">-₹{struct.pfDeduction.toLocaleString('en-IN')}</span>
+                    </div>
+                    <div className="flex justify-between text-slate-300">
+                      <span>TDS / Income Tax:</span>
+                      <span className="font-mono text-rose-300">-₹{struct.tdsDeduction.toLocaleString('en-IN')}</span>
+                    </div>
+                    <div className="flex justify-between text-slate-300">
+                      <span>Professional Tax (PT):</span>
+                      <span className="font-mono text-rose-300">-₹{struct.professionalTax}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-2 border-t border-slate-800 flex justify-between items-center text-xs">
+                  <span className="text-slate-400 font-semibold">Net Calculated Pay:</span>
+                  <span className="font-mono font-black text-lg text-emerald-400">
+                    ₹{struct.netCalculated.toLocaleString('en-IN')}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* SUB-TAB 5: MONTHLY PAYROLL RUNS */}
+      {activeSubTab === 'payroll_runs' && (
+        <div className="space-y-4">
+          <div className="flex justify-between items-center">
+            <div>
+              <h3 className="text-sm font-bold text-white">Monthly Payroll Processing Engine</h3>
+              <p className="text-xs text-slate-400">
+                Execute monthly institutional payroll runs with attendance LOP adjustments and bank disbursements.
+              </p>
+            </div>
+            <Button
+              variant="primary"
+              size="sm"
+              leftIcon={<Plus className="w-3.5 h-3.5" />}
+              onClick={() => {
+                const newRun: PayrollRun = {
+                  id: `pr-${Date.now()}`,
+                  tenantId: currentTenant.id,
+                  month: 'September 2026',
+                  year: 2026,
+                  totalEmployees: staffList.filter((s) => s.status === 'ACTIVE').length,
+                  totalGross: 295000,
+                  totalDeductions: 41500,
+                  totalNetPayout: 253500,
+                  status: 'CALCULATED',
+                  calculatedAt: new Date().toISOString(),
+                  payslipCount: staffList.filter((s) => s.status === 'ACTIVE').length,
+                };
+                storage.savePayrollRun(newRun);
+                setPayrollRuns(storage.getPayrollRuns(currentTenant.id));
+                showToast('September 2026 payroll calculated across active faculty and staff.');
+              }}
+              className="bg-purple-600 hover:bg-purple-500 shadow-lg shadow-purple-950/20"
+            >
+              Run September 2026 Payroll
+            </Button>
+          </div>
+
+          <div className="p-6 rounded-3xl bg-slate-900/60 border border-slate-800">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs text-slate-300">
+                <thead className="bg-slate-950/60 text-slate-400 uppercase tracking-wider text-[10px] font-semibold border-b border-slate-800">
+                  <tr>
+                    <th className="py-3 px-4">Pay Period</th>
+                    <th className="py-3 px-4 text-center">Employees</th>
+                    <th className="py-3 px-4 text-center">Gross Earnings</th>
+                    <th className="py-3 px-4 text-center">Total Deductions</th>
+                    <th className="py-3 px-4 text-center">Net Bank Payout</th>
+                    <th className="py-3 px-4 text-center">Status</th>
+                    <th className="py-3 px-4 text-right">Payroll Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800/60">
+                  {payrollRuns.map((run) => (
+                    <tr key={run.id} className="hover:bg-slate-800/30 transition-colors">
+                      <td className="py-3 px-4 font-bold text-white text-sm">{run.month}</td>
+                      <td className="py-3 px-4 text-center font-mono font-medium">{run.totalEmployees}</td>
+                      <td className="py-3 px-4 text-center font-mono font-medium text-emerald-400">
+                        ₹{run.totalGross.toLocaleString('en-IN')}
+                      </td>
+                      <td className="py-3 px-4 text-center font-mono font-medium text-rose-400">
+                        ₹{run.totalDeductions.toLocaleString('en-IN')}
+                      </td>
+                      <td className="py-3 px-4 text-center font-mono font-black text-white text-sm">
+                        ₹{run.totalNetPayout.toLocaleString('en-IN')}
+                      </td>
+                      <td className="py-3 px-4 text-center">
+                        <Badge
+                          variant={
+                            run.status === 'DISBURSED'
+                              ? 'emerald'
+                              : run.status === 'APPROVED'
+                              ? 'blue'
+                              : 'amber'
+                          }
+                        >
+                          {run.status}
+                        </Badge>
+                      </td>
+                      <td className="py-3 px-4 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          {run.status === 'CALCULATED' && (
+                            <Button
+                              variant="primary"
+                              size="sm"
+                              onClick={() => {
+                                storage.approvePayrollRun(run.id, `${currentUser.name} (${currentUser.role})`);
+                                setPayrollRuns(storage.getPayrollRuns(currentTenant.id));
+                                showToast(`${run.month} payroll approved by Principal.`);
+                              }}
+                              className="bg-blue-600 hover:bg-blue-500 text-xs py-1"
+                            >
+                              Approve
+                            </Button>
+                          )}
+                          {run.status === 'APPROVED' && (
+                            <Button
+                              variant="primary"
+                              size="sm"
+                              onClick={() => {
+                                storage.disbursePayrollRun(run.id);
+                                setPayrollRuns(storage.getPayrollRuns(currentTenant.id));
+                                setPayslips(storage.getPayslips(currentTenant.id));
+                                showToast(`${run.month} salaries disbursed via institutional bank account.`);
+                              }}
+                              className="bg-emerald-600 hover:bg-emerald-500 text-xs py-1"
+                            >
+                              Disburse Salaries
+                            </Button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* SUB-TAB 6: PAYSLIPS & ADVANCES */}
+      {activeSubTab === 'payslips' && (
+        <div className="space-y-6">
+          <div className="flex justify-between items-center">
+            <div>
+              <h3 className="text-sm font-bold text-white">Generated Staff Payslips & Advance Register</h3>
+              <p className="text-xs text-slate-400">
+                Official employee monthly salary certificates, tax deductions, and advance loan adjustments.
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              leftIcon={<DollarSign className="w-3.5 h-3.5" />}
+              onClick={() => setIsAddAdvanceModalOpen(true)}
+            >
+              Request Salary Advance
+            </Button>
+          </div>
+
+          {/* Payslips Table */}
+          <div className="p-6 rounded-3xl bg-slate-900/60 border border-slate-800">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs text-slate-300">
+                <thead className="bg-slate-950/60 text-slate-400 uppercase tracking-wider text-[10px] font-semibold border-b border-slate-800">
+                  <tr>
+                    <th className="py-3 px-4">Payslip Number</th>
+                    <th className="py-3 px-4">Employee</th>
+                    <th className="py-3 px-4">Department & Role</th>
+                    <th className="py-3 px-4 text-center">Gross Pay</th>
+                    <th className="py-3 px-4 text-center">Deductions</th>
+                    <th className="py-3 px-4 text-center">Net Disbursed</th>
+                    <th className="py-3 px-4 text-center">Status</th>
+                    <th className="py-3 px-4 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800/60">
+                  {payslips.map((ps) => (
+                    <tr key={ps.id} className="hover:bg-slate-800/30 transition-colors">
+                      <td className="py-3 px-4 font-mono font-bold text-sky-400">{ps.payslipNo}</td>
+                      <td className="py-3 px-4">
+                        <span className="font-bold text-white block">{ps.staffName}</span>
+                        <span className="font-mono text-slate-400 text-[11px]">{ps.employeeCode}</span>
+                      </td>
+                      <td className="py-3 px-4">
+                        <span className="font-medium text-slate-200 block">{ps.designation}</span>
+                        <span className="text-[11px] text-slate-400">{ps.department}</span>
+                      </td>
+                      <td className="py-3 px-4 text-center font-mono font-semibold text-emerald-400">
+                        ₹{ps.grossEarnings.toLocaleString('en-IN')}
+                      </td>
+                      <td className="py-3 px-4 text-center font-mono font-semibold text-rose-400">
+                        -₹{ps.totalDeductions.toLocaleString('en-IN')}
+                      </td>
+                      <td className="py-3 px-4 text-center font-mono font-black text-white text-sm">
+                        ₹{ps.netSalary.toLocaleString('en-IN')}
+                      </td>
+                      <td className="py-3 px-4 text-center">
+                        <Badge variant={ps.status === 'PAID' ? 'emerald' : 'blue'}>{ps.status}</Badge>
+                      </td>
+                      <td className="py-3 px-4 text-right">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          leftIcon={<Printer className="w-3.5 h-3.5" />}
+                          onClick={() => setSelectedPayslip(ps)}
+                          className="text-xs py-1"
+                        >
+                          View Payslip
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* OFFICIAL PRINTABLE PAYSLIP PREVIEW (Section 35) */}
+          {selectedPayslip && (
+            <div className="print-container max-w-2xl mx-auto p-8 rounded-3xl bg-slate-900 border-2 border-slate-700 shadow-2xl space-y-6">
+              <div className="flex items-start justify-between border-b-2 border-slate-700 pb-5">
+                <div className="flex items-center gap-3">
+                  <img src={currentTenant.logo} alt="" className="w-12 h-12 rounded-xl object-cover ring-2 ring-purple-500/30" />
+                  <div>
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-purple-400 font-mono">
+                      Official Salary Certificate & Payslip
+                    </span>
+                    <h2 className="text-lg font-black text-white">{currentTenant.name}</h2>
+                    <p className="text-[11px] text-slate-400">{currentTenant.address}</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <span className="font-mono text-xs font-bold text-white block">{selectedPayslip.payslipNo}</span>
+                  <span className="text-[10px] text-slate-400 font-mono">Status: {selectedPayslip.status}</span>
+                </div>
+              </div>
+
+              {/* Employee & Bank Info */}
+              <div className="grid grid-cols-2 gap-3 p-3.5 rounded-xl bg-slate-950 border border-slate-800 text-xs">
+                <div>
+                  <span className="text-slate-400 text-[10px] block">Employee Name:</span>
+                  <span className="font-bold text-white">{selectedPayslip.staffName} ({selectedPayslip.employeeCode})</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 text-[10px] block">Designation & Dept:</span>
+                  <span className="font-medium text-slate-200">{selectedPayslip.designation} • {selectedPayslip.department}</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 text-[10px] block">Bank Account & IFSC:</span>
+                  <span className="font-mono text-slate-200">{selectedPayslip.bankAccountNo} ({selectedPayslip.bankName})</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 text-[10px] block">Working Days / LOP:</span>
+                  <span className="font-medium text-slate-200">
+                    {selectedPayslip.presentDays} / {selectedPayslip.workingDays} Days (LOP: {selectedPayslip.lopDays}d)
+                  </span>
+                </div>
+              </div>
+
+              {/* Earnings vs Deductions Table */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="border border-slate-800 rounded-xl overflow-hidden text-xs">
+                  <div className="bg-slate-950 p-2.5 font-bold text-emerald-400 border-b border-slate-800">
+                    Earnings (₹)
+                  </div>
+                  <div className="p-3 space-y-1.5 text-slate-300">
+                    <div className="flex justify-between">
+                      <span>Basic Pay:</span>
+                      <span className="font-mono font-bold text-white">₹{selectedPayslip.basicPay.toLocaleString('en-IN')}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>HRA:</span>
+                      <span className="font-mono">₹{selectedPayslip.hra.toLocaleString('en-IN')}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Dearness Allowance (DA):</span>
+                      <span className="font-mono">₹{selectedPayslip.da.toLocaleString('en-IN')}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Special Allowance:</span>
+                      <span className="font-mono">₹{selectedPayslip.specialAllowance.toLocaleString('en-IN')}</span>
+                    </div>
+                    <div className="pt-2 border-t border-slate-800 flex justify-between font-bold text-emerald-400">
+                      <span>Gross Earnings:</span>
+                      <span className="font-mono">₹{selectedPayslip.grossEarnings.toLocaleString('en-IN')}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="border border-slate-800 rounded-xl overflow-hidden text-xs">
+                  <div className="bg-slate-950 p-2.5 font-bold text-rose-400 border-b border-slate-800">
+                    Deductions (₹)
+                  </div>
+                  <div className="p-3 space-y-1.5 text-slate-300">
+                    <div className="flex justify-between">
+                      <span>Provident Fund (PF):</span>
+                      <span className="font-mono text-rose-300">-₹{selectedPayslip.pfDeduction.toLocaleString('en-IN')}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>TDS / Income Tax:</span>
+                      <span className="font-mono text-rose-300">-₹{selectedPayslip.tdsDeduction.toLocaleString('en-IN')}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Professional Tax (PT):</span>
+                      <span className="font-mono text-rose-300">-₹{selectedPayslip.professionalTax}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Loss of Pay (LOP):</span>
+                      <span className="font-mono text-rose-300">-₹{selectedPayslip.lopDeduction}</span>
+                    </div>
+                    <div className="pt-2 border-t border-slate-800 flex justify-between font-bold text-rose-400">
+                      <span>Total Deductions:</span>
+                      <span className="font-mono">-₹{selectedPayslip.totalDeductions.toLocaleString('en-IN')}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Net Payout Banner */}
+              <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex justify-between items-center text-xs">
+                <div>
+                  <span className="text-slate-400 font-semibold block text-[10px] uppercase">Net Salary Disbursed</span>
+                  <span className="text-lg font-black text-emerald-400 font-mono">
+                    ₹{selectedPayslip.netSalary.toLocaleString('en-IN')}
+                  </span>
+                </div>
+                <span className="text-[11px] text-slate-400 italic">Direct NEFT to Bank Account</span>
+              </div>
+
+              {/* Signatures */}
+              <div className="flex items-end justify-between pt-4 border-t border-slate-800 text-xs">
+                <div className="text-center">
+                  <div className="h-6 font-serif italic text-slate-400">R. Gupta</div>
+                  <div className="border-t border-slate-600 pt-0.5 text-[10px] text-slate-400 font-bold">
+                    Accounts Officer
+                  </div>
+                </div>
+
+                <div className="text-center">
+                  <div className="h-6 font-serif italic text-slate-400">Dr. S. Rao</div>
+                  <div className="border-t border-slate-600 pt-0.5 text-[10px] text-slate-400 font-bold">
+                    Principal / Director
+                  </div>
+                </div>
+
+                <div className="no-print">
+                  <Button variant="primary" size="sm" leftIcon={<Printer className="w-4 h-4" />} onClick={() => window.print()}>
+                    Print Payslip
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
 

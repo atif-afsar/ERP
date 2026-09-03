@@ -195,8 +195,17 @@ CREATE TABLE IF NOT EXISTS public.batches (
 );
 
 -- ------------------------------------------------------------------------------------
--- 4. PEOPLE: STUDENTS, PARENTS, STAFF & ENROLLMENTS
--- ------------------------------------------------------------------------------------
+-- Ensure existing legacy admission_no column is migrated if table was partially created
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_schema = 'public' AND table_name = 'students' AND column_name = 'admission_no'
+    ) THEN
+        ALTER TABLE public.students RENAME COLUMN admission_no TO admission_number;
+    END IF;
+END $$;
+
 CREATE TABLE IF NOT EXISTS public.students (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     tenant_id UUID NOT NULL REFERENCES public.tenants(id) ON DELETE CASCADE,

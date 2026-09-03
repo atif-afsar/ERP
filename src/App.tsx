@@ -15,6 +15,13 @@ import { StudentsModule } from './modules/students/StudentsModule';
 import { AcademicsModule } from './modules/academics/AcademicsModule';
 import { AttendanceModule } from './modules/attendance/AttendanceModule';
 import { FeesModule } from './modules/fees/FeesModule';
+import { FinanceModule } from './modules/finance/FinanceModule';
+import { InventoryModule } from './modules/inventory/InventoryModule';
+import { LibraryModule } from './modules/library/LibraryModule';
+import { TransportModule } from './modules/transport/TransportModule';
+import { HostelModule } from './modules/hostel/HostelModule';
+import { MessModule } from './modules/mess/MessModule';
+import { HealthModule } from './modules/health/HealthModule';
 import { ExamsModule } from './modules/exams/ExamsModule';
 import { TimetableModule } from './modules/timetable/TimetableModule';
 import { HomeworkModule } from './modules/homework/HomeworkModule';
@@ -37,8 +44,16 @@ const ROUTE_PERMISSIONS: Record<string, Permission> = {
   attendance: 'attendance.view',
   'attendance/mark': 'attendance.mark',
   fees: 'fees.view',
+  finance: 'fees.view',
+  inventory: 'fees.view',
+  library: 'library.view',
+  transport: 'transport.view',
+  hostel: 'hostel.view',
+  mess: 'mess.view',
+  health: 'health.view',
   'fees/new': 'fees.create',
   exams: 'exams.view',
+  results: 'exams.view',
   timetable: 'timetable.view',
   homework: 'homework.view',
   communication: 'communication.send',
@@ -218,9 +233,24 @@ const MainRouter: React.FC = () => {
         ) : (
           <UnauthorizedCard permission="fees.view" onBackToDashboard={() => navigateTo('dashboard')} />
         );
+      case 'finance':
+        return <FinanceModule />;
+      case 'inventory':
+        return <InventoryModule />;
+      case 'library':
+        return <LibraryModule />;
+      case 'transport':
+        return <TransportModule />;
+      case 'hostel':
+        return <HostelModule />;
+      case 'mess':
+        return <MessModule />;
+      case 'health':
+        return <HealthModule />;
       case 'exams':
+      case 'results':
         return isFeatureEnabled('exams') ? (
-          <ExamsModule />
+          <ExamsModule defaultTab={currentNav === 'results' ? 'report_cards' : undefined} />
         ) : (
           <UnauthorizedCard permission="exams.view" onBackToDashboard={() => navigateTo('dashboard')} />
         );
