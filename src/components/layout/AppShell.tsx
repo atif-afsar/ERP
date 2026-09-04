@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
-import { InteractiveDemoBar } from './InteractiveDemoBar';
 import { Breadcrumbs } from '../navigation/Breadcrumbs';
 import { ErrorBoundary } from '../ui/ErrorBoundary';
 import { NetworkStatusBanner } from '../ui/NetworkStatusBanner';
@@ -9,7 +8,6 @@ import {
   LayoutDashboard, 
   CalendarCheck, 
   CreditCard, 
-  Award, 
   Users, 
   BookOpen,
   MoreHorizontal,
@@ -55,12 +53,9 @@ export const AppShell: React.FC<AppShellProps> = ({
   ];
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col antialiased">
+    <div className="min-h-screen bg-[#f8faf9] text-slate-900 flex flex-col antialiased">
       {/* Real-time Network Connectivity Banner */}
       <NetworkStatusBanner />
-
-      {/* Top Interactive Demo Pill Bar */}
-      <InteractiveDemoBar onOpenAi={onOpenAi} />
 
       {/* Main Framework Layout */}
       <div className="flex-1 flex overflow-hidden">
@@ -75,13 +70,13 @@ export const AppShell: React.FC<AppShellProps> = ({
         {/* Sidebar Overlay for Mobile */}
         {sidebarOpen && (
           <div
-            className="fixed inset-0 bg-slate-950/80 z-20 lg:hidden backdrop-blur-xs"
+            className="fixed inset-0 bg-slate-900/40 z-20 lg:hidden backdrop-blur-xs"
             onClick={() => setSidebarOpen(false)}
           />
         )}
 
         {/* Main Content Area */}
-        <div className="flex-1 flex flex-col min-w-0 lg:pl-64">
+        <div className="flex-1 flex flex-col min-w-0 lg:pl-64 bg-[#f8faf9]">
           <Header
             onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
             onOpenAi={onOpenAi}
@@ -106,11 +101,11 @@ export const AppShell: React.FC<AppShellProps> = ({
       </div>
 
       {/* Mobile Bottom Navigation Bar */}
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-30 bg-slate-900/95 backdrop-blur-lg border-t border-slate-800 px-2 py-1.5 flex items-center justify-around shadow-2xl">
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-30 bg-white border-t border-slate-200 px-2 py-1.5 flex items-center justify-around shadow-lg">
         <button
           onClick={() => onNavigate('dashboard')}
           className={`flex flex-col items-center gap-1 p-1.5 rounded-lg text-[10px] transition-colors ${
-            activeNav === 'dashboard' ? 'text-sky-400 font-bold' : 'text-slate-400'
+            activeNav === 'dashboard' ? 'text-emerald-700 font-bold' : 'text-slate-500'
           }`}
         >
           <LayoutDashboard className="w-4 h-4" />
@@ -121,7 +116,7 @@ export const AppShell: React.FC<AppShellProps> = ({
           <button
             onClick={() => onNavigate('students')}
             className={`flex flex-col items-center gap-1 p-1.5 rounded-lg text-[10px] transition-colors ${
-              activeNav === 'students' ? 'text-sky-400 font-bold' : 'text-slate-400'
+              activeNav === 'students' ? 'text-emerald-700 font-bold' : 'text-slate-500'
             }`}
           >
             <Users className="w-4 h-4" />
@@ -132,7 +127,7 @@ export const AppShell: React.FC<AppShellProps> = ({
         <button
           onClick={() => onNavigate('attendance')}
           className={`flex flex-col items-center gap-1 p-1.5 rounded-lg text-[10px] transition-colors ${
-            activeNav === 'attendance' ? 'text-sky-400 font-bold' : 'text-slate-400'
+            activeNav === 'attendance' ? 'text-emerald-700 font-bold' : 'text-slate-500'
           }`}
         >
           <CalendarCheck className="w-4 h-4" />
@@ -142,7 +137,7 @@ export const AppShell: React.FC<AppShellProps> = ({
         <button
           onClick={() => onNavigate('fees')}
           className={`flex flex-col items-center gap-1 p-1.5 rounded-lg text-[10px] transition-colors ${
-            activeNav === 'fees' ? 'text-sky-400 font-bold' : 'text-slate-400'
+            activeNav === 'fees' ? 'text-emerald-700 font-bold' : 'text-slate-500'
           }`}
         >
           <CreditCard className="w-4 h-4" />
@@ -152,7 +147,7 @@ export const AppShell: React.FC<AppShellProps> = ({
         <button
           onClick={() => setMobileMoreOpen(true)}
           className={`flex flex-col items-center gap-1 p-1.5 rounded-lg text-[10px] transition-colors ${
-            mobileMoreOpen ? 'text-sky-400 font-bold' : 'text-slate-400'
+            mobileMoreOpen ? 'text-emerald-700 font-bold' : 'text-slate-500'
           }`}
         >
           <MoreHorizontal className="w-4 h-4" />
@@ -164,15 +159,15 @@ export const AppShell: React.FC<AppShellProps> = ({
       {mobileMoreOpen && (
         <div className="fixed inset-0 z-40 lg:hidden flex flex-col justify-end">
           <div
-            className="fixed inset-0 bg-slate-950/80 backdrop-blur-xs"
+            className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs"
             onClick={() => setMobileMoreOpen(false)}
           />
-          <div className="relative bg-slate-900 border-t border-slate-700 rounded-t-3xl p-6 shadow-2xl z-50 animate-slide-up space-y-4 max-h-[80vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <h3 className="font-bold text-white text-sm">More Modules & Services</h3>
+          <div className="relative bg-white border-t border-slate-200 rounded-t-2xl p-6 shadow-2xl z-50 animate-slide-up space-y-4 max-h-[80vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <h3 className="font-bold text-slate-900 text-sm">More Modules & Services</h3>
               <button
                 onClick={() => setMobileMoreOpen(false)}
-                className="p-1 rounded-lg text-slate-400 hover:text-white"
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-700"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -190,9 +185,9 @@ export const AppShell: React.FC<AppShellProps> = ({
                         onNavigate(item.id);
                         setMobileMoreOpen(false);
                       }}
-                      className="flex items-center gap-3 p-3 rounded-2xl bg-slate-950/80 border border-slate-800 hover:border-sky-500/40 text-left text-xs font-semibold text-slate-200 transition-all"
+                      className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-200 hover:bg-emerald-50 hover:border-emerald-300 text-left text-xs font-semibold text-slate-800 transition-colors"
                     >
-                      <div className="p-2 rounded-xl bg-slate-900 border border-slate-800 text-sky-400">
+                      <div className="p-2 rounded-lg bg-white border border-slate-200 text-emerald-700">
                         <Icon className="w-4 h-4" />
                       </div>
                       <span className="truncate">{item.label}</span>

@@ -1,7 +1,19 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useTenant } from '../../context/TenantContext';
-import { Shield, Sparkles, LogIn, School, Award, Users, CreditCard, UserCheck, KeyRound, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { 
+  Building, 
+  School, 
+  Award, 
+  Users, 
+  CreditCard, 
+  UserCheck, 
+  CheckCircle2, 
+  AlertTriangle, 
+  Sparkles,
+  ShieldCheck,
+  LogIn
+} from 'lucide-react';
 import { Button } from '../ui/Button';
 import { ForgotPasswordModal } from './ForgotPasswordModal';
 
@@ -11,7 +23,7 @@ interface LoginViewProps {
 }
 
 export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, redirectUrl }) => {
-  const { allUsers, login, loginWithCredentials } = useAuth();
+  const { login, loginWithCredentials } = useAuth();
   const { currentTenant, allTenants, switchTenant } = useTenant();
 
   const [email, setEmail] = useState('');
@@ -24,17 +36,17 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, redirectUr
       role: 'SUPER_ADMIN',
       title: 'Super Admin',
       desc: 'Full SaaS platform management & multi-tenant provisioning',
-      icon: Shield,
+      icon: ShieldCheck,
       userId: 'user-superadmin',
-      badgeColor: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
+      badgeColor: 'bg-amber-50 text-amber-800 border-amber-200',
     },
     {
       role: 'TENANT_ADMIN',
-      title: 'Principal / Admin',
+      title: 'Principal / Director',
       desc: 'Complete administrative control over school/coaching institution',
       icon: School,
       userId: currentTenant.tenantType === 'SCHOOL' ? 'user-school-admin' : 'user-coaching-admin',
-      badgeColor: 'bg-sky-500/20 text-sky-300 border-sky-500/30',
+      badgeColor: 'bg-emerald-50 text-emerald-800 border-emerald-200',
     },
     {
       role: 'TEACHER',
@@ -42,7 +54,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, redirectUr
       desc: 'Attendance marking, marks entry, timetable & homework',
       icon: Award,
       userId: currentTenant.tenantType === 'SCHOOL' ? 'user-school-teacher' : 'user-coaching-faculty',
-      badgeColor: 'bg-purple-500/20 text-purple-300 border-purple-500/30',
+      badgeColor: 'bg-blue-50 text-blue-800 border-blue-200',
     },
     {
       role: 'ACCOUNTANT',
@@ -50,7 +62,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, redirectUr
       desc: 'Fee structures, receipts collection, ledgers & financial reports',
       icon: CreditCard,
       userId: 'user-school-accountant',
-      badgeColor: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
+      badgeColor: 'bg-emerald-50 text-emerald-800 border-emerald-200',
     },
     {
       role: 'STAFF',
@@ -58,7 +70,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, redirectUr
       desc: 'Admission inquiries, student directory, quick fee collection',
       icon: UserCheck,
       userId: 'user-school-receptionist',
-      badgeColor: 'bg-teal-500/20 text-teal-300 border-teal-500/30',
+      badgeColor: 'bg-slate-100 text-slate-800 border-slate-200',
     },
     {
       role: 'PARENT',
@@ -66,15 +78,15 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, redirectUr
       desc: 'Multi-child attendance tracking, report cards & online fees',
       icon: Users,
       userId: currentTenant.tenantType === 'SCHOOL' ? 'user-school-parent' : 'user-coaching-parent',
-      badgeColor: 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30',
+      badgeColor: 'bg-purple-50 text-purple-800 border-purple-200',
     },
     {
       role: 'STUDENT',
       title: 'Student Portal',
-      desc: 'My Attendance %, AI report card, homework submission & periods',
+      desc: 'Attendance %, marksheet, timetable periods & digital ID card',
       icon: Sparkles,
       userId: currentTenant.tenantType === 'SCHOOL' ? 'user-school-student' : 'user-coaching-student',
-      badgeColor: 'bg-pink-500/20 text-pink-300 border-pink-500/30',
+      badgeColor: 'bg-teal-50 text-teal-800 border-teal-200',
     },
   ];
 
@@ -91,47 +103,45 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, redirectUr
     if (res.success) {
       onLoginSuccess();
     } else {
-      setErrorMessage(res.error || 'Invalid credentials.');
+      setErrorMessage(res.error || 'Invalid email or password.');
     }
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col justify-center py-12 sm:px-6 lg:px-8 relative overflow-hidden">
-      {/* Dynamic Background Glow */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-sky-500/10 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-10 right-10 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
-
-      <div className="sm:mx-auto sm:w-full sm:max-w-md text-center z-10">
-        <div className="inline-flex items-center gap-3 p-2 px-4 rounded-2xl bg-slate-900/80 border border-slate-800 shadow-xl mb-4">
-          <div className="p-2 rounded-xl bg-gradient-to-tr from-sky-500 to-blue-600 text-white shadow-md shadow-sky-500/20">
-            <Shield className="w-6 h-6" />
+    <div className="min-h-screen bg-[#f8faf9] flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+      {/* Brand Header */}
+      <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
+        <div className="inline-flex items-center gap-3 p-2 px-4 rounded-xl bg-white border border-slate-200 shadow-2xs mb-4">
+          <div className="p-2 rounded-lg bg-emerald-600 text-white shadow-xs">
+            <Building className="w-5 h-5" />
           </div>
           <div className="text-left">
-            <h1 className="font-extrabold text-white text-lg tracking-tight">EduNexus SaaS</h1>
-            <p className="text-[11px] text-sky-400 font-medium">Enterprise School & Coaching ERP</p>
+            <h1 className="font-bold text-slate-900 text-base tracking-tight">EduNexus ERP</h1>
+            <p className="text-[11px] text-emerald-700 font-semibold">School & Coaching Management</p>
           </div>
         </div>
 
-        <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
-          Sign in to your portal
+        <h2 className="text-2xl font-bold tracking-tight text-slate-900">
+          Sign in to your account
         </h2>
-        <p className="mt-2 text-xs text-slate-400 max-w-sm mx-auto">
-          Experience role-based security, branch isolation, and multi-tenant workflows.
+        <p className="mt-1 text-xs text-slate-500 max-w-sm mx-auto">
+          Role-based security, multi-tenant isolation, and complete academic control.
         </p>
 
         {redirectUrl && (
-          <div className="mt-3 inline-block px-3 py-1 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs font-mono">
+          <div className="mt-2 inline-block px-3 py-1 rounded-md bg-amber-50 border border-amber-200 text-amber-800 text-xs font-medium">
             Redirect target: {redirectUrl}
           </div>
         )}
       </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-2xl px-4 z-10">
-        <div className="bg-slate-900/80 backdrop-blur-xl border border-slate-800 py-8 px-6 shadow-2xl rounded-3xl sm:px-10 space-y-6">
+      {/* Main Card */}
+      <div className="mt-6 sm:mx-auto sm:w-full sm:max-w-2xl px-4">
+        <div className="bg-white border border-slate-200 py-8 px-6 shadow-sm rounded-2xl sm:px-10 space-y-6">
           
-          {/* Tenant Preset Switcher */}
+          {/* Tenant Selector */}
           <div>
-            <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
+            <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-2">
               Select Active Institution
             </label>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
@@ -142,30 +152,30 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, redirectUr
                     key={t.id}
                     type="button"
                     onClick={() => switchTenant(t.id)}
-                    className={`flex items-center gap-3 p-3 rounded-2xl border text-left transition-all ${
+                    className={`flex items-center gap-3 p-3 rounded-xl border text-left transition-colors ${
                       isSelected
-                        ? 'bg-sky-500/15 border-sky-500/40 shadow-lg shadow-sky-500/5 ring-1 ring-sky-500/30'
-                        : 'bg-slate-950/60 border-slate-800 hover:border-slate-700 text-slate-400'
+                        ? 'bg-emerald-50/60 border-emerald-500 shadow-xs'
+                        : 'bg-slate-50 border-slate-200 hover:border-slate-300 text-slate-600'
                     }`}
                   >
-                    <img src={t.logo} alt={t.name} className="w-8 h-8 rounded-lg object-cover" />
+                    <img src={t.logo} alt={t.name} className="w-8 h-8 rounded-lg object-cover border border-slate-200" />
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs font-bold text-white truncate">{t.name}</p>
-                      <p className="text-[10px] text-slate-400">{t.tenantType} • {t.academicYear}</p>
+                      <p className="text-xs font-bold text-slate-900 truncate">{t.name}</p>
+                      <p className="text-[10px] text-slate-500">{t.tenantType} • {t.academicYear}</p>
                     </div>
-                    {isSelected && <CheckCircle2 className="w-4 h-4 text-sky-400 shrink-0" />}
+                    {isSelected && <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />}
                   </button>
                 );
               })}
             </div>
           </div>
 
-          {/* Quick Demo Role Persona Selector */}
+          {/* Quick Demo Role Logins */}
           <div>
-            <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
+            <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-2">
               1-Click Role Login (Demo Personas)
             </label>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-60 overflow-y-auto pr-1">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-64 overflow-y-auto pr-1">
               {rolePersonas.map((persona) => {
                 const Icon = persona.icon;
                 return (
@@ -173,21 +183,21 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, redirectUr
                     key={persona.role}
                     type="button"
                     onClick={() => handleQuickLogin(persona.userId)}
-                    className="flex items-start gap-3 p-3 rounded-xl bg-slate-950/70 border border-slate-800/80 hover:border-sky-500/40 hover:bg-slate-800/50 text-left transition-all group"
+                    className="flex items-start gap-3 p-3 rounded-xl bg-slate-50 border border-slate-200 hover:border-emerald-400 hover:bg-emerald-50/40 text-left transition-colors group"
                   >
-                    <div className="p-2 rounded-lg bg-slate-900 border border-slate-700/60 text-slate-300 group-hover:text-sky-400 group-hover:border-sky-500/30 transition-colors">
+                    <div className="p-2 rounded-lg bg-white border border-slate-200 text-slate-600 group-hover:text-emerald-700 group-hover:border-emerald-300 transition-colors">
                       <Icon className="w-4 h-4" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between gap-1">
-                        <span className="text-xs font-bold text-white group-hover:text-sky-300 transition-colors">
+                        <span className="text-xs font-bold text-slate-900 group-hover:text-emerald-900 transition-colors">
                           {persona.title}
                         </span>
                         <span className={`text-[9px] px-1.5 py-0.2 rounded border font-semibold ${persona.badgeColor}`}>
                           {persona.role}
                         </span>
                       </div>
-                      <p className="text-[11px] text-slate-400 line-clamp-1 mt-0.5">{persona.desc}</p>
+                      <p className="text-[11px] text-slate-500 line-clamp-1 mt-0.5">{persona.desc}</p>
                     </div>
                   </button>
                 );
@@ -195,39 +205,41 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, redirectUr
             </div>
           </div>
 
+          {/* Divider */}
           <div className="relative flex py-1 items-center">
-            <div className="flex-grow border-t border-slate-800"></div>
-            <span className="flex-shrink mx-4 text-[11px] text-slate-400 uppercase font-mono">Or Manual Credentials</span>
-            <div className="flex-grow border-t border-slate-800"></div>
+            <div className="flex-grow border-t border-slate-200"></div>
+            <span className="flex-shrink mx-4 text-[11px] text-slate-400 uppercase font-semibold">Or Email Credentials</span>
+            <div className="flex-grow border-t border-slate-200"></div>
           </div>
 
           {/* Error Banner */}
           {errorMessage && (
-            <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs flex items-center gap-2 animate-shake">
-              <AlertTriangle className="w-4 h-4 shrink-0" />
+            <div className="p-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4 shrink-0 text-rose-600" />
               <span>{errorMessage}</span>
             </div>
           )}
 
-          {/* Form */}
+          {/* Credentials Form */}
           <form onSubmit={handleCustomSubmit} className="space-y-4">
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1">Email Address</label>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Email Address</label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="e.g. principal@delhiinternationalschool.edu.in"
-                className="w-full px-3.5 py-2 bg-slate-950/70 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-sky-500/60 focus:ring-1 focus:ring-sky-500/60"
+                className="w-full px-3.5 py-2 rounded-lg bg-white border border-slate-300 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
               />
             </div>
+
             <div>
-              <div className="flex justify-between items-center mb-1">
-                <label className="block text-xs font-medium text-slate-300">Password</label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-xs font-semibold text-slate-700">Password</label>
                 <button
                   type="button"
                   onClick={() => setIsForgotPasswordOpen(true)}
-                  className="text-[11px] text-sky-400 hover:underline font-medium"
+                  className="text-[11px] text-emerald-700 hover:underline font-semibold"
                 >
                   Forgot password?
                 </button>
@@ -236,21 +248,20 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, redirectUr
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                className="w-full px-3.5 py-2 bg-slate-950/70 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-sky-500/60 focus:ring-1 focus:ring-sky-500/60"
+                placeholder="Enter your password"
+                className="w-full px-3.5 py-2 rounded-lg bg-white border border-slate-300 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
               />
             </div>
 
             <Button
               type="submit"
               variant="primary"
-              className="w-full justify-center py-2.5"
+              className="w-full text-xs font-semibold"
               leftIcon={<LogIn className="w-4 h-4" />}
             >
-              Sign In to ERP Console
+              Sign In to Portal
             </Button>
           </form>
-
         </div>
       </div>
 

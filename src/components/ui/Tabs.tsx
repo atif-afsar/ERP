@@ -17,7 +17,7 @@ interface TabsProps {
 
 export const Tabs: React.FC<TabsProps> = ({ tabs, activeTab, onChange, className }) => {
   return (
-    <div className={cn('flex items-center gap-1.5 p-1 bg-slate-950/60 border border-slate-800 rounded-xl overflow-x-auto no-scrollbar', className)}>
+    <div className={cn('flex items-center gap-1.5 p-1 bg-white border border-slate-200 rounded-xl overflow-x-auto no-scrollbar shadow-2xs', className)}>
       {tabs.map((tab) => {
         const isActive = activeTab === tab.id;
         return (
@@ -25,10 +25,10 @@ export const Tabs: React.FC<TabsProps> = ({ tabs, activeTab, onChange, className
             key={tab.id}
             onClick={() => onChange(tab.id)}
             className={cn(
-              'flex items-center gap-2 px-3.5 py-2 text-xs font-medium rounded-lg transition-all duration-150 whitespace-nowrap',
+              'flex items-center gap-2 px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors duration-150 whitespace-nowrap',
               isActive
-                ? 'bg-slate-800 text-white shadow-sm border border-slate-700/80 font-semibold'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/40'
+                ? 'bg-emerald-50 text-emerald-800 font-semibold border border-emerald-200/80 shadow-2xs'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
             )}
           >
             {tab.icon}
@@ -37,7 +37,7 @@ export const Tabs: React.FC<TabsProps> = ({ tabs, activeTab, onChange, className
               <span
                 className={cn(
                   'px-1.5 py-0.2 rounded-full text-[10px] font-semibold',
-                  isActive ? 'bg-sky-500/20 text-sky-400' : 'bg-slate-800 text-slate-400'
+                  isActive ? 'bg-emerald-200/60 text-emerald-900' : 'bg-slate-100 text-slate-600'
                 )}
               >
                 {tab.count}

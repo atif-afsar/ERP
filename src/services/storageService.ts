@@ -1055,8 +1055,9 @@ class StorageService {
   }
 
   // Audit Logging & Activity
-  getAuditLogs(tenantId: string): AuditLog[] {
+  getAuditLogs(tenantId?: string): AuditLog[] {
     const all = this.getItem<AuditLog[]>('audit_logs', INITIAL_AUDIT_LOGS);
+    if (!tenantId) return all;
     return all.filter((l) => l.tenantId === tenantId);
   }
 

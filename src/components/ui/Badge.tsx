@@ -17,26 +17,26 @@ export const Badge: React.FC<BadgeProps> = ({
   className,
 }) => {
   const variantStyles = {
-    blue: 'bg-sky-500/10 text-sky-400 border-sky-500/20',
-    purple: 'bg-purple-500/10 text-purple-400 border-purple-500/20',
-    emerald: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
-    amber: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
-    rose: 'bg-rose-500/10 text-rose-400 border-rose-500/20',
-    slate: 'bg-slate-700/40 text-slate-300 border-slate-600/30',
+    emerald: 'bg-emerald-50 text-emerald-800 border-emerald-200 font-medium',
+    blue: 'bg-blue-50 text-blue-800 border-blue-200 font-medium',
+    purple: 'bg-purple-50 text-purple-800 border-purple-200 font-medium',
+    amber: 'bg-amber-50 text-amber-800 border-amber-200 font-medium',
+    rose: 'bg-rose-50 text-rose-800 border-rose-200 font-medium',
+    slate: 'bg-slate-100 text-slate-700 border-slate-200 font-medium',
   };
 
   const dotColors = {
-    blue: 'bg-sky-400',
-    purple: 'bg-purple-400',
-    emerald: 'bg-emerald-400',
-    amber: 'bg-amber-400',
-    rose: 'bg-rose-400',
-    slate: 'bg-slate-400',
+    emerald: 'bg-emerald-600',
+    blue: 'bg-blue-600',
+    purple: 'bg-purple-600',
+    amber: 'bg-amber-600',
+    rose: 'bg-rose-600',
+    slate: 'bg-slate-500',
   };
 
   const sizeStyles = {
-    sm: 'px-2 py-0.5 text-xs',
-    md: 'px-2.5 py-1 text-xs font-medium',
+    sm: 'px-2 py-0.5 text-[11px]',
+    md: 'px-2.5 py-0.5 text-xs',
   };
 
   return (
@@ -48,7 +48,7 @@ export const Badge: React.FC<BadgeProps> = ({
         className
       )}
     >
-      {dot && <span className={cn('h-1.5 w-1.5 rounded-full animate-pulse', dotColors[variant])} />}
+      {dot && <span className={cn('h-1.5 w-1.5 rounded-full', dotColors[variant])} />}
       {children}
     </span>
   );

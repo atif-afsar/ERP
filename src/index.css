@@ -2,64 +2,85 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --color-primary: #16a34a;
+  --color-primary-hover: #15803d;
+  --color-primary-light: #dcfce7;
+  --color-primary-dark: #166534;
+
+  --color-background: #f8faf9;
+  --color-surface: #ffffff;
+  --color-surface-muted: #f1f5f9;
+
+  --color-text-primary: #0f172a;
+  --color-text-secondary: #475569;
+  --color-text-muted: #94a3b8;
+
+  --color-border: #e2e8f0;
+
+  --color-success: #16a34a;
+  --color-warning: #d97706;
+  --color-danger: #dc2626;
+  --color-info: #2563eb;
+}
+
 @layer base {
   body {
-    @apply bg-slate-900 text-slate-100 font-sans selection:bg-brand-500 selection:text-white;
+    @apply bg-[#f8faf9] text-slate-900 font-sans selection:bg-emerald-500 selection:text-white antialiased;
+    background-color: #f8faf9;
+    color: #0f172a;
   }
 }
 
-/* Custom Scrollbars */
+/* Light Enterprise Scrollbars */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(15, 23, 42, 0.6);
+  background: #f1f5f9;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(100, 116, 139, 0.4);
+  background: #cbd5e1;
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(148, 163, 184, 0.6);
+  background: #94a3b8;
 }
 
-/* Glassmorphism Classes */
+/* Clean White Card Utility Classes (Redesigned from Dark Glassmorphism) */
 .glass-panel {
-  background: rgba(30, 41, 59, 0.7);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
 }
 
 .glass-card {
-  background: rgba(30, 41, 59, 0.6);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
 }
 
 .glass-dropdown {
-  background: rgba(15, 23, 42, 0.92);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.05);
 }
 
-/* Subtle glowing pulse */
+/* Subtle pulse */
 @keyframes pulse-subtle {
   0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.85; transform: scale(0.98); }
+  50% { opacity: 0.9; transform: scale(0.99); }
 }
 
 .animate-pulse-subtle {
   animation: pulse-subtle 2s infinite ease-in-out;
 }
 
-/* Print Optimization for ID Cards and Report Cards */
+/* Print Optimization */
 @media print {
   body * {
     visibility: hidden;

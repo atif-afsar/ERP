@@ -35,6 +35,9 @@ import { SchemaExplorerModule } from './modules/schemaExplorer/SchemaExplorerMod
 import { RolesMatrixModule } from './modules/rolesMatrix/RolesMatrixModule';
 import { StaffModule } from './modules/staff/StaffModule';
 import { AiAssistantModal } from './modules/ai/AiAssistantModal';
+import { LandingPage } from './modules/public/LandingPage';
+import { OnboardingWizard } from './modules/onboarding/OnboardingWizard';
+import { SuperAdminShell } from './modules/superadmin/SuperAdminShell';
 
 const ROUTE_PERMISSIONS: Record<string, Permission> = {
   students: 'students.view',
@@ -110,24 +113,25 @@ const NotFoundView: React.FC<{ attemptedRoute: string; onBackToDashboard: () => 
 
 const MainRouter: React.FC = () => {
   const { authState, isAuthenticated, isSuperAdmin, can, login, currentUser } = useAuth();
-  const { currentTenant, isFeatureEnabled } = useTenant();
+  const { currentTenant, isFeatureEnabled, switchTenant } = useTenant();
   const [isAiModalOpen, setIsAiModalOpen] = useState(false);
 
   // Helper to get normalized route from window hash
-  const getHashRoute = (): { path: string; query: Record<string, string>; subParam?: string } => {
-    const rawHash = window.location.hash.replace(/^#\/?/, '') || 'dashboard';
-    const [pathPart, queryPart] = rawHash.split('?');
+  const getHashRoute = (): { rawHash: string; path: string; fullPath: string; query: Record<string, string>; subParam?: string } => {
+    const rawHash = window.location.hash.replace(/^#\/?/, '');
+    const [pathPart, queryPart] = (rawHash || '').split('?');
     const query: Record<string, string> = {};
     if (queryPart) {
       new URLSearchParams(queryPart).forEach((val, key) => {
         query[key] = val;
       });
     }
-    const segments = pathPart.split('/');
-    const mainPath = segments[0] || 'dashboard';
+    const segments = pathPart.split('/').filter(Boolean);
+    const fullPath = pathPart;
+    const mainPath = segments[0] || '';
     const subParam = segments[1];
 
-    return { path: mainPath, query, subParam };
+    return { rawHash, path: mainPath, fullPath, query, subParam };
   };
 
   const [routeState, setRouteState] = useState(getHashRoute);
@@ -146,26 +150,44 @@ const MainRouter: React.FC = () => {
     window.location.hash = `#/${cleanTarget}`;
   };
 
-  const activeNav = routeState.path;
-  const currentNav = isSuperAdmin && activeNav === 'dashboard' ? 'superadmin-dashboard' : activeNav;
-
   // Zero-Flicker Loading State
   if (authState === 'UNKNOWN') {
     return (
       <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-center p-4">
-        <Loader2 className="w-8 h-8 text-sky-400 animate-spin mb-3" />
+        <Loader2 className="w-8 h-8 text-emerald-500 animate-spin mb-3" />
         <p className="text-xs text-slate-400 font-mono">Initializing Authenticated Tenant Session...</p>
       </div>
     );
   }
 
-  // Suspended Tenant State (Section 48)
-  if (authState === 'TENANT_SUSPENDED' && !isSuperAdmin) {
-    return <SuspendedTenantView tenantName={currentTenant.name} />;
+  // 1. PUBLIC MARKETING ROUTES (Doc 62)
+  const isPublicRoute = 
+    routeState.rawHash === '' || 
+    routeState.path === 'landing' || 
+    routeState.path === 'features' || 
+    routeState.path === 'solutions' || 
+    routeState.path === 'pricing' || 
+    routeState.path === 'how-it-works';
+
+  if (isPublicRoute) {
+    return <LandingPage onNavigate={navigateTo} subRoute={routeState.fullPath} />;
   }
 
-  // Unauthenticated Flow
-  if (!isAuthenticated || activeNav === 'login') {
+  // 2. SELF-ONBOARDING WIZARD (Docs 63 & 65)
+  if (routeState.path === 'signup' || routeState.path === 'onboarding') {
+    return (
+      <OnboardingWizard
+        onComplete={(newTenant) => {
+          switchTenant(newTenant.id);
+          navigateTo('app/dashboard');
+        }}
+        onCancel={() => navigateTo('')}
+      />
+    );
+  }
+
+  // 3. AUTHENTICATION & LOGIN (Doc 63)
+  if (routeState.path === 'login' || !isAuthenticated) {
     return (
       <>
         <LoginView
@@ -174,7 +196,7 @@ const MainRouter: React.FC = () => {
             if (redirect && redirect.startsWith('/') && !redirect.includes('://')) {
               navigateTo(redirect.slice(1));
             } else {
-              navigateTo('dashboard');
+              navigateTo('app/dashboard');
             }
           }}
           redirectUrl={routeState.query.redirect}
@@ -189,6 +211,37 @@ const MainRouter: React.FC = () => {
       </>
     );
   }
+
+  // 4. SUSPENDED TENANT STATE (Section 48)
+  if (authState === 'TENANT_SUSPENDED' && !isSuperAdmin) {
+    return <SuspendedTenantView tenantName={currentTenant.name} />;
+  }
+
+  // 5. SEPARATE SUPER ADMIN SURFACE (Doc 64)
+  if (routeState.path === 'super-admin') {
+    if (!isSuperAdmin) {
+      return (
+        <UnauthorizedCard
+          permission="tenants.manage"
+          onBackToDashboard={() => navigateTo('app/dashboard')}
+        />
+      );
+    }
+    return (
+      <SuperAdminShell
+        onNavigate={navigateTo}
+        activeSubRoute={routeState.subParam}
+        onOpenAi={() => setIsAiModalOpen(true)}
+      />
+    );
+  }
+
+  // 6. TENANT WORKSPACE & PORTALS (/app/*)
+  const activeModule = routeState.path === 'app' 
+    ? (routeState.subParam || 'dashboard') 
+    : (routeState.path || 'dashboard');
+
+  const currentNav = isSuperAdmin && activeModule === 'dashboard' ? 'superadmin-dashboard' : activeModule;
 
   // Permission & Feature verification
   const requiredPermission = ROUTE_PERMISSIONS[currentNav];
@@ -295,8 +348,8 @@ const MainRouter: React.FC = () => {
       default:
         return (
           <NotFoundView
-            attemptedRoute={activeNav}
-            onBackToDashboard={() => navigateTo('dashboard')}
+            attemptedRoute={activeModule}
+            onBackToDashboard={() => navigateTo('app/dashboard')}
           />
         );
     }
@@ -304,7 +357,7 @@ const MainRouter: React.FC = () => {
 
   return (
     <AppShell
-      activeNav={activeNav}
+      activeNav={activeModule}
       subTitle={routeState.subParam ? `Item ID: ${routeState.subParam}` : undefined}
       onNavigate={(nav) => navigateTo(nav)}
       onOpenAi={() => setIsAiModalOpen(true)}
