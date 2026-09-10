@@ -431,7 +431,7 @@ I can assist you with:
       {/* 1. FLOATING LAUNCHER BUTTON */}
       {/* ------------------------------------------------------------- */}
       {!isChatOpen && (
-        <div className="fixed bottom-20 right-4 sm:bottom-6 sm:right-6 z-40 flex items-center gap-2.5 animate-fade-in">
+        <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-40 flex items-center gap-2.5 animate-fade-in">
           <button
             onClick={handleOpen}
             className="hidden sm:flex items-center gap-2 bg-white text-slate-800 text-xs font-semibold px-4 py-2.5 rounded-full border border-slate-200 shadow-lg hover:shadow-xl hover:border-emerald-500 transition-all hover:scale-102 cursor-pointer"
@@ -442,14 +442,12 @@ I can assist you with:
 
           <button
             onClick={handleOpen}
-            className="group relative flex items-center justify-center w-14 h-14 rounded-2xl bg-white hover:bg-slate-50 shadow-xl shadow-emerald-900/20 hover:scale-105 active:scale-95 transition-all duration-200 ring-4 ring-emerald-500/25 cursor-pointer p-1.5 border border-emerald-500/30"
+            className="group relative flex items-center justify-center w-12 h-12 sm:w-13 sm:h-13 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white shadow-xl shadow-emerald-950/20 hover:scale-105 active:scale-95 transition-all duration-200 border-2 border-white cursor-pointer"
             title="Open EduNexus Assistant"
             aria-label="Open EduNexus Assistant"
           >
-            <img src="/logo.png" alt="EduNexus AI" className="w-full h-full object-contain rounded-xl transition-transform group-hover:scale-105" />
-            <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-emerald-500 border-2 border-white flex items-center justify-center">
-              <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-            </span>
+            <Bot className="w-6 h-6 text-white transition-transform group-hover:scale-110" />
+            <span className="absolute top-0 right-0 w-3.5 h-3.5 rounded-full bg-emerald-300 border-2 border-white" />
           </button>
         </div>
       )}

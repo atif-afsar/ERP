@@ -101,26 +101,21 @@ export function EduNexusHero({
         {/* Brand Logo */}
         <div 
           onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-          className="flex items-center gap-3 cursor-pointer select-none group"
+          className="flex items-center gap-2.5 sm:gap-3 cursor-pointer select-none group shrink-0"
         >
           {logo || (
             <>
               <img
                 src="/logo.png"
                 alt="EduNexus ERP"
-                className="h-10 w-10 sm:h-12 sm:w-12 rounded-xl object-contain shadow-xs transition-transform group-hover:scale-105"
+                className="h-9 w-9 sm:h-11 sm:w-11 rounded-xl object-contain shadow-xs transition-transform group-hover:scale-105 shrink-0"
               />
-              <div className="flex flex-col">
-                <div className="flex items-center gap-1.5">
-                  <span className="font-extrabold text-slate-900 text-lg sm:text-xl tracking-tight leading-none">
-                    Edu<span className="text-emerald-600">Nexus</span>
-                  </span>
-                  <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
-                    ERP
-                  </span>
-                </div>
-                <span className="text-[10px] font-medium text-slate-500 tracking-wide hidden sm:block">
-                  Next-Gen Campus OS
+              <div className="flex items-center gap-1.5">
+                <span className="font-extrabold text-slate-900 text-lg sm:text-xl tracking-tight leading-none">
+                  Edu<span className="text-emerald-600">Nexus</span>
+                </span>
+                <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
+                  ERP
                 </span>
               </div>
             </>
@@ -178,19 +173,10 @@ export function EduNexusHero({
         </div>
 
         {/* Mobile Menu Toggle Button */}
-        <div className="flex md:hidden items-center gap-2">
-          {ctaButton && (
-            <button
-              onClick={ctaButton.onClick}
-              className="px-3.5 py-1.5 rounded-full bg-emerald-600 text-white text-xs font-semibold flex items-center gap-1 shadow-sm"
-            >
-              <span>{ctaButton.label}</span>
-              <ArrowUpRight className="w-3.5 h-3.5" />
-            </button>
-          )}
+        <div className="flex md:hidden items-center">
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="p-2 rounded-xl text-slate-700 hover:bg-slate-100/80 transition-colors"
+            className="p-2 rounded-xl text-slate-800 hover:bg-slate-100 transition-colors cursor-pointer"
             aria-label="Toggle Navigation Menu"
           >
             {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -232,6 +218,18 @@ export function EduNexusHero({
                 <ArrowUpRight className="w-4 h-4" />
               </button>
             )}
+            {ctaButton && (
+              <button
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  ctaButton.onClick();
+                }}
+                className="w-full py-2.5 rounded-xl bg-slate-100 text-slate-800 text-sm font-semibold flex items-center justify-center gap-2 hover:bg-slate-200 transition-colors"
+              >
+                <span>{ctaButton.label}</span>
+                <ArrowUpRight className="w-4 h-4" />
+              </button>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
@@ -240,7 +238,7 @@ export function EduNexusHero({
       {/* 2. HERO BODY */}
       {/* ------------------------------------------------------------- */}
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 sm:pt-12 pb-16 flex flex-col items-center text-center">
-        {/* Top Badge: ★ New Introduce our new ai features */}
+        {/* Top Badge */}
         <motion.div
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
@@ -255,26 +253,19 @@ export function EduNexusHero({
           </span>
         </motion.div>
 
-        {/* Hero Title with Serif Italic Accent (Ref Image: "Track Your Progress And Thrive Every Day") */}
+        {/* Hero Title */}
         <motion.h1
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.1 }}
-          className="max-w-4xl font-extrabold text-slate-900 text-4xl sm:text-5xl md:text-6xl lg:text-[68px] tracking-tight leading-[1.12] mb-5"
+          className="max-w-4xl font-extrabold text-slate-900 text-3xl sm:text-5xl md:text-6xl lg:text-[68px] tracking-tight leading-[1.14] mb-5"
         >
           {title ? (
             title
           ) : (
             <>
-              {headlinePart1} <br className="hidden sm:inline" />
-              <span
-                style={{
-                  fontFamily: "'Newsreader', Georgia, serif",
-                  fontStyle: "italic",
-                  fontWeight: 500,
-                }}
-                className="text-slate-800"
-              >
+              {headlinePart1}{" "}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-teal-600 font-extrabold">
                 {italicWord}
               </span>{" "}
               {headlinePart2}
@@ -310,10 +301,10 @@ export function EduNexusHero({
             </button>
           )}
 
-          {/* Social Proof (Avatars + 5 Stars + Trusted by 20k+ user) */}
-          <div className="flex items-center gap-3">
+          {/* Social Proof */}
+          <div className="flex flex-wrap items-center justify-center gap-2.5 sm:gap-3">
             {/* Overlapping Avatars */}
-            <div className="flex items-center -space-x-2.5">
+            <div className="flex items-center -space-x-2">
               {avatars.map((url, i) => (
                 <img
                   key={i}
@@ -325,14 +316,14 @@ export function EduNexusHero({
             </div>
 
             {/* Stars & Text */}
-            <div className="text-left">
+            <div className="flex flex-col items-center sm:items-start text-center sm:text-left">
               <div className="flex items-center gap-0.5 text-amber-400">
                 {[...Array(5)].map((_, i) => (
                   <Star key={i} className="w-3.5 h-3.5 fill-amber-400" />
                 ))}
               </div>
               <p className="text-[12px] sm:text-[13px] font-semibold text-slate-700">
-                {socialProof?.text || "Trusted by 20k+ user"}
+                {socialProof?.text || "Trusted by 500+ schools & academies"}
               </p>
             </div>
           </div>
