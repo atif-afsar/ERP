@@ -361,13 +361,13 @@ export const HealthModule: React.FC = () => {
                 <HeartPulse className="w-6 h-6" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-white tracking-tight flex items-center gap-2">
+                <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
                   Health & Medical Management
-                  <span className="text-[11px] font-mono px-2.5 py-0.5 rounded-full bg-red-500/10 border border-red-500/20 text-red-300">
+                  <span className="text-[11px] font-mono px-2.5 py-0.5 rounded-full bg-rose-50 border border-rose-200 text-rose-700">
                     Doc 61 Canonical
                   </span>
                 </h1>
-                <p className="text-xs text-slate-400 mt-0.5">
+                <p className="text-xs text-slate-500 mt-0.5">
                   Campus infirmary clinic, student health profiles, vital signs, first aid treatment logs, and vaccination records.
                 </p>
               </div>

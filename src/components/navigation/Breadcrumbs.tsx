@@ -64,31 +64,31 @@ export const Breadcrumbs: React.FC<BreadcrumbsProps> = ({
   }
 
   return (
-    <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs text-slate-400 mb-4 px-1">
+    <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs text-slate-500 mb-4 px-1">
       <button
         onClick={() => onNavigate('dashboard')}
-        className="flex items-center gap-1 hover:text-sky-400 transition-colors p-1 rounded-md hover:bg-slate-800/50"
+        className="flex items-center gap-1 hover:text-emerald-700 transition-colors p-1 rounded-md hover:bg-slate-100"
         title="Go to Dashboard"
       >
         <Home className="w-3.5 h-3.5" />
         <span className="hidden sm:inline font-medium">Home</span>
       </button>
 
-      <ChevronRight className="w-3.5 h-3.5 text-slate-600 shrink-0" />
+      <ChevronRight className="w-3.5 h-3.5 text-slate-400 shrink-0" />
 
       {subTitle ? (
         <>
           <button
             onClick={() => onNavigate(activeNav)}
-            className="hover:text-sky-400 transition-colors p-1 rounded-md hover:bg-slate-800/50 font-medium"
+            className="hover:text-emerald-700 transition-colors p-1 rounded-md hover:bg-slate-100 font-medium"
           >
             {getNavLabel(activeNav)}
           </button>
-          <ChevronRight className="w-3.5 h-3.5 text-slate-600 shrink-0" />
-          <span className="text-sky-300 font-semibold truncate max-w-xs">{subTitle}</span>
+          <ChevronRight className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+          <span className="text-emerald-700 font-semibold truncate max-w-xs">{subTitle}</span>
         </>
       ) : (
-        <span className="text-slate-200 font-semibold">{getNavLabel(activeNav)}</span>
+        <span className="text-slate-800 font-semibold">{getNavLabel(activeNav)}</span>
       )}
     </nav>
   );

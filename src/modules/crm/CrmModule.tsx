@@ -41,10 +41,10 @@ export const CrmModule: React.FC = () => {
       {/* Title */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-white tracking-tight">
+          <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
             {isSchool ? 'Admission Inquiries & Front Desk' : 'Lead CRM Pipeline'}
           </h2>
-          <p className="text-xs text-slate-400">
+          <p className="text-xs text-slate-500">
             {isSchool
               ? 'Track parent inquiries, school campus tours, and admission applications.'
               : 'Lead pipeline: New Inquiry → Demo Given → Follow Up → Enrolled.'}

@@ -628,13 +628,13 @@ export const ExamsModule: React.FC<ExamsModuleProps> = ({ defaultTab }) => {
                   <Award className="w-6 h-6" />
                 </div>
                 <div>
-                  <h1 className="text-xl font-bold text-white tracking-tight flex items-center gap-2">
+                  <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
                     {isSchool ? 'Examinations & Report Cards' : 'Test Series & Performance Ranking'}
-                    <span className="text-[11px] font-mono px-2.5 py-0.5 rounded-full bg-sky-500/10 border border-sky-500/20 text-sky-300">
+                    <span className="text-[11px] font-mono px-2.5 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700">
                       Doc 52 Canonical
                     </span>
                   </h1>
-                  <p className="text-xs text-slate-400 mt-0.5">
+                  <p className="text-xs text-slate-500 mt-0.5">
                     Deterministic result calculation, CBSE/GPA grade scale configuration, grace marks moderation & branded official report cards.
                   </p>
                 </div>

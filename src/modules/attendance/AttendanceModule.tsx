@@ -252,15 +252,15 @@ export const AttendanceModule: React.FC = () => {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <h2 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2">
-              <CalendarCheck className="w-6 h-6 text-sky-400" />
+            <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
+              <CalendarCheck className="w-6 h-6 text-emerald-600" />
               Attendance & Roll Call Suite
             </h2>
             <Badge variant="emerald" size="sm" dot>
               Live Session
             </Badge>
           </div>
-          <p className="text-xs text-slate-400">
+          <p className="text-xs sm:text-sm text-slate-500">
             Classroom roll call, session locking, audited corrections, staff attendance, QR gate scanner, and defaulter alerts.
           </p>
         </div>
@@ -271,7 +271,7 @@ export const AttendanceModule: React.FC = () => {
             type="date"
             value={selectedDate}
             onChange={(e) => setSelectedDate(e.target.value)}
-            className="p-2 bg-slate-950 border border-slate-700 rounded-xl text-xs text-white font-mono focus:border-sky-500"
+            className="p-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 font-medium shadow-2xs focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/10"
           />
         </div>
       </div>
@@ -293,13 +293,13 @@ export const AttendanceModule: React.FC = () => {
         <div className="space-y-4">
           
           {/* Action Bar */}
-          <div className="glass-panel p-4 rounded-2xl border border-slate-800 flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
+          <div className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
             <div className="flex items-center gap-3">
-              <label className="text-xs text-slate-400 font-semibold">Target {getLabel('group')}:</label>
+              <label className="text-xs text-slate-600 font-semibold">Target {getLabel('group')}:</label>
               <select
                 value={selectedGroupId}
                 onChange={(e) => setSelectedGroupId(e.target.value)}
-                className="p-2 bg-slate-950 border border-slate-700 rounded-xl text-xs text-white font-bold"
+                className="p-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 font-semibold shadow-2xs focus:border-emerald-500"
               >
                 {isSchool && classes.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                 {isCoaching && batches.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
@@ -310,8 +310,8 @@ export const AttendanceModule: React.FC = () => {
                 onClick={() => setIsSessionLocked(!isSessionLocked)}
                 className={`px-3 py-1.5 rounded-xl border text-xs font-semibold flex items-center gap-1.5 transition-all ${
                   isSessionLocked
-                    ? 'bg-rose-500/15 border-rose-500/40 text-rose-300'
-                    : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
+                    ? 'bg-rose-50 border-rose-200 text-rose-700'
+                    : 'bg-emerald-50 border-emerald-200 text-emerald-800'
                 }`}
               >
                 {isSessionLocked ? <Lock className="w-3.5 h-3.5" /> : <Unlock className="w-3.5 h-3.5" />}
@@ -326,7 +326,7 @@ export const AttendanceModule: React.FC = () => {
                 size="sm"
                 disabled={isSessionLocked}
                 onClick={() => handleMarkAll('PRESENT')}
-                leftIcon={<Check className="w-3.5 h-3.5 text-emerald-400" />}
+                leftIcon={<Check className="w-3.5 h-3.5 text-emerald-600" />}
               >
                 Mark All Present
               </Button>
@@ -335,7 +335,7 @@ export const AttendanceModule: React.FC = () => {
                 size="sm"
                 disabled={isSessionLocked}
                 onClick={() => handleMarkAll('ABSENT')}
-                leftIcon={<X className="w-3.5 h-3.5 text-rose-400" />}
+                leftIcon={<X className="w-3.5 h-3.5 text-rose-600" />}
               >
                 Mark All Absent
               </Button>
@@ -343,53 +343,53 @@ export const AttendanceModule: React.FC = () => {
           </div>
 
           {/* Roster Table */}
-          <div className="glass-panel rounded-2xl border border-slate-800 overflow-hidden">
+          <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs text-slate-300">
-                <thead className="bg-slate-950 text-slate-400 uppercase text-[10px] border-b border-slate-800 font-mono">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-50/90 text-slate-600 uppercase text-[10px] border-b border-slate-200 font-semibold tracking-wider">
                   <tr>
-                    <th className="p-3.5">{getLabel('student')}</th>
-                    <th className="p-3.5">{getLabel('admission')} No</th>
-                    <th className="p-3.5">Roll Call Status</th>
-                    <th className="p-3.5">Optional Remarks</th>
+                    <th className="px-4 py-3">{getLabel('student')}</th>
+                    <th className="px-4 py-3">{getLabel('admission')} No</th>
+                    <th className="px-4 py-3">Roll Call Status</th>
+                    <th className="px-4 py-3">Optional Remarks</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-800/60">
+                <tbody className="divide-y divide-slate-100">
                   {groupStudents.map((stu) => {
                     const status = getStudentStatus(stu.id);
 
                     return (
-                      <tr key={stu.id} className="hover:bg-slate-800/30 transition-colors">
-                        <td className="p-3.5 font-bold text-white flex items-center gap-3">
-                          <img src={stu.photoUrl} alt="" className="w-8 h-8 rounded-full object-cover border border-slate-700" />
+                      <tr key={stu.id} className="hover:bg-slate-50/60 transition-colors">
+                        <td className="px-4 py-3 font-medium text-slate-900 flex items-center gap-3">
+                          <img src={stu.photoUrl} alt="" className="w-8 h-8 rounded-full object-cover border border-slate-200" />
                           <div>
-                            <p>{stu.firstName} {stu.lastName}</p>
-                            <p className="text-[10px] text-slate-400 font-normal font-mono">{stu.parentPhone}</p>
+                            <p className="font-semibold text-slate-900">{stu.firstName} {stu.lastName}</p>
+                            <p className="text-[10px] text-slate-500 font-mono">{stu.parentPhone}</p>
                           </div>
                         </td>
 
-                        <td className="p-3.5 font-mono text-sky-400 font-semibold">{stu.admissionNo}</td>
+                        <td className="px-4 py-3 font-mono text-emerald-700 font-semibold">{stu.admissionNo}</td>
 
-                        <td className="p-3.5">
-                          <div className="flex items-center gap-1.5">
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-1.5 flex-wrap">
                             {(['PRESENT', 'ABSENT', 'LATE', 'HALF_DAY', 'EXCUSED'] as AttendanceStatus[]).map((st) => {
                               const isSelected = status === st;
                               const colors: Record<AttendanceStatus, string> = {
-                                PRESENT: 'bg-emerald-500 text-white',
-                                ABSENT: 'bg-rose-500 text-white',
-                                LATE: 'bg-amber-500 text-slate-950 font-bold',
-                                HALF_DAY: 'bg-indigo-500 text-white',
-                                EXCUSED: 'bg-purple-500 text-white',
+                                PRESENT: 'bg-emerald-600 text-white shadow-xs',
+                                ABSENT: 'bg-rose-600 text-white shadow-xs',
+                                LATE: 'bg-amber-500 text-slate-950 font-bold shadow-xs',
+                                HALF_DAY: 'bg-indigo-600 text-white shadow-xs',
+                                EXCUSED: 'bg-purple-600 text-white shadow-xs',
                               };
 
                               return (
                                 <button
                                   key={st}
                                   onClick={() => handleStatusChange(stu, st)}
-                                  className={`px-2 py-1 rounded-lg text-[10px] font-mono font-semibold transition-all ${
+                                  className={`px-2.5 py-1 rounded-lg text-[10px] font-mono font-semibold transition-all cursor-pointer ${
                                     isSelected
-                                      ? `${colors[st]} shadow-md`
-                                      : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
+                                      ? `${colors[st]} shadow-xs`
+                                      : 'bg-slate-100 text-slate-600 hover:text-slate-900 hover:bg-slate-200 border border-slate-200'
                                   }`}
                                 >
                                   {st}
@@ -399,13 +399,13 @@ export const AttendanceModule: React.FC = () => {
                           </div>
                         </td>
 
-                        <td className="p-3.5">
+                        <td className="px-4 py-3">
                           <input
                             type="text"
-                            placeholder="Add note (e.g. Doctor appointment)..."
+                            placeholder="Add note..."
                             value={remarksMap[stu.id] || ''}
                             onChange={(e) => setRemarksMap({ ...remarksMap, [stu.id]: e.target.value })}
-                            className="w-full max-w-xs p-1.5 bg-slate-950 border border-slate-800 rounded-lg text-[11px] text-slate-200 focus:outline-none focus:border-sky-500"
+                            className="w-full max-w-xs p-1.5 bg-slate-50 border border-slate-200 rounded-lg text-[11px] text-slate-800 focus:outline-none focus:border-emerald-500 focus:bg-white placeholder:text-slate-400"
                           />
                         </td>
                       </tr>
@@ -421,10 +421,10 @@ export const AttendanceModule: React.FC = () => {
       {/* TAB 2: STAFF ROLL CALL */}
       {activeTab === 'staff_rollcall' && (
         <div className="space-y-4">
-          <div className="glass-panel p-4 rounded-2xl border border-slate-800 flex items-center justify-between">
+          <div className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-xs flex items-center justify-between">
             <div>
-              <h4 className="font-bold text-white text-sm">Employee & Educator Daily Attendance</h4>
-              <p className="text-xs text-slate-400">Mark faculty and administrative staff presence for {selectedDate}.</p>
+              <h4 className="font-bold text-slate-900 text-sm">Employee & Educator Daily Attendance</h4>
+              <p className="text-xs text-slate-500">Mark faculty and administrative staff presence for {selectedDate}.</p>
             </div>
             <Button
               variant="outline"
@@ -434,7 +434,7 @@ export const AttendanceModule: React.FC = () => {
                 staffList.forEach((s) => (map[s.id] = 'PRESENT'));
                 setStaffAttendanceMap(map);
               }}
-              leftIcon={<Check className="w-3.5 h-3.5 text-emerald-400" />}
+              leftIcon={<Check className="w-3.5 h-3.5 text-emerald-600" />}
             >
               Mark All Staff Present
             </Button>
@@ -445,13 +445,13 @@ export const AttendanceModule: React.FC = () => {
               const status = staffAttendanceMap[st.id] || 'PRESENT';
 
               return (
-                <div key={st.id} className="glass-panel p-4 rounded-2xl border border-slate-800 space-y-3">
+                <div key={st.id} className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-xs space-y-3">
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3">
-                      <img src={st.avatarUrl} alt="" className="w-9 h-9 rounded-full object-cover border border-slate-700" />
+                      <img src={st.avatarUrl} alt="" className="w-9 h-9 rounded-full object-cover border border-slate-200" />
                       <div>
-                        <h5 className="font-bold text-white text-xs">{st.name}</h5>
-                        <p className="text-[10px] text-sky-400 font-mono">{st.designation}</p>
+                        <h5 className="font-bold text-slate-900 text-xs">{st.name}</h5>
+                        <p className="text-[10px] text-emerald-700 font-mono font-medium">{st.designation}</p>
                       </div>
                     </div>
                     <Badge variant={status === 'PRESENT' ? 'emerald' : status === 'ON_LEAVE' ? 'purple' : 'rose'} size="sm">
@@ -459,15 +459,15 @@ export const AttendanceModule: React.FC = () => {
                     </Badge>
                   </div>
 
-                  <div className="grid grid-cols-4 gap-1 pt-2 border-t border-slate-800">
+                  <div className="grid grid-cols-4 gap-1 pt-2 border-t border-slate-100">
                     {(['PRESENT', 'ABSENT', 'HALF_DAY', 'ON_LEAVE'] as StaffAttendanceStatus[]).map((s) => (
                       <button
                         key={s}
                         onClick={() => setStaffAttendanceMap({ ...staffAttendanceMap, [st.id]: s })}
                         className={`py-1 rounded text-[9px] font-mono font-semibold transition-all ${
                           status === s
-                            ? 'bg-sky-500 text-white shadow'
-                            : 'bg-slate-950 text-slate-400 hover:text-white border border-slate-800'
+                            ? 'bg-emerald-600 text-white shadow-xs'
+                            : 'bg-slate-100 text-slate-600 hover:text-slate-900 hover:bg-slate-200 border border-slate-200'
                         }`}
                       >
                         {s.replace('_', ' ')}
@@ -483,19 +483,19 @@ export const AttendanceModule: React.FC = () => {
 
       {/* TAB 3: HIGH SPEED QR KIOSK */}
       {activeTab === 'qr_kiosk' && (
-        <div className="glass-panel p-6 rounded-2xl border border-slate-800 space-y-6">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-4 border-b border-slate-800">
+        <div className="bg-white p-6 rounded-2xl border border-slate-200/90 shadow-xs space-y-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-4 border-b border-slate-100">
             <div>
-              <h3 className="font-bold text-white text-base flex items-center gap-2">
-                <QrCode className="w-5 h-5 text-sky-400" />
+              <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
+                <QrCode className="w-5 h-5 text-emerald-600" />
                 Automated Gate QR Kiosk Simulator
               </h3>
-              <p className="text-xs text-slate-400 mt-0.5">
+              <p className="text-xs text-slate-500 mt-0.5">
                 Simulate instant barcode/QR badge scans with automated WhatsApp notifications to parents.
               </p>
             </div>
 
-            <label className="flex items-center gap-2 text-xs text-slate-300 cursor-pointer bg-slate-950 px-3 py-1.5 rounded-xl border border-slate-800">
+            <label className="flex items-center gap-2 text-xs text-slate-700 cursor-pointer bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200">
               <input
                 type="checkbox"
                 checked={autoNotifyWhatsApp}

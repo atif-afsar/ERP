@@ -361,7 +361,6 @@ const MainRouter: React.FC = () => {
     return (
       <AppShell
         activeNav={activeModule}
-        subTitle={routeState.subParam ? `Item ID: ${routeState.subParam}` : undefined}
         onNavigate={(nav) => navigateTo(nav)}
         onOpenAi={() => setIsAiModalOpen(true)}
       >

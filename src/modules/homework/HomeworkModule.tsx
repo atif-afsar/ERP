@@ -81,14 +81,14 @@ export const HomeworkModule: React.FC = () => {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <h2 className="text-2xl font-bold text-white tracking-tight">
+            <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
               {getLabel('homework')} & Assignments
             </h2>
             <Badge variant="blue" size="sm">
               {isSchool ? 'CBSE Standard' : 'IIT-JEE / NEET DPP'}
             </Badge>
           </div>
-          <p className="text-xs text-slate-400">
+          <p className="text-xs text-slate-500">
             {isSchool
               ? 'Assign daily homework, chapter worksheets, and monitor class submission rates.'
               : 'Distribute Daily Practice Problem (DPP) sheets, numerical sets, and track student submissions.'}

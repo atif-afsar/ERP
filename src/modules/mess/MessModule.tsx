@@ -245,13 +245,13 @@ export const MessModule: React.FC = () => {
                 <UtensilsCrossed className="w-6 h-6" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-white tracking-tight flex items-center gap-2">
+                <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
                   Hostel Mess & Dining Management
-                  <span className="text-[11px] font-mono px-2.5 py-0.5 rounded-full bg-orange-500/10 border border-orange-500/20 text-orange-300">
+                  <span className="text-[11px] font-mono px-2.5 py-0.5 rounded-full bg-amber-50 border border-amber-200 text-amber-700">
                     Doc 60 Canonical
                   </span>
                 </h1>
-                <p className="text-xs text-slate-400 mt-0.5">
+                <p className="text-xs text-slate-500 mt-0.5">
                   Dining halls, 7-day rotating weekly menus, subscription meal plans (Veg/Non-Veg/Jain), and meal token check-ins.
                 </p>
               </div>

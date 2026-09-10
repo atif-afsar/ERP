@@ -132,10 +132,10 @@ export const SuperAdminModule: React.FC = () => {
       {/* Title */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-white tracking-tight">
+          <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
             Multi-Tenant SaaS Management
           </h2>
-          <p className="text-xs text-slate-400">
+          <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
             Control onboarding, tenant lifecycle (active/suspended), and subscription provisioning.
           </p>
         </div>
@@ -150,67 +150,69 @@ export const SuperAdminModule: React.FC = () => {
       </div>
 
       {/* Tenants Table */}
-      <div className="glass-panel rounded-2xl border border-slate-800 overflow-hidden shadow-xl">
-        <table className="w-full text-left text-xs">
-          <thead className="bg-slate-950/60 border-b border-slate-800 text-slate-400 uppercase font-semibold">
-            <tr>
-              <th className="px-6 py-4">Institution Name</th>
-              <th className="px-6 py-4">Tenant Type</th>
-              <th className="px-6 py-4">Plan & Subscription</th>
-              <th className="px-6 py-4">Status</th>
-              <th className="px-6 py-4 text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-800/60">
-            {tenants.map((t) => (
-              <tr key={t.id} className="hover:bg-slate-850/50 transition-colors">
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-3">
-                    <img src={t.logo} alt="" className="w-9 h-9 rounded-xl object-cover" />
-                    <div>
-                      <p className="font-bold text-white">{t.name}</p>
-                      <p className="text-[11px] text-slate-400 font-mono">Code: {t.code} • ID: {t.id}</p>
-                    </div>
-                  </div>
-                </td>
-
-                <td className="px-6 py-4">
-                  <Badge variant={t.tenantType === 'SCHOOL' ? 'blue' : 'purple'} size="sm">
-                    {t.tenantType}
-                  </Badge>
-                </td>
-
-                <td className="px-6 py-4">
-                  <p className="font-semibold text-white">{t.planName}</p>
-                  <p className="text-[11px] text-slate-400">Renews: {t.subscriptionRenewalDate}</p>
-                </td>
-
-                <td className="px-6 py-4">
-                  <Badge variant={t.status === 'active' ? 'emerald' : 'amber'} size="sm" dot>
-                    {t.status.toUpperCase()}
-                  </Badge>
-                </td>
-
-                <td className="px-6 py-4 text-right space-x-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => switchTenant(t.id)}
-                  >
-                    Enter Tenant
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant={t.status === 'active' ? 'danger' : 'success'}
-                    onClick={() => handleToggleTenantStatus(t)}
-                  >
-                    {t.status === 'active' ? 'Suspend' : 'Activate'}
-                  </Button>
-                </td>
+      <div className="bg-white rounded-2xl border border-slate-200/90 overflow-hidden shadow-xs">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs">
+            <thead className="bg-slate-50/90 border-b border-slate-200 text-slate-600 uppercase font-semibold text-[10px] tracking-wider">
+              <tr>
+                <th className="px-6 py-3.5">Institution Name</th>
+                <th className="px-6 py-3.5">Tenant Type</th>
+                <th className="px-6 py-3.5">Plan & Subscription</th>
+                <th className="px-6 py-3.5">Status</th>
+                <th className="px-6 py-3.5 text-right">Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {tenants.map((t) => (
+                <tr key={t.id} className="hover:bg-slate-50/60 transition-colors">
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-3">
+                      <img src={t.logo} alt="" className="w-10 h-10 rounded-xl object-cover border border-slate-200" />
+                      <div>
+                        <p className="font-bold text-slate-900 text-sm">{t.name}</p>
+                        <p className="text-[11px] text-slate-500 font-mono">Code: {t.code} • ID: {t.id}</p>
+                      </div>
+                    </div>
+                  </td>
+
+                  <td className="px-6 py-4">
+                    <Badge variant={t.tenantType === 'SCHOOL' ? 'blue' : 'purple'} size="sm">
+                      {t.tenantType}
+                    </Badge>
+                  </td>
+
+                  <td className="px-6 py-4">
+                    <p className="font-semibold text-slate-900 text-xs">{t.planName}</p>
+                    <p className="text-[11px] text-slate-500">Renews: {t.subscriptionRenewalDate}</p>
+                  </td>
+
+                  <td className="px-6 py-4">
+                    <Badge variant={t.status === 'active' ? 'emerald' : 'amber'} size="sm" dot>
+                      {t.status.toUpperCase()}
+                    </Badge>
+                  </td>
+
+                  <td className="px-6 py-4 text-right space-x-2 whitespace-nowrap">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => switchTenant(t.id)}
+                    >
+                      Enter Tenant
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant={t.status === 'active' ? 'danger' : 'success'}
+                      onClick={() => handleToggleTenantStatus(t)}
+                    >
+                      {t.status === 'active' ? 'Suspend' : 'Activate'}
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* Modal: Onboard Tenant */}

@@ -325,15 +325,15 @@ export const StudentsModule: React.FC = () => {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <h2 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2">
-              <Users className="w-6 h-6 text-sky-400" />
+            <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
+              <Users className="w-6 h-6 text-emerald-600" />
               {getLabel('studentPlural')} & Family Management
             </h2>
-            <span className="px-2 py-0.5 rounded-full bg-sky-500/10 border border-sky-500/20 text-[10px] font-mono text-sky-400">
+            <span className="px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-[10px] font-mono text-emerald-700">
               Canonical Workspace v1.0
             </span>
           </div>
-          <p className="text-xs text-slate-400 mt-0.5">
+          <p className="text-xs text-slate-500 mt-0.5">
             Full student lifecycle, multi-guardian family relationships, historical academic snapshots, and document vault.
           </p>
         </div>
@@ -382,7 +382,7 @@ export const StudentsModule: React.FC = () => {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder={`Search by name, ${getLabel('admission').toLowerCase()} no, parent, or phone...`}
-                className="w-full pl-10 pr-4 py-2 bg-slate-950/70 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-sky-500"
+                className="w-full pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 shadow-2xs"
               />
             </div>
 
@@ -390,7 +390,7 @@ export const StudentsModule: React.FC = () => {
               <select
                 value={classFilter}
                 onChange={(e) => setClassFilter(e.target.value)}
-                className="px-3 py-2 bg-slate-950/70 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-sky-500"
+                className="px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-700 focus:outline-none focus:border-emerald-500 shadow-2xs"
               >
                 <option value="ALL">All {getLabel('groupPlural')}</option>
                 {isSchool && classes.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
@@ -400,7 +400,7 @@ export const StudentsModule: React.FC = () => {
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="px-3 py-2 bg-slate-950/70 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-sky-500"
+                className="px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-700 focus:outline-none focus:border-emerald-500 shadow-2xs"
               >
                 <option value="ALL">All Statuses</option>
                 <option value="ACTIVE">Active</option>
@@ -411,10 +411,10 @@ export const StudentsModule: React.FC = () => {
           </div>
 
           {/* Students Table */}
-          <div className="glass-panel rounded-2xl border border-slate-800 overflow-hidden">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs text-slate-300">
-                <thead className="bg-slate-950/90 text-slate-400 uppercase text-[10px] border-b border-slate-800 font-mono">
+              <table className="w-full text-left text-xs text-slate-600">
+                <thead className="bg-slate-50 text-slate-500 uppercase text-[10px] border-b border-slate-200 font-mono">
                   <tr>
                     <th className="p-3.5">{getLabel('student')} Name</th>
                     <th className="p-3.5">{getLabel('admission')} No</th>
@@ -424,37 +424,37 @@ export const StudentsModule: React.FC = () => {
                     <th className="p-3.5 text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-800/60">
+                <tbody className="divide-y divide-slate-100">
                   {filteredStudents.map((s) => {
                     const studentClass = classes.find((c) => c.id === s.classId);
                     const studentBatch = batches.find((b) => s.batchIds?.includes(b.id));
                     const groupLabel = isSchool ? studentClass?.name : studentBatch?.name;
 
                     return (
-                      <tr key={s.id} className="hover:bg-slate-800/30 transition-colors">
+                      <tr key={s.id} className="hover:bg-slate-50/80 transition-colors">
                         <td className="p-3.5">
                           <div className="flex items-center gap-3">
                             <img
                               src={s.photoUrl}
                               alt={s.firstName}
-                              className="w-8 h-8 rounded-full object-cover border border-slate-700"
+                              className="w-8 h-8 rounded-full object-cover border border-slate-200"
                             />
                             <div>
-                              <p className="font-bold text-white text-xs">
+                              <p className="font-bold text-slate-900 text-xs">
                                 {s.firstName} {s.lastName}
                               </p>
-                              <p className="text-[10px] text-slate-400">{s.gender} • DOB: {s.dob}</p>
+                              <p className="text-[10px] text-slate-500">{s.gender} • DOB: {s.dob}</p>
                             </div>
                           </div>
                         </td>
 
-                        <td className="p-3.5 font-mono text-sky-400 font-semibold">{s.admissionNo}</td>
-                        <td className="p-3.5 text-slate-200">{groupLabel || 'Unassigned'}</td>
+                        <td className="p-3.5 font-mono text-emerald-700 font-semibold">{s.admissionNo}</td>
+                        <td className="p-3.5 text-slate-700 font-medium">{groupLabel || 'Unassigned'}</td>
 
                         <td className="p-3.5">
-                          <p className="font-semibold text-white">{s.parentName}</p>
-                          <p className="text-[10px] text-slate-400 flex items-center gap-1 font-mono">
-                            <Phone className="w-3 h-3 text-slate-500" /> {s.parentPhone}
+                          <p className="font-semibold text-slate-900">{s.parentName}</p>
+                          <p className="text-[10px] text-slate-500 flex items-center gap-1 font-mono">
+                            <Phone className="w-3 h-3 text-slate-400" /> {s.parentPhone}
                           </p>
                         </td>
 
@@ -479,7 +479,7 @@ export const StudentsModule: React.FC = () => {
                             </Button>
                             <button
                               onClick={() => handleDeleteStudent(s.id)}
-                              className="p-1.5 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
+                              className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
@@ -506,7 +506,7 @@ export const StudentsModule: React.FC = () => {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search guardians by name, phone, or email..."
-                className="w-full pl-10 pr-4 py-2 bg-slate-950/70 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-sky-500"
+                className="w-full pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 shadow-2xs"
               />
             </div>
           </div>
@@ -517,39 +517,39 @@ export const StudentsModule: React.FC = () => {
               const linkedStudentList = students.filter((s) => linkedJunctions.some((j) => j.studentId === s.id));
 
               return (
-                <div key={g.id} className="glass-panel p-5 rounded-2xl border border-slate-800 space-y-4">
+                <div key={g.id} className="bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs space-y-4">
                   <div className="flex items-start justify-between">
                     <div>
-                      <h4 className="font-bold text-white text-sm">{g.name}</h4>
-                      {g.occupation && <p className="text-[11px] text-sky-400 font-medium">{g.occupation}</p>}
+                      <h4 className="font-bold text-slate-900 text-sm">{g.name}</h4>
+                      {g.occupation && <p className="text-[11px] text-emerald-700 font-medium">{g.occupation}</p>}
                     </div>
                     <Badge variant="blue" size="sm">
                       {linkedStudentList.length} {linkedStudentList.length === 1 ? 'Child' : 'Children'}
                     </Badge>
                   </div>
 
-                  <div className="space-y-1.5 font-mono text-xs text-slate-300">
+                  <div className="space-y-1.5 font-mono text-xs text-slate-600">
                     <div className="flex items-center gap-2">
-                      <Phone className="w-3.5 h-3.5 text-slate-500" />
+                      <Phone className="w-3.5 h-3.5 text-slate-400" />
                       <span>{g.phone}</span>
                     </div>
                     {g.email && (
                       <div className="flex items-center gap-2">
-                        <Mail className="w-3.5 h-3.5 text-slate-500" />
+                        <Mail className="w-3.5 h-3.5 text-slate-400" />
                         <span className="truncate">{g.email}</span>
                       </div>
                     )}
                     {g.address && (
-                      <div className="flex items-center gap-2 font-sans text-[11px] text-slate-400">
-                        <MapPin className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+                      <div className="flex items-center gap-2 font-sans text-[11px] text-slate-500">
+                        <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                         <span className="truncate">{g.address}</span>
                       </div>
                     )}
                   </div>
 
                   {/* Linked Siblings / Students */}
-                  <div className="pt-3 border-t border-slate-800 space-y-2">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                  <div className="pt-3 border-t border-slate-100 space-y-2">
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
                       Linked Dependents & Siblings
                     </span>
                     <div className="space-y-1.5">
@@ -563,15 +563,15 @@ export const StudentsModule: React.FC = () => {
                               setActiveSubTab('students');
                               setProfileTab('overview');
                             }}
-                            className="p-2 bg-slate-950 rounded-xl border border-slate-800 hover:border-sky-500/40 cursor-pointer transition-all flex items-center justify-between"
+                            className="p-2 bg-slate-50 rounded-xl border border-slate-200 hover:border-emerald-500/40 cursor-pointer transition-all flex items-center justify-between"
                           >
                             <div className="flex items-center gap-2">
-                              <img src={stu.photoUrl} alt={stu.firstName} className="w-6 h-6 rounded-full object-cover" />
-                              <span className="text-xs font-semibold text-white">
+                              <img src={stu.photoUrl} alt={stu.firstName} className="w-6 h-6 rounded-full object-cover border border-slate-200" />
+                              <span className="text-xs font-semibold text-slate-900">
                                 {stu.firstName} {stu.lastName}
                               </span>
                             </div>
-                            <span className="text-[10px] font-mono text-sky-400">{junc?.relationshipType || 'Child'}</span>
+                            <span className="text-[10px] font-mono text-emerald-700">{junc?.relationshipType || 'Child'}</span>
                           </div>
                         );
                       })}
@@ -584,14 +584,14 @@ export const StudentsModule: React.FC = () => {
                       href={`https://wa.me/${g.phone.replace(/[^0-9]/g, '')}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex-1 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 rounded-xl text-center text-xs font-semibold border border-emerald-500/20 transition-colors flex items-center justify-center gap-1"
+                      className="flex-1 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-xl text-center text-xs font-semibold border border-emerald-200 transition-colors flex items-center justify-center gap-1"
                     >
                       <MessageSquare className="w-3.5 h-3.5" />
                       WhatsApp
                     </a>
                     <a
                       href={`tel:${g.phone}`}
-                      className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-slate-300 rounded-xl text-xs font-semibold border border-slate-800 transition-colors flex items-center justify-center gap-1"
+                      className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold border border-slate-200 transition-colors flex items-center justify-center gap-1"
                     >
                       <Phone className="w-3.5 h-3.5" />
                       Call
@@ -606,22 +606,22 @@ export const StudentsModule: React.FC = () => {
 
       {/* SUB-TAB 3: ACADEMIC PLACEMENT & ENROLLMENTS */}
       {activeSubTab === 'enrollments' && (
-        <div className="glass-panel p-6 rounded-2xl border border-slate-800 space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-2xs space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
             <div>
-              <h3 className="font-bold text-white text-base flex items-center gap-2">
-                <GraduationCap className="w-5 h-5 text-sky-400" />
+              <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
+                <GraduationCap className="w-5 h-5 text-emerald-600" />
                 Historical Academic Placements
               </h3>
-              <p className="text-xs text-slate-400 mt-0.5">
+              <p className="text-xs text-slate-500 mt-0.5">
                 Year-by-year historical snapshot ledger preserving student progress across grades and batches.
               </p>
             </div>
           </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs text-slate-300">
-              <thead className="bg-slate-950 text-slate-400 uppercase text-[10px] border-b border-slate-800 font-mono">
+            <table className="w-full text-left text-xs text-slate-600">
+              <thead className="bg-slate-50 text-slate-500 uppercase text-[10px] border-b border-slate-200 font-mono">
                 <tr>
                   <th className="p-3">Student</th>
                   <th className="p-3">Academic Session</th>
@@ -631,21 +631,21 @@ export const StudentsModule: React.FC = () => {
                   <th className="p-3">Placement Status</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800/60 font-mono">
+              <tbody className="divide-y divide-slate-100 font-mono">
                 {enrollments.map((enr) => {
                   const stu = students.find((s) => s.id === enr.studentId);
                   const cls = classes.find((c) => c.id === enr.classId);
                   const bat = batches.find((b) => b.id === enr.batchId);
 
                   return (
-                    <tr key={enr.id} className="hover:bg-slate-800/30">
-                      <td className="p-3 font-sans font-bold text-white">
+                    <tr key={enr.id} className="hover:bg-slate-50">
+                      <td className="p-3 font-sans font-bold text-slate-900">
                         {stu ? `${stu.firstName} ${stu.lastName}` : enr.studentId}
                       </td>
-                      <td className="p-3 text-sky-400">{enr.academicYearId}</td>
-                      <td className="p-3 text-slate-200">{cls?.name || bat?.name || 'Class 10-A'}</td>
-                      <td className="p-3 text-slate-400">{enr.startDate}</td>
-                      <td className="p-3 text-slate-400">{enr.endDate || 'Current'}</td>
+                      <td className="p-3 text-emerald-700 font-semibold">{enr.academicYearId}</td>
+                      <td className="p-3 text-slate-700">{cls?.name || bat?.name || 'Class 10-A'}</td>
+                      <td className="p-3 text-slate-500">{enr.startDate}</td>
+                      <td className="p-3 text-slate-500">{enr.endDate || 'Current'}</td>
                       <td className="p-3">
                         <Badge variant={enr.status === 'ACTIVE' ? 'emerald' : 'blue'} size="sm">
                           {enr.status}
@@ -684,32 +684,32 @@ export const StudentsModule: React.FC = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
             <div className="space-y-1">
-              <label className="text-slate-400 font-semibold">First Name *</label>
+              <label className="text-slate-600 font-semibold">First Name *</label>
               <input
                 type="text"
                 required
                 value={studentForm.firstName}
                 onChange={(e) => setStudentForm({ ...studentForm, firstName: e.target.value })}
-                className="w-full p-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white focus:border-sky-500"
+                className="w-full p-2.5 bg-white border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 shadow-2xs"
               />
             </div>
 
             <div className="space-y-1">
-              <label className="text-slate-400 font-semibold">Last Name</label>
+              <label className="text-slate-600 font-semibold">Last Name</label>
               <input
                 type="text"
                 value={studentForm.lastName}
                 onChange={(e) => setStudentForm({ ...studentForm, lastName: e.target.value })}
-                className="w-full p-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white focus:border-sky-500"
+                className="w-full p-2.5 bg-white border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 shadow-2xs"
               />
             </div>
 
             <div className="space-y-1">
-              <label className="text-slate-400 font-semibold">Gender</label>
+              <label className="text-slate-600 font-semibold">Gender</label>
               <select
                 value={studentForm.gender}
                 onChange={(e) => setStudentForm({ ...studentForm, gender: e.target.value as any })}
-                className="w-full p-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white"
+                className="w-full p-2.5 bg-white border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:border-emerald-500 shadow-2xs"
               >
                 <option value="MALE">Male</option>
                 <option value="FEMALE">Female</option>
@@ -717,18 +717,18 @@ export const StudentsModule: React.FC = () => {
             </div>
 
             <div className="space-y-1">
-              <label className="text-slate-400 font-semibold">Date of Birth</label>
+              <label className="text-slate-600 font-semibold">Date of Birth</label>
               <input
                 type="date"
                 value={studentForm.dob}
                 onChange={(e) => setStudentForm({ ...studentForm, dob: e.target.value })}
-                className="w-full p-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white"
+                className="w-full p-2.5 bg-white border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:border-emerald-500 shadow-2xs"
               />
             </div>
 
             {/* Academic Placement */}
             <div className="space-y-1 md:col-span-2">
-              <label className="text-slate-400 font-semibold">{getLabel('group')} Placement</label>
+              <label className="text-slate-600 font-semibold">{getLabel('group')} Placement</label>
               <select
                 value={isSchool ? studentForm.classId : studentForm.batchIds?.[0]}
                 onChange={(e) =>
@@ -736,7 +736,7 @@ export const StudentsModule: React.FC = () => {
                     ? setStudentForm({ ...studentForm, classId: e.target.value })
                     : setStudentForm({ ...studentForm, batchIds: [e.target.value] })
                 }
-                className="w-full p-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white"
+                className="w-full p-2.5 bg-white border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:border-emerald-500 shadow-2xs"
               >
                 {isSchool && classes.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                 {isCoaching && batches.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
@@ -745,29 +745,29 @@ export const StudentsModule: React.FC = () => {
 
             {/* Guardian Info */}
             <div className="space-y-1">
-              <label className="text-slate-400 font-semibold">Primary Guardian Name *</label>
+              <label className="text-slate-600 font-semibold">Primary Guardian Name *</label>
               <input
                 type="text"
                 required
                 value={studentForm.parentName}
                 onChange={(e) => setStudentForm({ ...studentForm, parentName: e.target.value })}
-                className="w-full p-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white"
+                className="w-full p-2.5 bg-white border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 shadow-2xs"
               />
             </div>
 
             <div className="space-y-1">
-              <label className="text-slate-400 font-semibold">Guardian Phone Number *</label>
+              <label className="text-slate-600 font-semibold">Guardian Phone Number *</label>
               <input
                 type="tel"
                 required
                 value={studentForm.parentPhone}
                 onChange={(e) => setStudentForm({ ...studentForm, parentPhone: e.target.value })}
-                className="w-full p-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white font-mono"
+                className="w-full p-2.5 bg-white border border-slate-200 rounded-xl text-slate-900 font-mono focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 shadow-2xs"
               />
             </div>
           </div>
 
-          <div className="flex justify-end gap-2 pt-3 border-t border-slate-800">
+          <div className="flex justify-end gap-2 pt-3 border-t border-slate-200">
             <Button variant="outline" type="button" onClick={() => setIsAddStudentModalOpen(false)}>
               Cancel
             </Button>
@@ -780,28 +780,28 @@ export const StudentsModule: React.FC = () => {
 
       {/* STUDENT WORKSPACE DETAIL DRAWER (8-TAB COMPLETE CONSOLE) */}
       {selectedStudent && (
-        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex justify-end animate-fade-in">
-          <div className="w-full max-w-4xl bg-slate-900 border-l border-slate-800 h-full flex flex-col shadow-2xl overflow-hidden animate-slide-left">
+        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex justify-end animate-fade-in">
+          <div className="w-full max-w-4xl bg-white border-l border-slate-200 h-full flex flex-col shadow-2xl overflow-hidden animate-slide-left">
             
             {/* Header */}
-            <div className="p-6 bg-slate-950 border-b border-slate-800 flex items-start justify-between gap-4">
+            <div className="p-6 bg-slate-50 border-b border-slate-200 flex items-start justify-between gap-4">
               <div className="flex items-center gap-4">
                 <img
                   src={selectedStudent.photoUrl}
                   alt={selectedStudent.firstName}
-                  className="w-16 h-16 rounded-2xl object-cover border-2 border-sky-500/30 shadow-lg"
+                  className="w-16 h-16 rounded-2xl object-cover border-2 border-emerald-600/30 shadow-md"
                 />
                 <div>
                   <div className="flex items-center gap-2">
-                    <h3 className="text-xl font-bold text-white">
+                    <h3 className="text-xl font-bold text-slate-900">
                       {selectedStudent.firstName} {selectedStudent.lastName}
                     </h3>
                     <Badge variant={selectedStudent.status === 'ACTIVE' ? 'emerald' : 'rose'} size="sm">
                       {selectedStudent.status}
                     </Badge>
                   </div>
-                  <p className="text-xs font-mono text-sky-400 mt-0.5">{selectedStudent.admissionNo}</p>
-                  <p className="text-xs text-slate-400 mt-0.5">
+                  <p className="text-xs font-mono text-emerald-700 font-semibold mt-0.5">{selectedStudent.admissionNo}</p>
+                  <p className="text-xs text-slate-500 mt-0.5">
                     {isSchool
                       ? classes.find((c) => c.id === selectedStudent.classId)?.name
                       : batches.find((b) => selectedStudent.batchIds?.includes(b.id))?.name}{' '}
@@ -812,14 +812,14 @@ export const StudentsModule: React.FC = () => {
 
               <button
                 onClick={() => setSelectedStudent(null)}
-                className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800"
+                className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
               >
                 ✕
               </button>
             </div>
 
             {/* Workspace Navigation Tabs */}
-            <div className="px-6 bg-slate-950/50 border-b border-slate-800">
+            <div className="px-6 py-2 bg-white border-b border-slate-200">
               <Tabs
                 tabs={[
                   { id: 'overview', label: 'Overview' },
@@ -843,27 +843,27 @@ export const StudentsModule: React.FC = () => {
               {profileTab === 'overview' && (
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                    <div className="p-3.5 bg-slate-950 rounded-2xl border border-slate-800">
-                      <p className="text-[10px] text-slate-400 uppercase font-mono">Attendance Rate</p>
-                      <p className="text-lg font-bold text-emerald-400 mt-1">94.2%</p>
+                    <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200">
+                      <p className="text-[10px] text-slate-500 uppercase font-mono">Attendance Rate</p>
+                      <p className="text-lg font-bold text-emerald-600 mt-1">94.2%</p>
                       <span className="text-[10px] text-slate-500 font-mono">132 / 140 days</span>
                     </div>
 
-                    <div className="p-3.5 bg-slate-950 rounded-2xl border border-slate-800">
-                      <p className="text-[10px] text-slate-400 uppercase font-mono">Fee Dues</p>
-                      <p className="text-lg font-bold text-amber-400 mt-1">₹4,500</p>
+                    <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200">
+                      <p className="text-[10px] text-slate-500 uppercase font-mono">Fee Dues</p>
+                      <p className="text-lg font-bold text-amber-600 mt-1">₹4,500</p>
                       <span className="text-[10px] text-slate-500 font-mono">Next: 15 Oct</span>
                     </div>
 
-                    <div className="p-3.5 bg-slate-950 rounded-2xl border border-slate-800">
-                      <p className="text-[10px] text-slate-400 uppercase font-mono">Latest Exam %</p>
-                      <p className="text-lg font-bold text-purple-400 mt-1">88.5%</p>
+                    <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200">
+                      <p className="text-[10px] text-slate-500 uppercase font-mono">Latest Exam %</p>
+                      <p className="text-lg font-bold text-purple-600 mt-1">88.5%</p>
                       <span className="text-[10px] text-slate-500 font-mono">Rank #3 in Class</span>
                     </div>
 
-                    <div className="p-3.5 bg-slate-950 rounded-2xl border border-slate-800">
-                      <p className="text-[10px] text-slate-400 uppercase font-mono">Documents</p>
-                      <p className="text-lg font-bold text-sky-400 mt-1">
+                    <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200">
+                      <p className="text-[10px] text-slate-500 uppercase font-mono">Documents</p>
+                      <p className="text-lg font-bold text-emerald-700 mt-1">
                         {documents.filter((d) => d.entityId === selectedStudent.id).length} Verified
                       </p>
                       <span className="text-[10px] text-slate-500 font-mono">TC & Aadhaar on file</span>
@@ -871,19 +871,19 @@ export const StudentsModule: React.FC = () => {
                   </div>
 
                   {/* Primary Guardian Card */}
-                  <div className="p-4 bg-slate-950 rounded-2xl border border-slate-800 space-y-2">
+                  <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
-                        <HeartHandshake className="w-4 h-4 text-rose-400" />
+                      <span className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+                        <HeartHandshake className="w-4 h-4 text-rose-500" />
                         Primary Guardian Contact
                       </span>
                       <Badge variant="blue" size="sm">Primary Emergency Contact</Badge>
                     </div>
-                    <div className="grid grid-cols-2 gap-2 text-xs text-slate-300">
-                      <div>Name: <span className="font-semibold text-white">{selectedStudent.parentName}</span></div>
-                      <div>Phone: <span className="font-mono text-sky-400">{selectedStudent.parentPhone}</span></div>
-                      <div>Relationship: <span className="text-slate-200">{selectedStudent.parentRelationship}</span></div>
-                      <div>Address: <span className="text-slate-200">{selectedStudent.address}</span></div>
+                    <div className="grid grid-cols-2 gap-2 text-xs text-slate-600">
+                      <div>Name: <span className="font-semibold text-slate-900">{selectedStudent.parentName}</span></div>
+                      <div>Phone: <span className="font-mono text-emerald-700 font-semibold">{selectedStudent.parentPhone}</span></div>
+                      <div>Relationship: <span className="text-slate-800 font-medium">{selectedStudent.parentRelationship}</span></div>
+                      <div>Address: <span className="text-slate-800 font-medium">{selectedStudent.address}</span></div>
                     </div>
                   </div>
                 </div>
@@ -892,29 +892,29 @@ export const StudentsModule: React.FC = () => {
               {/* TAB 2: ACADEMIC & PLACEMENT */}
               {profileTab === 'academic' && (
                 <div className="space-y-4">
-                  <div className="p-4 bg-slate-950 rounded-2xl border border-slate-800 space-y-3">
-                    <h4 className="font-bold text-white text-xs uppercase tracking-wider">
+                  <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
+                    <h4 className="font-bold text-slate-900 text-xs uppercase tracking-wider">
                       Current Placement Snapshot ({currentTenant.academicYear})
                     </h4>
                     <div className="grid grid-cols-2 gap-2 text-xs">
-                      <div className="text-slate-400">Class / Batch: <span className="text-white font-bold">{isSchool ? classes.find((c) => c.id === selectedStudent.classId)?.name : batches.find((b) => selectedStudent.batchIds?.includes(b.id))?.name}</span></div>
-                      <div className="text-slate-400">Academic Year: <span className="text-sky-400 font-mono">{currentTenant.academicYear}</span></div>
-                      <div className="text-slate-400">Enrolled On: <span className="text-slate-200 font-mono">{selectedStudent.enrollmentDate}</span></div>
+                      <div className="text-slate-500">Class / Batch: <span className="text-slate-900 font-bold">{isSchool ? classes.find((c) => c.id === selectedStudent.classId)?.name : batches.find((b) => selectedStudent.batchIds?.includes(b.id))?.name}</span></div>
+                      <div className="text-slate-500">Academic Year: <span className="text-emerald-700 font-mono font-semibold">{currentTenant.academicYear}</span></div>
+                      <div className="text-slate-500">Enrolled On: <span className="text-slate-800 font-mono">{selectedStudent.enrollmentDate}</span></div>
                     </div>
                   </div>
 
-                  <div className="p-4 bg-slate-950 rounded-2xl border border-slate-800 space-y-3">
-                    <h4 className="font-bold text-white text-xs uppercase tracking-wider">
+                  <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
+                    <h4 className="font-bold text-slate-900 text-xs uppercase tracking-wider">
                       Historical Placements
                     </h4>
                     <div className="space-y-2">
                       {enrollments
                         .filter((e) => e.studentId === selectedStudent.id)
                         .map((enr) => (
-                          <div key={enr.id} className="p-3 bg-slate-900 rounded-xl border border-slate-800 flex items-center justify-between text-xs">
+                          <div key={enr.id} className="p-3 bg-white rounded-xl border border-slate-200 shadow-2xs flex items-center justify-between text-xs">
                             <div>
-                              <p className="font-bold text-white">{enr.academicYearId} Placement</p>
-                              <p className="text-[10px] text-slate-400 font-mono">Started: {enr.startDate} • Status: {enr.status}</p>
+                              <p className="font-bold text-slate-900">{enr.academicYearId} Placement</p>
+                              <p className="text-[10px] text-slate-500 font-mono">Started: {enr.startDate} • Status: {enr.status}</p>
                             </div>
                             <Badge variant={enr.status === 'ACTIVE' ? 'emerald' : 'blue'} size="sm">
                               {enr.status}
@@ -930,7 +930,7 @@ export const StudentsModule: React.FC = () => {
               {profileTab === 'guardians' && (
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <h4 className="font-bold text-white text-xs uppercase tracking-wider">
+                    <h4 className="font-bold text-slate-900 text-xs uppercase tracking-wider">
                       Linked Guardians & Emergency Contacts
                     </h4>
                     <Button
@@ -951,18 +951,18 @@ export const StudentsModule: React.FC = () => {
                         if (!gua) return null;
 
                         return (
-                          <div key={sg.id} className="p-4 bg-slate-950 rounded-2xl border border-slate-800 flex items-start justify-between">
+                          <div key={sg.id} className="p-4 bg-slate-50 rounded-2xl border border-slate-200 flex items-start justify-between">
                             <div className="space-y-1">
                               <div className="flex items-center gap-2">
-                                <h5 className="font-bold text-white text-sm">{gua.name}</h5>
+                                <h5 className="font-bold text-slate-900 text-sm">{gua.name}</h5>
                                 <Badge variant="purple" size="sm">{sg.relationshipType}</Badge>
                                 {sg.isPrimary && <Badge variant="emerald" size="sm">PRIMARY</Badge>}
                               </div>
-                              <p className="text-xs text-sky-400 font-mono flex items-center gap-1">
+                              <p className="text-xs text-emerald-700 font-mono font-semibold flex items-center gap-1">
                                 <Phone className="w-3 h-3" /> {gua.phone}
                               </p>
                               {gua.email && (
-                                <p className="text-xs text-slate-400 font-mono flex items-center gap-1">
+                                <p className="text-xs text-slate-500 font-mono flex items-center gap-1">
                                   <Mail className="w-3 h-3" /> {gua.email}
                                 </p>
                               )}
@@ -973,7 +973,7 @@ export const StudentsModule: React.FC = () => {
                                 href={`https://wa.me/${gua.phone.replace(/[^0-9]/g, '')}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="px-3 py-1.5 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 rounded-xl text-xs font-semibold border border-emerald-500/20"
+                                className="px-3 py-1.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded-xl text-xs font-semibold border border-emerald-200 transition-colors"
                               >
                                 WhatsApp
                               </a>
@@ -989,7 +989,7 @@ export const StudentsModule: React.FC = () => {
               {profileTab === 'documents' && (
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <h4 className="font-bold text-white text-xs uppercase tracking-wider">
+                    <h4 className="font-bold text-slate-900 text-xs uppercase tracking-wider">
                       Verified Identity & Academic Documents
                     </h4>
                     <Button
@@ -1006,12 +1006,12 @@ export const StudentsModule: React.FC = () => {
                     {documents
                       .filter((d) => d.entityId === selectedStudent.id)
                       .map((doc) => (
-                        <div key={doc.id} className="p-3 bg-slate-950 rounded-xl border border-slate-800 flex items-center justify-between text-xs">
+                        <div key={doc.id} className="p-3 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between text-xs">
                           <div className="flex items-center gap-2.5">
-                            <FileText className="w-4 h-4 text-sky-400" />
+                            <FileText className="w-4 h-4 text-emerald-600" />
                             <div>
-                              <p className="font-bold text-white">{doc.fileName}</p>
-                              <p className="text-[10px] text-slate-400 font-mono">
+                              <p className="font-bold text-slate-900">{doc.fileName}</p>
+                              <p className="text-[10px] text-slate-500 font-mono">
                                 {(doc.sizeBytes / 1024).toFixed(1)} KB • Uploaded {doc.uploadedAt.slice(0, 10)}
                               </p>
                             </div>
@@ -1025,34 +1025,34 @@ export const StudentsModule: React.FC = () => {
 
               {/* TAB 8: DIGITAL ID CARD */}
               {profileTab === 'idcard' && (
-                <div className="flex flex-col items-center justify-center p-6 bg-slate-950 rounded-2xl border border-slate-800 space-y-4">
-                  <div className="w-72 bg-gradient-to-br from-slate-900 to-slate-950 p-6 rounded-3xl border border-sky-500/40 shadow-2xl text-center space-y-4">
+                <div className="flex flex-col items-center justify-center p-6 bg-slate-50 rounded-2xl border border-slate-200 space-y-4">
+                  <div className="w-72 bg-white p-6 rounded-3xl border border-emerald-200 shadow-lg text-center space-y-4">
                     <div>
-                      <p className="text-[10px] font-bold tracking-widest text-sky-400 uppercase font-mono">
+                      <p className="text-[10px] font-bold tracking-widest text-emerald-700 uppercase font-mono">
                         {currentTenant.name}
                       </p>
-                      <p className="text-[9px] text-slate-400">STUDENT IDENTITY CARD</p>
+                      <p className="text-[9px] text-slate-500 font-medium">STUDENT IDENTITY CARD</p>
                     </div>
 
                     <img
                       src={selectedStudent.photoUrl}
                       alt={selectedStudent.firstName}
-                      className="w-20 h-20 rounded-2xl mx-auto object-cover border-2 border-sky-400"
+                      className="w-20 h-20 rounded-2xl mx-auto object-cover border-2 border-emerald-500 shadow-xs"
                     />
 
                     <div>
-                      <h4 className="font-bold text-white text-base">
+                      <h4 className="font-bold text-slate-900 text-base">
                         {selectedStudent.firstName} {selectedStudent.lastName}
                       </h4>
-                      <p className="text-xs font-mono text-sky-300 font-semibold">{selectedStudent.admissionNo}</p>
-                      <p className="text-xs text-slate-400 mt-1">
+                      <p className="text-xs font-mono text-emerald-700 font-semibold">{selectedStudent.admissionNo}</p>
+                      <p className="text-xs text-slate-600 mt-1 font-medium">
                         {isSchool
                           ? classes.find((c) => c.id === selectedStudent.classId)?.name
                           : batches.find((b) => selectedStudent.batchIds?.includes(b.id))?.name}
                       </p>
                     </div>
 
-                    <div className="p-3 bg-slate-950 rounded-2xl border border-slate-800 text-[10px] text-slate-400 font-mono">
+                    <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200 text-[10px] text-slate-600 font-mono">
                       <span>Emergency: {selectedStudent.parentPhone}</span>
                     </div>
                   </div>
@@ -1077,33 +1077,33 @@ export const StudentsModule: React.FC = () => {
       >
         <form onSubmit={handleAddGuardianToStudent} className="space-y-4 text-xs">
           <div className="space-y-1">
-            <label className="text-slate-400 font-semibold">Guardian Full Name *</label>
+            <label className="text-slate-600 font-semibold">Guardian Full Name *</label>
             <input
               type="text"
               required
               value={guardianForm.name}
               onChange={(e) => setGuardianForm({ ...guardianForm, name: e.target.value })}
-              className="w-full p-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white"
+              className="w-full p-2.5 bg-white border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 shadow-2xs"
             />
           </div>
 
           <div className="space-y-1">
-            <label className="text-slate-400 font-semibold">Phone Number *</label>
+            <label className="text-slate-600 font-semibold">Phone Number *</label>
             <input
               type="tel"
               required
               value={guardianForm.phone}
               onChange={(e) => setGuardianForm({ ...guardianForm, phone: e.target.value })}
-              className="w-full p-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white font-mono"
+              className="w-full p-2.5 bg-white border border-slate-200 rounded-xl text-slate-900 font-mono focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 shadow-2xs"
             />
           </div>
 
           <div className="space-y-1">
-            <label className="text-slate-400 font-semibold">Relationship</label>
+            <label className="text-slate-600 font-semibold">Relationship</label>
             <select
               value={guardianRelType}
               onChange={(e) => setGuardianRelType(e.target.value as any)}
-              className="w-full p-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white"
+              className="w-full p-2.5 bg-white border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:border-emerald-500 shadow-2xs"
             >
               <option value="FATHER">Father</option>
               <option value="MOTHER">Mother</option>
@@ -1111,7 +1111,7 @@ export const StudentsModule: React.FC = () => {
             </select>
           </div>
 
-          <div className="flex justify-end gap-2 pt-2 border-t border-slate-800">
+          <div className="flex justify-end gap-2 pt-2 border-t border-slate-200">
             <Button variant="outline" type="button" onClick={() => setIsAddGuardianModalOpen(false)}>
               Cancel
             </Button>
@@ -1131,23 +1131,23 @@ export const StudentsModule: React.FC = () => {
       >
         <form onSubmit={handleUploadDocument} className="space-y-4 text-xs">
           <div className="space-y-1">
-            <label className="text-slate-400 font-semibold">Document Title / File Name *</label>
+            <label className="text-slate-600 font-semibold">Document Title / File Name *</label>
             <input
               type="text"
               required
               value={docForm.fileName}
               onChange={(e) => setDocForm({ ...docForm, fileName: e.target.value })}
-              className="w-full p-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white"
+              className="w-full p-2.5 bg-white border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 shadow-2xs"
             />
           </div>
 
-          <div className="p-4 border-2 border-dashed border-slate-700 rounded-2xl text-center space-y-2">
-            <Upload className="w-8 h-8 text-sky-400 mx-auto" />
-            <p className="text-xs text-slate-300">Drag & drop document PDF/JPG or browse</p>
-            <p className="text-[10px] text-slate-500">Max size: 5MB (Aadhaar, Birth Certificate, TC)</p>
+          <div className="p-4 border-2 border-dashed border-slate-300 rounded-2xl text-center space-y-2 bg-slate-50">
+            <Upload className="w-8 h-8 text-emerald-600 mx-auto" />
+            <p className="text-xs text-slate-600 font-medium">Drag & drop document PDF/JPG or browse</p>
+            <p className="text-[10px] text-slate-400">Max size: 5MB (Aadhaar, Birth Certificate, TC)</p>
           </div>
 
-          <div className="flex justify-end gap-2 pt-2 border-t border-slate-800">
+          <div className="flex justify-end gap-2 pt-2 border-t border-slate-200">
             <Button variant="outline" type="button" onClick={() => setIsUploadDocModalOpen(false)}>
               Cancel
             </Button>
@@ -1156,8 +1156,6 @@ export const StudentsModule: React.FC = () => {
             </Button>
           </div>
         </form>
-      </Modal>
-
-    </div>
+      </Modal>    </div>
   );
 };

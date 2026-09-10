@@ -439,7 +439,7 @@ I can assist you with:
       {/* 1. FLOATING LAUNCHER BUTTON */}
       {/* ------------------------------------------------------------- */}
       {!isChatOpen && (
-        <div className="fixed bottom-5 right-5 sm:bottom-6 sm:right-6 z-50 flex items-center gap-2.5 animate-fade-in">
+        <div className="fixed bottom-20 right-4 sm:bottom-6 sm:right-6 z-40 flex items-center gap-2.5 animate-fade-in">
           <button
             onClick={handleOpen}
             className="hidden sm:flex items-center gap-2 bg-white text-slate-800 text-xs font-semibold px-4 py-2.5 rounded-full border border-slate-200 shadow-lg hover:shadow-xl hover:border-emerald-500 transition-all hover:scale-102 cursor-pointer"

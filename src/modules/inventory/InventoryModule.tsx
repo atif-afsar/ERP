@@ -325,13 +325,13 @@ export const InventoryModule: React.FC = () => {
                 <Package className="w-6 h-6" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-white tracking-tight flex items-center gap-2">
+                <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
                   Inventory & Asset Management
-                  <span className="text-[11px] font-mono px-2.5 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-300">
+                  <span className="text-[11px] font-mono px-2.5 py-0.5 rounded-full bg-amber-50 border border-amber-200 text-amber-700">
                     Doc 56 Canonical
                   </span>
                 </h1>
-                <p className="text-xs text-slate-400 mt-0.5">
+                <p className="text-xs text-slate-500 mt-0.5">
                   Consumable stock tracking, multi-warehouse stores, stock-in/stock-out distribution, and capital asset register.
                 </p>
               </div>

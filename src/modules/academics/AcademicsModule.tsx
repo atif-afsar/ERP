@@ -243,15 +243,15 @@ export const AcademicsModule: React.FC = () => {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <h2 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2">
-              <GraduationCap className="w-6 h-6 text-sky-400" />
+            <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
+              <GraduationCap className="w-6 h-6 text-emerald-600" />
               Academic Structure & Promotion Engine
             </h2>
             <Badge variant="emerald" size="sm" dot>
               {currentTenant.academicYear || '2026-2027'} (Active Session)
             </Badge>
           </div>
-          <p className="text-xs text-slate-400">
+          <p className="text-xs text-slate-500">
             Institutional academic hierarchy, batch capacities, multi-year session lifecycle, and bulk student promotions.
           </p>
         </div>

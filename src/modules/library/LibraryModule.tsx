@@ -343,13 +343,13 @@ export const LibraryModule: React.FC = () => {
                 <BookOpen className="w-6 h-6" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-white tracking-tight flex items-center gap-2">
+                <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
                   Library Management
-                  <span className="text-[11px] font-mono px-2.5 py-0.5 rounded-full bg-teal-500/10 border border-teal-500/20 text-teal-300">
+                  <span className="text-[11px] font-mono px-2.5 py-0.5 rounded-full bg-teal-50 border border-teal-200 text-teal-700">
                     Doc 57 Canonical
                   </span>
                 </h1>
-                <p className="text-xs text-slate-400 mt-0.5">
+                <p className="text-xs text-slate-500 mt-0.5">
                   Bibliographic catalog (OPAC), accession copy barcodes, book circulation desk, member loan limits, and overdue fines.
                 </p>
               </div>

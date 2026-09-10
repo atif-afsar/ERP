@@ -80,6 +80,55 @@
   animation: pulse-subtle 2s infinite ease-in-out;
 }
 
+/* Light Enterprise Theme & Legibility Safeguards */
+main h1.text-white,
+main h2.text-white,
+main h3.text-white,
+main h4.text-white,
+main h5.text-white {
+  color: #0f172a !important;
+}
+
+main table thead[class*="bg-slate-9"] {
+  background-color: #f8fafc !important;
+  color: #64748b !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+}
+
+main th.text-white {
+  color: #475569 !important;
+}
+
+main td.text-white {
+  color: #0f172a !important;
+}
+
+main p.text-white:not(button *) {
+  color: #0f172a !important;
+}
+
+main span.text-white:not(button *):not([class*="bg-"]) {
+  color: #0f172a !important;
+}
+
+main input[class*="bg-slate-9"],
+main select[class*="bg-slate-9"],
+main textarea[class*="bg-slate-9"] {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  border-color: #e2e8f0 !important;
+}
+
+main input[class*="bg-slate-9"]::placeholder,
+main textarea[class*="bg-slate-9"]::placeholder {
+  color: #94a3b8 !important;
+}
+
+main [class*="border-slate-800"],
+main [class*="border-slate-700"] {
+  border-color: #e2e8f0 !important;
+}
+
 /* Print Optimization */
 @media print {
   body * {

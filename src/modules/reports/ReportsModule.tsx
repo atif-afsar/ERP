@@ -83,14 +83,14 @@ export const ReportsModule: React.FC = () => {
               </span>
             )}
           </div>
-          <h1 className="text-2xl font-bold text-white tracking-tight">Institutional Reports & Intelligence</h1>
-          <p className="text-xs text-slate-400 mt-0.5">
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">Institutional Reports & Intelligence</h1>
+          <p className="text-xs text-slate-500 mt-0.5">
             Audit metrics, demographic breakdowns, fee cashflows, and performance insights.
           </p>
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
-          <div className="flex items-center bg-slate-950/80 rounded-xl p-1 border border-slate-800 text-xs">
+          <div className="flex items-center bg-white rounded-xl p-1 border border-slate-200 text-xs shadow-2xs">
             {(['week', 'month', 'term', 'year'] as const).map((r) => (
               <button
                 key={r}

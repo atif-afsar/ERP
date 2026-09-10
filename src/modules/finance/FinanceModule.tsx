@@ -378,13 +378,13 @@ export const FinanceModule: React.FC = () => {
                 <Building className="w-6 h-6" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-white tracking-tight flex items-center gap-2">
+                <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
                   Expenses, Finance & Accounting
-                  <span className="text-[11px] font-mono px-2.5 py-0.5 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-300">
+                  <span className="text-[11px] font-mono px-2.5 py-0.5 rounded-full bg-purple-50 border border-purple-200 text-purple-700">
                     Doc 54 Canonical
                   </span>
                 </h1>
-                <p className="text-xs text-slate-400 mt-0.5">
+                <p className="text-xs text-slate-500 mt-0.5">
                   Institutional operational expenses, vendor bills payable, cash & bank treasury, and real-time P&L statements.
                 </p>
               </div>

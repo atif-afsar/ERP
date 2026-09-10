@@ -333,22 +333,21 @@ export const FeesModule: React.FC = () => {
 
       {/* Header Banner (Hidden for Students / Parents) */}
       {!isStudent && !isParent && (
-        <div className="no-print p-6 rounded-3xl bg-slate-900/80 border border-slate-800 backdrop-blur-xl relative overflow-hidden shadow-2xl">
-          <div className="absolute -right-10 -bottom-10 w-80 h-80 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
+        <div className="no-print p-5 sm:p-6 rounded-2xl bg-white border border-slate-200/90 shadow-xs relative overflow-hidden">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-10">
             <div>
               <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-2xl bg-gradient-to-tr from-emerald-500/20 to-teal-600/20 border border-emerald-500/30 text-emerald-400 shadow-md shadow-emerald-500/10">
-                  <CreditCard className="w-6 h-6" />
+                <div className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 shadow-2xs">
+                  <CreditCard className="w-5 h-5" />
                 </div>
                 <div>
-                  <h1 className="text-xl font-bold text-white tracking-tight flex items-center gap-2">
+                  <h1 className="text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
                     Fees, Billing & Collections
-                    <span className="text-[11px] font-mono px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-300">
-                      Doc 53 Canonical
+                    <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 font-medium">
+                      Live Ledger
                     </span>
                   </h1>
-                  <p className="text-xs text-slate-400 mt-0.5">
+                  <p className="text-xs text-slate-500 mt-0.5">
                     Student fee ledgers, automated installments, multi-mode payment allocations & printable official receipts.
                   </p>
                 </div>
@@ -362,7 +361,7 @@ export const FeesModule: React.FC = () => {
                   size="sm"
                   leftIcon={<Plus className="w-4 h-4" />}
                   onClick={() => setIsAddStructureModalOpen(true)}
-                  className="bg-emerald-600 hover:bg-emerald-500 shadow-lg shadow-emerald-950/20"
+                  className="bg-emerald-600 hover:bg-emerald-500 shadow-xs"
                 >
                   Create Fee Structure
                 </Button>
@@ -371,7 +370,7 @@ export const FeesModule: React.FC = () => {
           </div>
 
           {/* Navigation Tabs */}
-          <div className="mt-6 pt-4 border-t border-slate-800/80">
+          <div className="mt-5 pt-4 border-t border-slate-100">
             <Tabs
               activeTab={activeTab}
               onChange={(tab: any) => setActiveTab(tab)}
@@ -389,29 +388,29 @@ export const FeesModule: React.FC = () => {
       )}
 
       {/* Financial Health Overview Bar */}
-      <div className="no-print grid grid-cols-1 sm:grid-cols-4 gap-4">
-        <div className="glass-panel p-5 rounded-2xl border border-slate-800 space-y-1">
-          <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">Total Invoiced</span>
-          <h3 className="text-2xl font-black text-white font-mono">₹{totalInvoiced.toLocaleString()}</h3>
-          <p className="text-[11px] text-slate-400">Net demand across active cohorts</p>
+      <div className="no-print grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-xs space-y-1">
+          <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">Total Invoiced</span>
+          <h3 className="text-2xl font-black text-slate-900 font-mono">₹{totalInvoiced.toLocaleString()}</h3>
+          <p className="text-[11px] text-slate-500">Net demand across active cohorts</p>
         </div>
 
-        <div className="glass-panel p-5 rounded-2xl border border-slate-800 space-y-1">
-          <span className="text-xs font-semibold text-emerald-400 uppercase tracking-wider block">Realized Collections</span>
-          <h3 className="text-2xl font-black text-emerald-400 font-mono">₹{totalCollected.toLocaleString()}</h3>
-          <p className="text-[11px] text-slate-400">{realizationPct}% collection efficiency</p>
+        <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-xs space-y-1">
+          <span className="text-xs font-semibold text-emerald-700 uppercase tracking-wider block">Realized Collections</span>
+          <h3 className="text-2xl font-black text-emerald-600 font-mono">₹{totalCollected.toLocaleString()}</h3>
+          <p className="text-[11px] text-slate-500">{realizationPct}% collection efficiency</p>
         </div>
 
-        <div className="glass-panel p-5 rounded-2xl border border-slate-800 space-y-1">
-          <span className="text-xs font-semibold text-rose-400 uppercase tracking-wider block">Outstanding Dues</span>
-          <h3 className="text-2xl font-black text-rose-400 font-mono">₹{totalDue.toLocaleString()}</h3>
-          <p className="text-[11px] text-slate-400">{100 - realizationPct}% pending realization</p>
+        <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-xs space-y-1">
+          <span className="text-xs font-semibold text-rose-700 uppercase tracking-wider block">Outstanding Dues</span>
+          <h3 className="text-2xl font-black text-rose-600 font-mono">₹{totalDue.toLocaleString()}</h3>
+          <p className="text-[11px] text-slate-500">{100 - realizationPct}% pending realization</p>
         </div>
 
-        <div className="glass-panel p-5 rounded-2xl border border-slate-800 space-y-1">
-          <span className="text-xs font-semibold text-amber-400 uppercase tracking-wider block">Overdue Recoveries</span>
-          <h3 className="text-2xl font-black text-amber-400 font-mono">₹{agingStats.amount.toLocaleString()}</h3>
-          <p className="text-[11px] text-slate-400">{agingStats.count} accounts in overdue bucket</p>
+        <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-xs space-y-1">
+          <span className="text-xs font-semibold text-amber-700 uppercase tracking-wider block">Overdue Recoveries</span>
+          <h3 className="text-2xl font-black text-amber-600 font-mono">₹{agingStats.amount.toLocaleString()}</h3>
+          <p className="text-[11px] text-slate-500">{agingStats.count} accounts in overdue bucket</p>
         </div>
       </div>
 
@@ -419,29 +418,29 @@ export const FeesModule: React.FC = () => {
       {/* TAB 1: STUDENT FEE LEDGERS & INVOICES */}
       {/* ------------------------------------------------------------- */}
       {activeTab === 'ledgers' && (
-        <div className="space-y-6">
-          <div className="no-print p-4 rounded-2xl bg-slate-900/60 border border-slate-800 flex flex-wrap items-center justify-between gap-4">
-            <div className="relative max-w-sm flex-1">
+        <div className="space-y-4 sm:space-y-6">
+          <div className="no-print p-4 rounded-2xl bg-white border border-slate-200/90 shadow-xs flex flex-wrap items-center justify-between gap-4">
+            <div className="relative max-w-sm flex-1 min-w-[220px]">
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search ledger by student name, admission no or batch..."
-                className="w-full pl-9 pr-4 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500"
+                placeholder="Search by student name or admission no..."
+                className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-emerald-500 focus:bg-white"
               />
             </div>
 
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold text-slate-400">Filter Status:</span>
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="text-xs font-semibold text-slate-500 mr-1">Status:</span>
               {(['ALL', 'PAID', 'PARTIAL', 'OVERDUE'] as const).map((st) => (
                 <button
                   key={st}
                   onClick={() => setStatusFilter(st)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
                     statusFilter === st
-                      ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/20'
-                      : 'bg-slate-800 text-slate-400 hover:text-white'
+                      ? 'bg-emerald-600 text-white shadow-xs'
+                      : 'bg-slate-100 text-slate-600 hover:text-slate-900 hover:bg-slate-200 border border-slate-200'
                   }`}
                 >
                   {st}
@@ -451,10 +450,10 @@ export const FeesModule: React.FC = () => {
           </div>
 
           {/* Ledgers Table */}
-          <div className="p-6 rounded-3xl bg-slate-900/60 border border-slate-800">
+          <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs text-slate-300">
-                <thead className="bg-slate-950/60 text-slate-400 uppercase tracking-wider text-[10px] font-semibold border-b border-slate-800">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-50/90 text-slate-600 uppercase tracking-wider text-[10px] font-semibold border-b border-slate-200">
                   <tr>
                     <th className="py-3 px-4">Student & Admission</th>
                     <th className="py-3 px-4">Class / Batch</th>
@@ -467,28 +466,28 @@ export const FeesModule: React.FC = () => {
                     <th className="py-3 px-4 text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-800/60">
+                <tbody className="divide-y divide-slate-100">
                   {filteredLedgers.map((ledger) => (
-                    <tr key={ledger.id} className="hover:bg-slate-800/30 transition-colors">
-                      <td className="py-3 px-4">
-                        <span className="font-bold text-white block text-sm">{ledger.studentName}</span>
-                        <span className="font-mono text-slate-400 text-[11px]">{ledger.admissionNo}</span>
+                    <tr key={ledger.id} className="hover:bg-slate-50/60 transition-colors">
+                      <td className="py-3.5 px-4">
+                        <span className="font-bold text-slate-900 block text-sm">{ledger.studentName}</span>
+                        <span className="font-mono text-slate-500 text-[11px]">{ledger.admissionNo}</span>
                       </td>
-                      <td className="py-3 px-4 font-medium text-slate-300">{ledger.groupName}</td>
-                      <td className="py-3 px-4 text-center font-mono font-medium">₹{ledger.totalFee.toLocaleString()}</td>
-                      <td className="py-3 px-4 text-center font-mono text-emerald-400 font-semibold">
+                      <td className="py-3.5 px-4 font-medium text-slate-700">{ledger.groupName}</td>
+                      <td className="py-3.5 px-4 text-center font-mono font-medium text-slate-700">₹{ledger.totalFee.toLocaleString()}</td>
+                      <td className="py-3.5 px-4 text-center font-mono text-emerald-700 font-semibold">
                         {ledger.concession > 0 ? `₹${ledger.concession.toLocaleString()}` : '—'}
                       </td>
-                      <td className="py-3 px-4 text-center font-mono font-bold text-white">
+                      <td className="py-3.5 px-4 text-center font-mono font-bold text-slate-900">
                         ₹{ledger.netPayable.toLocaleString()}
                       </td>
-                      <td className="py-3 px-4 text-center font-mono font-bold text-emerald-400">
+                      <td className="py-3.5 px-4 text-center font-mono font-bold text-emerald-600">
                         ₹{ledger.paidAmount.toLocaleString()}
                       </td>
-                      <td className="py-3 px-4 text-center font-mono font-bold text-rose-400">
+                      <td className="py-3.5 px-4 text-center font-mono font-bold text-rose-600">
                         {ledger.dueAmount > 0 ? `₹${ledger.dueAmount.toLocaleString()}` : '—'}
                       </td>
-                      <td className="py-3 px-4 text-center">
+                      <td className="py-3.5 px-4 text-center">
                         <Badge
                           variant={
                             ledger.status === 'PAID'
@@ -501,7 +500,7 @@ export const FeesModule: React.FC = () => {
                           {ledger.status}
                         </Badge>
                       </td>
-                      <td className="py-3 px-4 text-right">
+                      <td className="py-3.5 px-4 text-right whitespace-nowrap">
                         <div className="flex items-center justify-end gap-2">
                           {ledger.dueAmount > 0 && (
                             <Button
@@ -520,7 +519,7 @@ export const FeesModule: React.FC = () => {
                           {!isStudent && !isParent && (
                             <button
                               onClick={() => setConcessionModalLedger(ledger)}
-                              className="px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-[11px] font-semibold text-sky-300"
+                              className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-[11px] font-semibold text-slate-700 border border-slate-200 transition-colors cursor-pointer"
                             >
                               Discount
                             </button>

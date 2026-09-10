@@ -268,15 +268,15 @@ export const StaffModule: React.FC = () => {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <h2 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2">
-              <UserCheck className="w-6 h-6 text-sky-400" />
+            <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
+              <UserCheck className="w-6 h-6 text-emerald-600" />
               Staff & Faculty Management
             </h2>
-            <span className="px-2 py-0.5 rounded-full bg-sky-500/10 border border-sky-500/20 text-[10px] font-mono text-sky-400">
+            <span className="px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-[10px] font-mono text-emerald-700">
               Canonical Specification v1.0
             </span>
           </div>
-          <p className="text-xs text-slate-400 mt-0.5">
+          <p className="text-xs text-slate-500 mt-0.5">
             Teaching personnel, administrative employees, subject-batch academic assignments, and staff records.
           </p>
         </div>
