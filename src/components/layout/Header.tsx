@@ -103,6 +103,18 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar, onOpenAi, onNav
           <Menu className="w-5 h-5" />
         </button>
 
+        {/* Mobile Brand Logo */}
+        <div className="flex items-center gap-2 lg:hidden">
+          <img
+            src="/logo.png"
+            alt="EduNexus"
+            className="w-9 h-9 rounded-xl object-contain shadow-xs border border-slate-200/80 p-0.5 bg-white"
+          />
+          <span className="font-extrabold text-slate-900 text-sm tracking-tight hidden sm:inline">
+            EduNexus
+          </span>
+        </div>
+
         {/* Multi-Branch Selector (Section 15) */}
         {branches && branches.length > 0 && (
           <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs hover:border-slate-300 transition-colors">

@@ -101,14 +101,29 @@ export function EduNexusHero({
         {/* Brand Logo */}
         <div 
           onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-          className="flex items-center gap-3 cursor-pointer select-none"
+          className="flex items-center gap-3 cursor-pointer select-none group"
         >
           {logo || (
-            <img
-              src="/assets/edunexus_logo.png"
-              alt="EduNexus ERP - Schools • Academies • Brighter Tomorrows"
-              className="h-8 sm:h-10 w-auto object-contain transition-transform hover:scale-102"
-            />
+            <>
+              <img
+                src="/logo.png"
+                alt="EduNexus ERP"
+                className="h-10 w-10 sm:h-12 sm:w-12 rounded-xl object-contain shadow-xs transition-transform group-hover:scale-105"
+              />
+              <div className="flex flex-col">
+                <div className="flex items-center gap-1.5">
+                  <span className="font-extrabold text-slate-900 text-lg sm:text-xl tracking-tight leading-none">
+                    Edu<span className="text-emerald-600">Nexus</span>
+                  </span>
+                  <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    ERP
+                  </span>
+                </div>
+                <span className="text-[10px] font-medium text-slate-500 tracking-wide hidden sm:block">
+                  Next-Gen Campus OS
+                </span>
+              </div>
+            </>
           )}
         </div>
 

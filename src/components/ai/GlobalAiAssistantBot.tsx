@@ -442,12 +442,14 @@ I can assist you with:
 
           <button
             onClick={handleOpen}
-            className="group relative flex items-center justify-center w-14 h-14 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white shadow-xl shadow-emerald-600/30 hover:scale-105 active:scale-95 transition-all duration-200 ring-4 ring-emerald-500/20 cursor-pointer"
-            title="Open AI Assistant"
-            aria-label="Open AI Assistant"
+            className="group relative flex items-center justify-center w-14 h-14 rounded-2xl bg-white hover:bg-slate-50 shadow-xl shadow-emerald-900/20 hover:scale-105 active:scale-95 transition-all duration-200 ring-4 ring-emerald-500/25 cursor-pointer p-1.5 border border-emerald-500/30"
+            title="Open EduNexus Assistant"
+            aria-label="Open EduNexus Assistant"
           >
-            <Bot className="w-7 h-7 text-white transition-transform group-hover:rotate-6" />
-            <span className="absolute top-0 right-0 w-3.5 h-3.5 rounded-full bg-emerald-400 border-2 border-white" />
+            <img src="/logo.png" alt="EduNexus AI" className="w-full h-full object-contain rounded-xl transition-transform group-hover:scale-105" />
+            <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-emerald-500 border-2 border-white flex items-center justify-center">
+              <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+            </span>
           </button>
         </div>
       )}
@@ -466,8 +468,8 @@ I can assist you with:
           {/* Header */}
           <div className="px-4 py-3 bg-gradient-to-r from-emerald-700 to-emerald-600 text-white flex items-center justify-between shrink-0 shadow-xs select-none">
             <div className="flex items-center gap-2.5">
-              <div className="relative w-8 h-8 rounded-full bg-white/15 flex items-center justify-center text-white border border-white/20">
-                <Bot className="w-4 h-4" />
+              <div className="relative w-9 h-9 rounded-xl bg-white/20 p-0.5 flex items-center justify-center text-white border border-white/30 shrink-0">
+                <img src="/logo.png" alt="EduNexus AI" className="w-full h-full object-contain rounded-lg" />
                 <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-emerald-700" />
               </div>
               <div>
@@ -514,8 +516,8 @@ I can assist you with:
                 className={`flex gap-2.5 ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
               >
                 {msg.sender === 'ai' && (
-                  <div className="w-7 h-7 rounded-full bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-xs mt-0.5">
-                    <Bot className="w-4 h-4" />
+                  <div className="w-7 h-7 rounded-lg bg-white border border-slate-200 flex items-center justify-center shrink-0 shadow-xs mt-0.5 p-0.5">
+                    <img src="/logo.png" alt="EduNexus" className="w-full h-full object-contain rounded-md" />
                   </div>
                 )}
 

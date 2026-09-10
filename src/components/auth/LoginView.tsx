@@ -111,14 +111,19 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, redirectUr
     <div className="min-h-screen bg-[#f8faf9] flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       {/* Brand Header */}
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
-        <div className="inline-flex items-center gap-3 p-2 px-4 rounded-xl bg-white border border-slate-200 shadow-2xs mb-4">
-          <div className="p-2 rounded-lg bg-emerald-600 text-white shadow-xs">
-            <Building className="w-5 h-5" />
+        <div className="inline-flex flex-col items-center mb-4">
+          <img
+            src="/logo.png"
+            alt="EduNexus ERP"
+            className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl object-contain shadow-md border border-slate-200/80 p-1 bg-white mb-3 hover:scale-105 transition-transform"
+          />
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold mb-1">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            EduNexus Cloud ERP
           </div>
-          <div className="text-left">
-            <h1 className="font-bold text-slate-900 text-base tracking-tight">EduNexus ERP</h1>
-            <p className="text-[11px] text-emerald-700 font-semibold">School & Coaching Management</p>
-          </div>
+          <p className="text-xs text-slate-500 font-medium">
+            Next-Generation School & Coaching Platform
+          </p>
         </div>
 
         <h2 className="text-2xl font-bold tracking-tight text-slate-900">

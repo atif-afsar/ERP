@@ -44,9 +44,11 @@ export const SuperAdminShell: React.FC<SuperAdminShellProps> = ({ onNavigate, ac
       {/* Top Bar */}
       <header className="h-16 bg-slate-950 border-b border-slate-800 px-6 flex items-center justify-between sticky top-0 z-30 shadow-md">
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-xl bg-gradient-to-tr from-amber-500 to-amber-600 text-slate-950 font-bold shadow-md shadow-amber-500/20">
-            <ShieldCheck className="w-5 h-5" />
-          </div>
+          <img
+            src="/logo.png"
+            alt="EduNexus"
+            className="w-10 h-10 rounded-xl object-contain shadow-md bg-white p-0.5 border border-slate-700 shrink-0"
+          />
           <div>
             <div className="flex items-center gap-2">
               <span className="font-extrabold text-white text-base tracking-tight">EduNexus Cloud</span>

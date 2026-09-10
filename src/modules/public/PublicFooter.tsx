@@ -12,12 +12,25 @@ export const PublicFooter: React.FC<PublicFooterProps> = ({ onNavigate }) => {
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-8">
           {/* Brand Info */}
           <div className="col-span-2 space-y-4">
-            <div className="cursor-pointer select-none" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+            <div className="cursor-pointer select-none flex items-center gap-3 group" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
               <img
-                src="/assets/edunexus_logo.png"
-                alt="EduNexus ERP - Schools • Academies • Brighter Tomorrows"
-                className="h-9 w-auto object-contain"
+                src="/logo.png"
+                alt="EduNexus ERP"
+                className="h-11 w-11 rounded-xl object-contain shadow-xs transition-transform group-hover:scale-105"
               />
+              <div className="flex flex-col">
+                <div className="flex items-center gap-1.5">
+                  <span className="font-extrabold text-slate-900 text-xl tracking-tight leading-none">
+                    Edu<span className="text-emerald-600">Nexus</span>
+                  </span>
+                  <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    ERP
+                  </span>
+                </div>
+                <span className="text-[10px] font-medium text-slate-500 tracking-wide">
+                  Schools • Academies • Brighter Tomorrows
+                </span>
+              </div>
             </div>
             <p className="text-xs text-slate-500 max-w-sm leading-relaxed">
               The unified cloud operating system for forward-thinking schools and competitive coaching academies. Connected academic, financial, and logistical management.
