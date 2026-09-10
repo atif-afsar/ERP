@@ -257,20 +257,12 @@ export const GlobalAiAssistantBot: React.FC<GlobalAiAssistantBotProps> = ({
     {
       id: 'welcome-1',
       sender: 'ai',
-      text: `👋 **Hi! I'm your EduNexus AI Assistant.**
+      text: `👋 **Hi! How can I help you today?**
 
-I have complete, embedded intelligence across all **28 operational modules** and campus bylaws.
-
-You can ask me how fee collections & BYOK work, how to scan QR attendance at gates, how CBSE 8-point report cards calculate, staff batch payroll, bus GPS telemetry, or hostel rules.
-
-How can I help you today?`,
+Ask me anything about fees, QR attendance, CBSE grading, staff payroll, or student admissions.`,
       timestamp: 'Just now',
-      actions: [
-        { label: 'Fee Collection Desk', route: 'app/fees' },
-        { label: 'QR Attendance Kiosk', route: 'app/attendance' },
-      ],
       followUps: [
-        'How does fee collection work?',
+        'What are the late fee grace periods?',
         'How to mark QR attendance?',
         'What are the CBSE grading rules?',
       ],
@@ -472,22 +464,19 @@ I can assist you with:
           }`}
         >
           {/* Header */}
-          <div className="px-5 py-3.5 bg-gradient-to-r from-emerald-700 via-emerald-600 to-teal-700 text-white flex items-center justify-between shrink-0 shadow-xs select-none">
-            <div className="flex items-center gap-3">
-              <div className="relative w-9 h-9 rounded-full bg-white/15 backdrop-blur-md flex items-center justify-center text-white border border-white/20">
-                <Bot className="w-5 h-5" />
+          <div className="px-4 py-3 bg-gradient-to-r from-emerald-700 to-emerald-600 text-white flex items-center justify-between shrink-0 shadow-xs select-none">
+            <div className="flex items-center gap-2.5">
+              <div className="relative w-8 h-8 rounded-full bg-white/15 flex items-center justify-center text-white border border-white/20">
+                <Bot className="w-4 h-4" />
                 <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-emerald-700" />
               </div>
               <div>
-                <h3 className="font-bold text-white text-sm leading-tight flex items-center gap-1.5">
-                  EduNexus AI Copilot
-                  <span className="text-[9px] font-semibold uppercase tracking-wider bg-white/20 px-1.5 py-0.2 rounded-full text-white">
-                    ChatGPT Engine
-                  </span>
+                <h3 className="font-semibold text-white text-sm leading-tight">
+                  EduNexus Assistant
                 </h3>
-                <p className="text-[11px] text-emerald-100 font-medium flex items-center gap-1.5">
-                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-300" />
-                  Embedded Knowledge • Zero Latency
+                <p className="text-[10px] text-emerald-100 flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-300" />
+                  Online
                 </p>
               </div>
             </div>
@@ -546,67 +535,36 @@ I can assist you with:
                       <span className="inline-block w-1.5 h-3.5 bg-emerald-600 animate-pulse ml-0.5 align-middle" />
                     )}
 
-                    {/* Verified Campus Document Citations */}
-                    {msg.citations && msg.citations.length > 0 && !msg.isStreaming && (
-                      <div className="pt-2 mt-2 border-t border-slate-100 flex flex-col gap-1 text-[11px]">
-                        <div className="flex items-center justify-between text-[10px] font-semibold text-emerald-800">
-                          <span className="flex items-center gap-1">
-                            <Sparkles className="w-3 h-3 text-emerald-600" />
-                            Grounded Campus Source:
-                          </span>
-                          {msg.groundedModel && (
-                            <span className="text-[9px] text-slate-400 font-normal">
-                              {msg.groundedModel}
-                            </span>
-                          )}
-                        </div>
-                        {msg.citations.slice(0, 2).map((cit, idx) => (
-                          <div 
-                            key={idx} 
-                            className="bg-emerald-50/70 border border-emerald-200/80 rounded-lg px-2.5 py-1 text-[10px] text-emerald-950 flex items-center justify-between gap-2"
-                          >
-                            <span className="font-medium truncate">📄 {cit.documentTitle}</span>
-                            <span className="shrink-0 text-emerald-700 font-bold text-[9px] bg-white px-1.5 py-0.5 rounded border border-emerald-100">
-                              {Math.round(cit.similarityScore * 100)}% match
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Clean Action Link Buttons */}
+                    {/* Quick navigation link if relevant */}
                     {msg.actions && msg.actions.length > 0 && !msg.isStreaming && (
-                      <div className="pt-2.5 mt-2.5 border-t border-slate-100 flex flex-wrap gap-2">
-                        {msg.actions.map((act, i) => (
+                      <div className="pt-2 mt-2 border-t border-slate-100 flex flex-wrap gap-2">
+                        {msg.actions.slice(0, 1).map((act, i) => (
                           <button
                             key={i}
                             onClick={() => {
                               onNavigate(act.route);
                               if (!isExpanded) handleClose();
                             }}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-800 text-xs font-semibold transition-all hover:scale-102 cursor-pointer"
+                            className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-700 hover:text-emerald-800 hover:underline cursor-pointer"
                           >
-                            <span>{act.label}</span>
-                            <ChevronRight className="w-3 h-3 text-emerald-600" />
+                            <span>Open {act.label}</span>
+                            <ChevronRight className="w-3 h-3" />
                           </button>
                         ))}
                       </div>
                     )}
 
-                    {/* Suggested Follow-Up Chips */}
-                    {msg.followUps && msg.followUps.length > 0 && !msg.isStreaming && (
-                      <div className="pt-2.5 mt-2 border-t border-slate-100">
-                        <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-1.5">
-                          Suggested questions:
-                        </span>
+                    {/* Initial Suggested Prompts (only on welcome message) */}
+                    {msg.followUps && msg.followUps.length > 0 && !msg.isStreaming && msg.id === 'welcome-1' && !hasUserSentMessage && (
+                      <div className="pt-2 mt-2 border-t border-slate-100">
                         <div className="flex flex-wrap gap-1.5">
                           {msg.followUps.map((prompt, pIdx) => (
                             <button
                               key={pIdx}
                               onClick={() => handleSend(prompt)}
-                              className="text-[11px] px-2.5 py-1 rounded-full bg-slate-100 hover:bg-emerald-50 hover:text-emerald-700 text-slate-700 transition-colors border border-slate-200 hover:border-emerald-300 cursor-pointer"
+                              className="text-[11px] px-2.5 py-1 rounded-full bg-slate-50 hover:bg-emerald-50 hover:text-emerald-700 text-slate-600 transition-colors border border-slate-200 hover:border-emerald-300 cursor-pointer"
                             >
-                              💬 {prompt}
+                              {prompt}
                             </button>
                           ))}
                         </div>
