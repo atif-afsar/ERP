@@ -12,11 +12,12 @@ export const PublicFooter: React.FC<PublicFooterProps> = ({ onNavigate }) => {
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-8">
           {/* Brand Info */}
           <div className="col-span-2 space-y-4">
-            <div className="flex items-center gap-2.5">
-              <div className="p-2 rounded-xl bg-emerald-600 text-white shadow-xs">
-                <Building className="w-5 h-5" />
-              </div>
-              <span className="font-bold text-slate-900 text-lg tracking-tight">EduNexus ERP</span>
+            <div className="cursor-pointer select-none" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+              <img
+                src="/assets/edunexus_logo.png"
+                alt="EduNexus ERP - Schools • Academies • Brighter Tomorrows"
+                className="h-9 w-auto object-contain"
+              />
             </div>
             <p className="text-xs text-slate-500 max-w-sm leading-relaxed">
               The unified cloud operating system for forward-thinking schools and competitive coaching academies. Connected academic, financial, and logistical management.

@@ -21,11 +21,17 @@ import {
   LogOut,
   AlertTriangle,
   Lock,
+  CreditCard,
+  Landmark,
+  Eye,
+  EyeOff,
+  ExternalLink,
+  RefreshCw,
 } from 'lucide-react';
 import { useTenant } from '../../context/TenantContext';
 import { useAuth } from '../../context/AuthContext';
 import { storage } from '../../services/storageService';
-import { TenantFeatureFlags, TenantLabels, AuditLog, UserInvitation, UserSession } from '../../types';
+import { TenantFeatureFlags, TenantLabels, AuditLog, UserInvitation, UserSession, TenantPaymentConfig } from '../../types';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { Tabs } from '../../components/ui/Tabs';
@@ -38,8 +44,28 @@ import { RolesMatrixModule } from '../rolesMatrix/RolesMatrixModule';
 export const SettingsModule: React.FC = () => {
   const { currentTenant, updateCurrentTenant, toggleFeature } = useTenant();
   const { currentUser, changePassword, logoutAllDevices, expireSessionSimulator } = useAuth();
-  const [activeTab, setActiveTab] = useState<'features' | 'terminology' | 'branding' | 'security' | 'roles' | 'api' | 'schema' | 'audit'>('features');
+  const [activeTab, setActiveTab] = useState<'features' | 'terminology' | 'branding' | 'security' | 'roles' | 'api' | 'schema' | 'audit' | 'payments'>('features');
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [showSecretKey, setShowSecretKey] = useState(false);
+  const [paymentConfig, setPaymentConfig] = useState<TenantPaymentConfig>(() => currentTenant.paymentConfig || {
+    provider: 'RAZORPAY',
+    environment: 'TEST',
+    razorpayKeyId: 'rzp_test_sample',
+    razorpayKeySecret: '',
+    webhookSecret: '',
+    allowCashAtCounter: true,
+    allowUpi: true,
+    allowCards: true,
+    allowNetBanking: true,
+    bankAccount: {
+      accountName: currentTenant.name,
+      accountNumber: '',
+      bankName: '',
+      ifscCode: '',
+      branch: '',
+      upiId: '',
+    },
+  });
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>(() => storage.getAuditLogs(currentTenant.id));
   const [auditSearch, setAuditSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
@@ -73,6 +99,26 @@ export const SettingsModule: React.FC = () => {
   const handleSaveTerminology = (e: React.FormEvent) => {
     e.preventDefault();
     updateCurrentTenant({ labels });
+    triggerSuccess();
+  };
+
+  const handleSavePaymentConfig = (e: React.FormEvent) => {
+    e.preventDefault();
+    updateCurrentTenant({ paymentConfig });
+    storage.saveAuditLog({
+      id: `audit_${Date.now()}`,
+      tenantId: currentTenant.id,
+      actorId: currentUser.id,
+      actorName: currentUser.name,
+      actorRole: currentUser.role,
+      action: 'PAYMENT_CONFIG_UPDATED',
+      category: 'SETTINGS',
+      entityType: 'TENANT',
+      entityId: currentTenant.id,
+      details: `Updated Payment Gateway (${paymentConfig.provider} - ${paymentConfig.environment}) and direct settlement bank details.`,
+      timestamp: new Date().toISOString(),
+      status: 'SUCCESS',
+    });
     triggerSuccess();
   };
 
@@ -127,6 +173,7 @@ export const SettingsModule: React.FC = () => {
       <Tabs
         tabs={[
           { id: 'features', label: '🎛️ Feature Flags / Module Toggles' },
+          { id: 'payments', label: '💳 Payment Gateway & Banking' },
           { id: 'terminology', label: '🔤 Dynamic Terminology Labels' },
           { id: 'branding', label: '🎨 Institution Branding & Identity' },
           { id: 'security', label: '🔐 Security, Sessions & Invites' },
@@ -670,6 +717,308 @@ export const SettingsModule: React.FC = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* TAB 9: PAYMENT GATEWAYS & BANKING (BYOK ARCHITECTURE) */}
+      {activeTab === 'payments' && (
+        <form onSubmit={handleSavePaymentConfig} className="space-y-6 animate-fade-in">
+          {/* Architecture Info Banner */}
+          <div className="p-5 rounded-2xl bg-emerald-950/40 border border-emerald-500/30 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div className="flex items-start gap-3">
+              <div className="p-2.5 rounded-xl bg-emerald-500/20 text-emerald-400 shrink-0">
+                <Landmark className="w-5 h-5" />
+              </div>
+              <div>
+                <h4 className="font-bold text-white text-sm">Direct School Settlement (BYOK - Bring Your Own Key)</h4>
+                <p className="text-xs text-slate-300 mt-1 max-w-2xl leading-relaxed">
+                  Student fees flow <strong>100% directly</strong> into your institution's bank account via your own merchant gateway credentials. 
+                  Zero intermediary escrow, zero tax entanglement (school tuition is 0% GST exempt), and instant T+1 banking settlement.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className={`px-3 py-1 rounded-full text-xs font-bold border ${
+                paymentConfig.environment === 'LIVE' 
+                  ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-300'
+                  : 'bg-amber-500/20 border-amber-500/40 text-amber-300'
+              }`}>
+                ● {paymentConfig.environment === 'LIVE' ? 'LIVE PRODUCTION' : 'TEST SANDBOX'}
+              </span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Gateway API Credentials */}
+            <div className="lg:col-span-2 glass-panel p-6 rounded-2xl border border-slate-800 space-y-5">
+              <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div>
+                  <h3 className="font-bold text-white text-sm flex items-center gap-2">
+                    <CreditCard className="w-4 h-4 text-sky-400" />
+                    Merchant Gateway Credentials (Razorpay India)
+                  </h3>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    Enter API keys generated from your Razorpay Dashboard (Settings ➔ API Keys).
+                  </p>
+                </div>
+                {/* Environment Selector */}
+                <div className="flex items-center p-1 rounded-xl bg-slate-950 border border-slate-800 text-xs">
+                  <button
+                    type="button"
+                    onClick={() => setPaymentConfig({ ...paymentConfig, environment: 'TEST' })}
+                    className={`px-3 py-1 rounded-lg font-semibold transition-all ${
+                      paymentConfig.environment === 'TEST'
+                        ? 'bg-amber-500 text-slate-950 shadow-sm'
+                        : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    Test Sandbox
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPaymentConfig({ ...paymentConfig, environment: 'LIVE' })}
+                    className={`px-3 py-1 rounded-lg font-semibold transition-all ${
+                      paymentConfig.environment === 'LIVE'
+                        ? 'bg-emerald-500 text-slate-950 shadow-sm'
+                        : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    Live Production
+                  </button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 text-xs">
+                <div>
+                  <label className="block font-semibold text-slate-300 mb-1">
+                    Razorpay Key ID ({paymentConfig.environment === 'LIVE' ? 'rzp_live_...' : 'rzp_test_...'})
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={paymentConfig.razorpayKeyId || ''}
+                    onChange={(e) => setPaymentConfig({ ...paymentConfig, razorpayKeyId: e.target.value })}
+                    placeholder={paymentConfig.environment === 'LIVE' ? 'rzp_live_xxxxxxxxxxxxxxxx' : 'rzp_test_xxxxxxxxxxxxxxxx'}
+                    className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white font-mono focus:border-sky-500 focus:outline-none"
+                  />
+                  <p className="text-[11px] text-slate-400 mt-1">
+                    Public Key used to render the client-side checkout popup for UPI, Cards & NetBanking.
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-slate-300 mb-1">
+                    Razorpay Key Secret (Private API Token)
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showSecretKey ? 'text' : 'password'}
+                      value={paymentConfig.razorpayKeySecret || ''}
+                      onChange={(e) => setPaymentConfig({ ...paymentConfig, razorpayKeySecret: e.target.value })}
+                      placeholder="Enter merchant secret key"
+                      className="w-full px-3 py-2 pr-10 rounded-xl bg-slate-950 border border-slate-800 text-white font-mono focus:border-sky-500 focus:outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowSecretKey(!showSecretKey)}
+                      className="absolute right-3 top-2.5 text-slate-400 hover:text-white"
+                    >
+                      {showSecretKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                  <p className="text-[11px] text-slate-400 mt-1">
+                    Private secret token stored encrypted for server-side order signature validation.
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-slate-300 mb-1">
+                    Webhook Secret Token (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={paymentConfig.webhookSecret || ''}
+                    onChange={(e) => setPaymentConfig({ ...paymentConfig, webhookSecret: e.target.value })}
+                    placeholder="whsec_xxxxxxxxxxxxxxxxxxxxxx"
+                    className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white font-mono focus:border-sky-500 focus:outline-none"
+                  />
+                  <p className="text-[11px] text-slate-400 mt-1">
+                    Used to verify incoming Razorpay webhook events (<code className="text-sky-300">payment.captured</code>).
+                  </p>
+                </div>
+              </div>
+
+              {/* Supported Payment Instruments */}
+              <div className="pt-4 border-t border-slate-800">
+                <span className="block font-bold text-white text-xs mb-3">Accepted Payment Channels</span>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  <label className="flex items-center gap-2 p-3 rounded-xl bg-slate-950/60 border border-slate-800 cursor-pointer text-xs">
+                    <input
+                      type="checkbox"
+                      checked={paymentConfig.allowUpi}
+                      onChange={(e) => setPaymentConfig({ ...paymentConfig, allowUpi: e.target.checked })}
+                      className="rounded text-sky-500"
+                    />
+                    <span className="text-slate-200 font-medium">Instant UPI</span>
+                  </label>
+
+                  <label className="flex items-center gap-2 p-3 rounded-xl bg-slate-950/60 border border-slate-800 cursor-pointer text-xs">
+                    <input
+                      type="checkbox"
+                      checked={paymentConfig.allowCards}
+                      onChange={(e) => setPaymentConfig({ ...paymentConfig, allowCards: e.target.checked })}
+                      className="rounded text-sky-500"
+                    />
+                    <span className="text-slate-200 font-medium">Cards (Visa/MC)</span>
+                  </label>
+
+                  <label className="flex items-center gap-2 p-3 rounded-xl bg-slate-950/60 border border-slate-800 cursor-pointer text-xs">
+                    <input
+                      type="checkbox"
+                      checked={paymentConfig.allowNetBanking}
+                      onChange={(e) => setPaymentConfig({ ...paymentConfig, allowNetBanking: e.target.checked })}
+                      className="rounded text-sky-500"
+                    />
+                    <span className="text-slate-200 font-medium">NetBanking</span>
+                  </label>
+
+                  <label className="flex items-center gap-2 p-3 rounded-xl bg-slate-950/60 border border-slate-800 cursor-pointer text-xs">
+                    <input
+                      type="checkbox"
+                      checked={paymentConfig.allowCashAtCounter}
+                      onChange={(e) => setPaymentConfig({ ...paymentConfig, allowCashAtCounter: e.target.checked })}
+                      className="rounded text-sky-500"
+                    />
+                    <span className="text-slate-200 font-medium">Counter Cash</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            {/* Direct Settlement Bank Details */}
+            <div className="glass-panel p-6 rounded-2xl border border-slate-800 space-y-4">
+              <div className="border-b border-slate-800 pb-3">
+                <h3 className="font-bold text-white text-sm flex items-center gap-2">
+                  <Landmark className="w-4 h-4 text-emerald-400" />
+                  Direct Settlement Bank
+                </h3>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Official account where Razorpay settles collected student tuition.
+                </p>
+              </div>
+
+              <div className="space-y-3 text-xs">
+                <div>
+                  <label className="block font-semibold text-slate-300 mb-1">Beneficiary / Account Name</label>
+                  <input
+                    type="text"
+                    required
+                    value={paymentConfig.bankAccount?.accountName || ''}
+                    onChange={(e) =>
+                      setPaymentConfig({
+                        ...paymentConfig,
+                        bankAccount: { ...paymentConfig.bankAccount, accountName: e.target.value },
+                      })
+                    }
+                    className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white font-medium focus:border-sky-500 focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-slate-300 mb-1">Bank Name</label>
+                  <input
+                    type="text"
+                    required
+                    value={paymentConfig.bankAccount?.bankName || ''}
+                    onChange={(e) =>
+                      setPaymentConfig({
+                        ...paymentConfig,
+                        bankAccount: { ...paymentConfig.bankAccount, bankName: e.target.value },
+                      })
+                    }
+                    placeholder="e.g. HDFC Bank / State Bank of India"
+                    className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white focus:border-sky-500 focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-slate-300 mb-1">Bank Account Number</label>
+                  <input
+                    type="text"
+                    required
+                    value={paymentConfig.bankAccount?.accountNumber || ''}
+                    onChange={(e) =>
+                      setPaymentConfig({
+                        ...paymentConfig,
+                        bankAccount: { ...paymentConfig.bankAccount, accountNumber: e.target.value },
+                      })
+                    }
+                    className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white font-mono focus:border-sky-500 focus:outline-none"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block font-semibold text-slate-300 mb-1">IFSC Code</label>
+                    <input
+                      type="text"
+                      required
+                      value={paymentConfig.bankAccount?.ifscCode || ''}
+                      onChange={(e) =>
+                        setPaymentConfig({
+                          ...paymentConfig,
+                          bankAccount: { ...paymentConfig.bankAccount, ifscCode: e.target.value.toUpperCase() },
+                        })
+                      }
+                      className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white font-mono uppercase focus:border-sky-500 focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-semibold text-slate-300 mb-1">Branch</label>
+                    <input
+                      type="text"
+                      value={paymentConfig.bankAccount?.branch || ''}
+                      onChange={(e) =>
+                        setPaymentConfig({
+                          ...paymentConfig,
+                          bankAccount: { ...paymentConfig.bankAccount, branch: e.target.value },
+                        })
+                      }
+                      className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white focus:border-sky-500 focus:outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-slate-300 mb-1">Institution UPI ID / VPA</label>
+                  <input
+                    type="text"
+                    value={paymentConfig.bankAccount?.upiId || ''}
+                    onChange={(e) =>
+                      setPaymentConfig({
+                        ...paymentConfig,
+                        bankAccount: { ...paymentConfig.bankAccount, upiId: e.target.value },
+                      })
+                    }
+                    placeholder="e.g. school@hdfcbank"
+                    className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white font-mono focus:border-sky-500 focus:outline-none"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Action Bar */}
+          <div className="flex justify-end gap-3 pt-2">
+            <Button
+              variant="primary"
+              type="submit"
+              leftIcon={<Save className="w-4 h-4" />}
+              className="bg-emerald-600 hover:bg-emerald-500 shadow-lg shadow-emerald-950/20 font-bold px-6"
+            >
+              Save Payment Gateway & Banking Config
+            </Button>
+          </div>
+        </form>
       )}
 
       {/* User Invitation Modal */}

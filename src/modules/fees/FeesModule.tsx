@@ -544,9 +544,25 @@ export const FeesModule: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="md:col-span-2 p-6 rounded-3xl bg-slate-900/60 border border-slate-800">
               <h3 className="text-sm font-bold text-white mb-1">Fee Collection & Allocation Desk</h3>
-              <p className="text-xs text-slate-400 mb-5">
+              <p className="text-xs text-slate-400 mb-4">
                 Record student payment with multi-mode options and automated fee-head priority allocation.
               </p>
+
+              {currentTenant.paymentConfig && (
+                <div className="p-3 rounded-2xl bg-slate-950/80 border border-slate-800 flex items-center justify-between text-xs mb-4">
+                  <div className="flex items-center gap-2.5">
+                    <div className={`w-2.5 h-2.5 rounded-full ${currentTenant.paymentConfig.environment === 'LIVE' ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`} />
+                    <div>
+                      <span className="font-bold text-white">Merchant Gateway: </span>
+                      <span className="text-slate-300">{currentTenant.paymentConfig.provider} ({currentTenant.paymentConfig.environment} Mode)</span>
+                      <span className="text-slate-500 font-mono text-[11px] ml-2">ID: {currentTenant.paymentConfig.razorpayKeyId}</span>
+                    </div>
+                  </div>
+                  <div className="text-right text-[11px] text-slate-400 hidden sm:block">
+                    Direct Settlement: <span className="text-emerald-400 font-semibold">{currentTenant.paymentConfig.bankAccount.bankName}</span>
+                  </div>
+                </div>
+              )}
 
               <form onSubmit={handleExecutePayment} className="space-y-4 text-xs">
                 <div>
@@ -599,6 +615,20 @@ export const FeesModule: React.FC = () => {
                     </select>
                   </div>
                 </div>
+
+                {(paymentMethod === 'RAZORPAY_UPI' || paymentMethod === 'RAZORPAY_CARD') && (
+                  <div className="p-3.5 rounded-xl bg-sky-950/30 border border-sky-500/30 text-xs space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-sky-300">Live Gateway Checkout Mode</span>
+                      <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-sky-500/20 text-sky-300 font-semibold">
+                        {currentTenant.paymentConfig?.environment || 'TEST'} ACTIVE
+                      </span>
+                    </div>
+                    <p className="text-slate-300 text-[11px]">
+                      Payer will settle ₹{payAmount.toLocaleString()} directly into <strong>{currentTenant.paymentConfig?.bankAccount?.accountName || currentTenant.name}</strong> ({currentTenant.paymentConfig?.bankAccount?.bankName || 'School Bank'}).
+                    </p>
+                  </div>
+                )}
 
                 {paymentMethod === 'CHEQUE' && (
                   <div className="grid grid-cols-2 gap-4 p-3 rounded-xl bg-slate-950/60 border border-slate-800">

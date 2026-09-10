@@ -18,18 +18,11 @@ export const PublicHeader: React.FC<PublicHeaderProps> = ({ onNavigate, activeSe
           onClick={() => onNavigate('')}
           className="flex items-center gap-3 cursor-pointer select-none"
         >
-          <div className="p-2 rounded-xl bg-emerald-600 text-white shadow-xs">
-            <Building className="w-5 h-5" />
-          </div>
-          <div>
-            <div className="flex items-center gap-1.5">
-              <span className="font-bold text-slate-900 text-lg tracking-tight">EduNexus</span>
-              <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
-                ERP
-              </span>
-            </div>
-            <p className="text-[10px] text-slate-500 font-medium">School & Coaching Management</p>
-          </div>
+          <img
+            src="/assets/edunexus_logo.png"
+            alt="EduNexus ERP - Schools • Academies • Brighter Tomorrows"
+            className="h-9 w-auto object-contain"
+          />
         </div>
 
         {/* Desktop Navigation Links */}

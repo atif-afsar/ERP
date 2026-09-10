@@ -201,6 +201,26 @@ export interface TenantFeatureFlags {
   hostel: boolean;
 }
 
+export interface TenantPaymentConfig {
+  provider: 'RAZORPAY' | 'STRIPE' | 'MANUAL';
+  environment: 'TEST' | 'LIVE';
+  razorpayKeyId?: string;
+  razorpayKeySecret?: string;
+  webhookSecret?: string;
+  allowCashAtCounter: boolean;
+  allowUpi: boolean;
+  allowCards: boolean;
+  allowNetBanking: boolean;
+  bankAccount: {
+    accountName: string;
+    accountNumber: string;
+    bankName: string;
+    ifscCode: string;
+    branch: string;
+    upiId?: string;
+  };
+}
+
 export interface TenantConfig {
   id: string;
   name: string;
@@ -224,6 +244,7 @@ export interface TenantConfig {
   features: TenantFeatureFlags;
   planName: string;
   subscriptionRenewalDate: string;
+  paymentConfig?: TenantPaymentConfig;
 }
 
 export type AuthState = 

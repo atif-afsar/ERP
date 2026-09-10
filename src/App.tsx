@@ -34,7 +34,7 @@ import { ApiExplorerModule } from './modules/apiExplorer/ApiExplorerModule';
 import { SchemaExplorerModule } from './modules/schemaExplorer/SchemaExplorerModule';
 import { RolesMatrixModule } from './modules/rolesMatrix/RolesMatrixModule';
 import { StaffModule } from './modules/staff/StaffModule';
-import { AiAssistantModal } from './modules/ai/AiAssistantModal';
+import { GlobalAiAssistantBot } from './components/ai/GlobalAiAssistantBot';
 import { LandingPage } from './modules/public/LandingPage';
 import { OnboardingWizard } from './modules/onboarding/OnboardingWizard';
 import { SuperAdminShell } from './modules/superadmin/SuperAdminShell';
@@ -169,74 +169,7 @@ const MainRouter: React.FC = () => {
     routeState.path === 'pricing' || 
     routeState.path === 'how-it-works';
 
-  if (isPublicRoute) {
-    return <LandingPage onNavigate={navigateTo} subRoute={routeState.fullPath} />;
-  }
-
-  // 2. SELF-ONBOARDING WIZARD (Docs 63 & 65)
-  if (routeState.path === 'signup' || routeState.path === 'onboarding') {
-    return (
-      <OnboardingWizard
-        onComplete={(newTenant) => {
-          switchTenant(newTenant.id);
-          navigateTo('app/dashboard');
-        }}
-        onCancel={() => navigateTo('')}
-      />
-    );
-  }
-
-  // 3. AUTHENTICATION & LOGIN (Doc 63)
-  if (routeState.path === 'login' || !isAuthenticated) {
-    return (
-      <>
-        <LoginView
-          onLoginSuccess={() => {
-            const redirect = routeState.query.redirect;
-            if (redirect && redirect.startsWith('/') && !redirect.includes('://')) {
-              navigateTo(redirect.slice(1));
-            } else {
-              navigateTo('app/dashboard');
-            }
-          }}
-          redirectUrl={routeState.query.redirect}
-        />
-
-        {/* Session Expired Modal if triggered */}
-        <SessionExpiredModal
-          isOpen={authState === 'SESSION_EXPIRED'}
-          onRenewSession={() => login(currentUser.id)}
-          onRedirectToLogin={() => navigateTo('login')}
-        />
-      </>
-    );
-  }
-
-  // 4. SUSPENDED TENANT STATE (Section 48)
-  if (authState === 'TENANT_SUSPENDED' && !isSuperAdmin) {
-    return <SuspendedTenantView tenantName={currentTenant.name} />;
-  }
-
-  // 5. SEPARATE SUPER ADMIN SURFACE (Doc 64)
-  if (routeState.path === 'super-admin') {
-    if (!isSuperAdmin) {
-      return (
-        <UnauthorizedCard
-          permission="tenants.manage"
-          onBackToDashboard={() => navigateTo('app/dashboard')}
-        />
-      );
-    }
-    return (
-      <SuperAdminShell
-        onNavigate={navigateTo}
-        activeSubRoute={routeState.subParam}
-        onOpenAi={() => setIsAiModalOpen(true)}
-      />
-    );
-  }
-
-  // 6. TENANT WORKSPACE & PORTALS (/app/*)
+  // TENANT WORKSPACE & PORTALS (/app/*)
   const activeModule = routeState.path === 'app' 
     ? (routeState.subParam || 'dashboard') 
     : (routeState.path || 'dashboard');
@@ -355,21 +288,100 @@ const MainRouter: React.FC = () => {
     }
   };
 
-  return (
-    <AppShell
-      activeNav={activeModule}
-      subTitle={routeState.subParam ? `Item ID: ${routeState.subParam}` : undefined}
-      onNavigate={(nav) => navigateTo(nav)}
-      onOpenAi={() => setIsAiModalOpen(true)}
-    >
-      {renderModule()}
+  const renderPageContent = () => {
+    // 1. PUBLIC MARKETING ROUTES (Doc 62)
+    if (isPublicRoute) {
+      return <LandingPage onNavigate={navigateTo} subRoute={routeState.fullPath} />;
+    }
 
-      {/* AI Assistant Modal */}
-      <AiAssistantModal
+    // 2. SELF-ONBOARDING WIZARD (Docs 63 & 65)
+    if (routeState.path === 'signup' || routeState.path === 'onboarding') {
+      return (
+        <OnboardingWizard
+          onComplete={(newTenant) => {
+            switchTenant(newTenant.id);
+            navigateTo('app/dashboard');
+          }}
+          onCancel={() => navigateTo('')}
+        />
+      );
+    }
+
+    // 3. AUTHENTICATION & LOGIN (Doc 63)
+    if (routeState.path === 'login' || !isAuthenticated) {
+      return (
+        <>
+          <LoginView
+            onLoginSuccess={() => {
+              const redirect = routeState.query.redirect;
+              if (redirect && redirect.startsWith('/') && !redirect.includes('://')) {
+                navigateTo(redirect.slice(1));
+              } else {
+                navigateTo('app/dashboard');
+              }
+            }}
+            redirectUrl={routeState.query.redirect}
+          />
+
+          {/* Session Expired Modal if triggered */}
+          <SessionExpiredModal
+            isOpen={authState === 'SESSION_EXPIRED'}
+            onRenewSession={() => login(currentUser.id)}
+            onRedirectToLogin={() => navigateTo('login')}
+          />
+        </>
+      );
+    }
+
+    // 4. SUSPENDED TENANT STATE (Section 48)
+    if (authState === 'TENANT_SUSPENDED' && !isSuperAdmin) {
+      return <SuspendedTenantView tenantName={currentTenant.name} />;
+    }
+
+    // 5. SEPARATE SUPER ADMIN SURFACE (Doc 64)
+    if (routeState.path === 'super-admin') {
+      if (!isSuperAdmin) {
+        return (
+          <UnauthorizedCard
+            permission="tenants.manage"
+            onBackToDashboard={() => navigateTo('app/dashboard')}
+          />
+        );
+      }
+      return (
+        <SuperAdminShell
+          onNavigate={navigateTo}
+          activeSubRoute={routeState.subParam}
+          onOpenAi={() => setIsAiModalOpen(true)}
+        />
+      );
+    }
+
+    // 6. TENANT WORKSPACE & PORTALS (/app/*)
+    return (
+      <AppShell
+        activeNav={activeModule}
+        subTitle={routeState.subParam ? `Item ID: ${routeState.subParam}` : undefined}
+        onNavigate={(nav) => navigateTo(nav)}
+        onOpenAi={() => setIsAiModalOpen(true)}
+      >
+        {renderModule()}
+      </AppShell>
+    );
+  };
+
+  return (
+    <>
+      {renderPageContent()}
+
+      {/* Universal Floating AI Assistant Bot - accessible everywhere for anyone */}
+      <GlobalAiAssistantBot
+        onNavigate={navigateTo}
         isOpen={isAiModalOpen}
+        onOpen={() => setIsAiModalOpen(true)}
         onClose={() => setIsAiModalOpen(false)}
       />
-    </AppShell>
+    </>
   );
 };
 
