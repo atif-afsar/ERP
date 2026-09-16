@@ -288,20 +288,19 @@ export const TransportModule: React.FC = () => {
       )}
 
       {/* Header Banner */}
-      <div className="no-print p-6 rounded-3xl bg-slate-900/80 border border-slate-800 backdrop-blur-xl relative overflow-hidden shadow-2xl">
-        <div className="absolute -right-10 -bottom-10 w-80 h-80 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
+      <div className="no-print p-5 sm:p-6 rounded-2xl bg-white border border-slate-200/90 shadow-xs relative overflow-hidden">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-10">
           <div>
             <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-2xl bg-gradient-to-tr from-indigo-500/20 to-blue-600/20 border border-indigo-500/30 text-indigo-400 shadow-md shadow-indigo-500/10">
-                <Bus className="w-6 h-6" />
+              <div className="p-2.5 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-700 shadow-2xs">
+                <Bus className="w-5 h-5" />
               </div>
               <div>
                 <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
                   Transport & Fleet Management
-                  <span className="text-[11px] font-mono px-2.5 py-0.5 rounded-full bg-indigo-50 border border-indigo-200 text-indigo-700">
-                    Doc 58 Canonical
-                  </span>
+                  <Badge variant="blue" size="sm" dot>
+                    Fleet Logistics
+                  </Badge>
                 </h1>
                 <p className="text-xs text-slate-500 mt-0.5">
                   Institutional vehicle fleet, driver licenses, route stops, passenger seating capacity limits, and trip logs.
@@ -310,7 +309,7 @@ export const TransportModule: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2.5">
             <Button
               variant="outline"
               size="sm"
@@ -324,7 +323,7 @@ export const TransportModule: React.FC = () => {
               size="sm"
               leftIcon={<Plus className="w-4 h-4" />}
               onClick={() => setIsEnrollModalOpen(true)}
-              className="bg-indigo-600 hover:bg-indigo-500 shadow-lg shadow-indigo-950/20"
+              className="bg-indigo-600 hover:bg-indigo-500 shadow-xs"
             >
               Allocate Student to Route
             </Button>
@@ -332,7 +331,7 @@ export const TransportModule: React.FC = () => {
         </div>
 
         {/* Tabs Navigation */}
-        <div className="mt-6 pt-4 border-t border-slate-800/80">
+        <div className="mt-5 pt-4 border-t border-slate-100">
           <Tabs
             activeTab={activeTab}
             onChange={(tab: any) => setActiveTab(tab)}
@@ -349,30 +348,30 @@ export const TransportModule: React.FC = () => {
 
       {/* Overview Metrics */}
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-        <div className="glass-panel p-5 rounded-2xl border border-slate-800 space-y-1">
-          <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">Fleet Size</span>
-          <h3 className="text-2xl font-black text-white font-mono">{vehicles.length} Vehicles</h3>
-          <p className="text-[11px] text-slate-400">{totalFleetCapacity} total passenger seats</p>
+        <div className="p-5 rounded-2xl bg-white border border-slate-200/90 shadow-xs space-y-1">
+          <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">Fleet Size</span>
+          <h3 className="text-2xl font-bold text-slate-900 tabular-nums">{vehicles.length} Vehicles</h3>
+          <p className="text-[11px] text-slate-500">{totalFleetCapacity} total passenger seats</p>
         </div>
 
-        <div className="glass-panel p-5 rounded-2xl border border-slate-800 space-y-1">
-          <span className="text-xs font-semibold text-indigo-400 uppercase tracking-wider block">Enrolled Students</span>
-          <h3 className="text-2xl font-black text-indigo-400 font-mono">{totalAllocated} Allocated</h3>
-          <p className="text-[11px] text-slate-400">
+        <div className="p-5 rounded-2xl bg-white border border-slate-200/90 shadow-xs space-y-1">
+          <span className="text-xs font-semibold text-indigo-700 uppercase tracking-wider block">Enrolled Students</span>
+          <h3 className="text-2xl font-bold text-indigo-700 tabular-nums">{totalAllocated} Allocated</h3>
+          <p className="text-[11px] text-slate-500">
             Occupancy rate: {Math.round((totalAllocated / (totalFleetCapacity || 1)) * 100)}%
           </p>
         </div>
 
-        <div className="glass-panel p-5 rounded-2xl border border-slate-800 space-y-1">
-          <span className="text-xs font-semibold text-emerald-400 uppercase tracking-wider block">Commercial Drivers</span>
-          <h3 className="text-2xl font-black text-emerald-400 font-mono">{drivers.length} Verified</h3>
-          <p className="text-[11px] text-slate-400">100% Police verification compliant</p>
+        <div className="p-5 rounded-2xl bg-white border border-slate-200/90 shadow-xs space-y-1">
+          <span className="text-xs font-semibold text-emerald-700 uppercase tracking-wider block">Commercial Drivers</span>
+          <h3 className="text-2xl font-bold text-emerald-700 tabular-nums">{drivers.length} Verified</h3>
+          <p className="text-[11px] text-slate-500">100% Police verification compliant</p>
         </div>
 
-        <div className="glass-panel p-5 rounded-2xl border border-slate-800 space-y-1">
-          <span className="text-xs font-semibold text-amber-400 uppercase tracking-wider block">Fuel Consumption</span>
-          <h3 className="text-2xl font-black text-amber-400 font-mono">₹{totalFuelCost.toLocaleString('en-IN')}</h3>
-          <p className="text-[11px] text-slate-400">{fuelLogs.length} Refill entries recorded</p>
+        <div className="p-5 rounded-2xl bg-white border border-slate-200/90 shadow-xs space-y-1">
+          <span className="text-xs font-semibold text-amber-700 uppercase tracking-wider block">Fuel Consumption</span>
+          <h3 className="text-2xl font-bold text-amber-700 tabular-nums">₹{totalFuelCost.toLocaleString('en-IN')}</h3>
+          <p className="text-[11px] text-slate-500">{fuelLogs.length} Refill entries recorded</p>
         </div>
       </div>
 

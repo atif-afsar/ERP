@@ -284,46 +284,46 @@ export const AcademicsModule: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {isSchool
               ? classes.map((c) => (
-                  <div key={c.id} className="glass-panel p-5 rounded-2xl border border-slate-800 space-y-4">
+                  <div key={c.id} className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs space-y-4">
                     <div className="flex items-start justify-between">
                       <div>
-                        <h4 className="font-bold text-white text-base">{c.name}</h4>
-                        <p className="text-[11px] text-slate-400 font-mono mt-0.5">{c.sections.length} Active Sections</p>
+                        <h4 className="font-bold text-slate-900 text-base">{c.name}</h4>
+                        <p className="text-[11px] text-slate-500 font-mono mt-0.5">{c.sections.length} Active Sections</p>
                       </div>
                       <Badge variant="blue" size="sm">
                         {c.stream || 'General Curriculum'}
                       </Badge>
                     </div>
 
-                    <div className="space-y-2 pt-2 border-t border-slate-800">
+                    <div className="space-y-2 pt-3 border-t border-slate-100">
                       {c.sections.map((sec) => {
                         const mentor = staff.find((s) => s.id === sec.classTeacherId);
                         const enrolledCount = students.filter((s) => s.classId === c.id).length;
                         const capacityPct = Math.round((enrolledCount / sec.capacity) * 100);
 
                         return (
-                          <div key={sec.id} className="p-3 bg-slate-950 rounded-xl border border-slate-800/80 space-y-2 text-xs">
+                          <div key={sec.id} className="p-3.5 bg-slate-50 rounded-xl border border-slate-200/90 space-y-2 text-xs">
                             <div className="flex items-center justify-between">
-                              <span className="font-bold text-white">{sec.name}</span>
-                              <span className="font-mono text-[11px] text-slate-400">
+                              <span className="font-bold text-slate-900">{sec.name}</span>
+                              <span className="font-mono text-[11px] text-slate-600">
                                 {enrolledCount} / {sec.capacity} Seats
                               </span>
                             </div>
 
                             {/* Capacity Progress Bar */}
-                            <div className="w-full h-1.5 bg-slate-900 rounded-full overflow-hidden">
+                            <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
                               <div
                                 className={`h-full rounded-full transition-all ${
-                                  capacityPct >= 90 ? 'bg-amber-400' : 'bg-sky-400'
+                                  capacityPct >= 90 ? 'bg-amber-500' : 'bg-emerald-500'
                                 }`}
                                 style={{ width: `${Math.min(100, capacityPct)}%` }}
                               />
                             </div>
 
                             {mentor && (
-                              <p className="text-[10px] text-slate-400 flex items-center gap-1.5">
-                                <span className="text-slate-500">Mentor:</span>
-                                <span className="text-sky-300 font-medium">{mentor.name}</span>
+                              <p className="text-[11px] text-slate-500 flex items-center gap-1.5">
+                                <span>Mentor:</span>
+                                <span className="text-slate-800 font-semibold">{mentor.name}</span>
                               </p>
                             )}
                           </div>
@@ -333,24 +333,24 @@ export const AcademicsModule: React.FC = () => {
                   </div>
                 ))
               : batches.map((b) => (
-                  <div key={b.id} className="glass-panel p-5 rounded-2xl border border-slate-800 space-y-4">
+                  <div key={b.id} className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs space-y-4">
                     <div className="flex items-start justify-between">
                       <div>
-                        <h4 className="font-bold text-white text-base">{b.name}</h4>
-                        <p className="text-[11px] text-sky-400 font-medium mt-0.5">{b.roomNo}</p>
+                        <h4 className="font-bold text-slate-900 text-base">{b.name}</h4>
+                        <p className="text-[11px] text-emerald-700 font-semibold mt-0.5">{b.roomNo}</p>
                       </div>
                       <Badge variant="purple" size="sm">
                         {b.enrolledCount} / {b.capacity} Enrolled
                       </Badge>
                     </div>
 
-                    <div className="space-y-1.5 text-xs text-slate-300 font-mono">
+                    <div className="space-y-1.5 text-xs text-slate-600 font-mono">
                       <div className="flex items-center gap-2">
-                        <Clock className="w-3.5 h-3.5 text-slate-500" />
+                        <Clock className="w-3.5 h-3.5 text-slate-400" />
                         <span>{b.schedule}</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Calendar className="w-3.5 h-3.5 text-slate-500" />
+                        <Calendar className="w-3.5 h-3.5 text-slate-400" />
                         <span>{b.startDate} to {b.endDate}</span>
                       </div>
                     </div>
@@ -362,11 +362,11 @@ export const AcademicsModule: React.FC = () => {
 
       {/* TAB 2: ACADEMIC SESSIONS & LIFECYCLE */}
       {activeTab === 'sessions' && (
-        <div className="glass-panel p-6 rounded-2xl border border-slate-800 space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+        <div className="bg-white p-6 rounded-2xl border border-slate-200/90 shadow-xs space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
             <div>
-              <h3 className="font-bold text-white text-base">Academic Session Timeline</h3>
-              <p className="text-xs text-slate-400 mt-0.5">
+              <h3 className="font-bold text-slate-900 text-base">Academic Session Timeline</h3>
+              <p className="text-xs text-slate-500 mt-0.5">
                 Multi-year academic periods with active institutional boundaries and enrollment stats.
               </p>
             </div>
@@ -378,12 +378,12 @@ export const AcademicsModule: React.FC = () => {
                 key={sess.id}
                 className={`p-5 rounded-2xl border transition-all ${
                   sess.status === 'ACTIVE'
-                    ? 'bg-sky-500/10 border-sky-500/40 shadow-lg shadow-sky-500/5'
-                    : 'bg-slate-950 border-slate-800'
+                    ? 'bg-emerald-50/40 border-emerald-300 shadow-2xs'
+                    : 'bg-white border-slate-200'
                 }`}
               >
                 <div className="flex items-center justify-between mb-3">
-                  <h4 className="font-bold text-white text-lg">{sess.name}</h4>
+                  <h4 className="font-bold text-slate-900 text-lg">{sess.name}</h4>
                   <Badge
                     variant={sess.status === 'ACTIVE' ? 'emerald' : sess.status === 'UPCOMING' ? 'blue' : 'slate'}
                     size="sm"
@@ -392,14 +392,14 @@ export const AcademicsModule: React.FC = () => {
                   </Badge>
                 </div>
 
-                <div className="space-y-2 text-xs text-slate-300 font-mono">
+                <div className="space-y-2 text-xs text-slate-600 font-mono">
                   <div className="flex items-center justify-between">
                     <span className="text-slate-500">Term Period:</span>
                     <span>{sess.startDate} to {sess.endDate}</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-slate-500">Active Students:</span>
-                    <span className="text-sky-400 font-bold">{sess.enrolledStudentsCount}</span>
+                    <span className="text-emerald-700 font-bold">{sess.enrolledStudentsCount}</span>
                   </div>
                 </div>
               </div>
@@ -410,11 +410,11 @@ export const AcademicsModule: React.FC = () => {
 
       {/* TAB 3: SUBJECT REPOSITORY */}
       {activeTab === 'subjects' && (
-        <div className="glass-panel p-6 rounded-2xl border border-slate-800 space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+        <div className="bg-white p-6 rounded-2xl border border-slate-200/90 shadow-xs space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
             <div>
-              <h3 className="font-bold text-white text-base">Subject Catalog & Disciplines</h3>
-              <p className="text-xs text-slate-400 mt-0.5">
+              <h3 className="font-bold text-slate-900 text-base">Subject Catalog & Disciplines</h3>
+              <p className="text-xs text-slate-500 mt-0.5">
                 Authorized academic subject codes, period loads, and passing grade criteria.
               </p>
             </div>
@@ -422,20 +422,20 @@ export const AcademicsModule: React.FC = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {SUBJECT_CATALOG.map((sub) => (
-              <div key={sub.id} className="p-4 bg-slate-950 rounded-2xl border border-slate-800 space-y-3">
+              <div key={sub.id} className="p-4 bg-slate-50/80 rounded-2xl border border-slate-200/90 space-y-3">
                 <div className="flex items-start justify-between">
                   <div>
-                    <h4 className="font-bold text-white text-sm">{sub.name}</h4>
-                    <span className="px-2 py-0.5 rounded bg-sky-500/10 text-sky-400 border border-sky-500/20 text-[10px] font-mono">
+                    <h4 className="font-bold text-slate-900 text-sm">{sub.name}</h4>
+                    <span className="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-mono font-semibold">
                       {sub.code}
                     </span>
                   </div>
                   <Badge variant="purple" size="sm">{sub.department}</Badge>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2 text-[11px] text-slate-300 font-mono pt-2 border-t border-slate-800/80">
-                  <div>Weekly Load: <span className="text-white font-bold">{sub.weeklyPeriods} Hrs</span></div>
-                  <div>Passing: <span className="text-emerald-400 font-bold">{sub.passingMarks} / {sub.maxMarks}</span></div>
+                <div className="grid grid-cols-2 gap-2 text-[11px] text-slate-600 font-mono pt-2 border-t border-slate-200/70">
+                  <div>Weekly Load: <span className="text-slate-900 font-bold">{sub.weeklyPeriods} Hrs</span></div>
+                  <div>Passing: <span className="text-emerald-700 font-bold">{sub.passingMarks} / {sub.maxMarks}</span></div>
                 </div>
               </div>
             ))}
@@ -445,14 +445,14 @@ export const AcademicsModule: React.FC = () => {
 
       {/* TAB 4: BULK PROMOTION WIZARD */}
       {activeTab === 'promotion' && (
-        <div className="glass-panel p-6 rounded-2xl border border-slate-800 space-y-6">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-4 border-b border-slate-800">
+        <div className="bg-white p-6 rounded-2xl border border-slate-200/90 shadow-xs space-y-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-4 border-b border-slate-100">
             <div>
-              <h3 className="font-bold text-white text-base flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-sky-400" />
+              <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-emerald-600" />
                 Student Promotion & Year-End Rollover Wizard
               </h3>
-              <p className="text-xs text-slate-400 mt-0.5">
+              <p className="text-xs text-slate-500 mt-0.5">
                 Bulk promote students to the next grade or batch with academic standing clearance and audit logs.
               </p>
             </div>
@@ -470,7 +470,7 @@ export const AcademicsModule: React.FC = () => {
 
           {/* Success Notification */}
           {promotionSuccessMsg && (
-            <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-emerald-300 text-xs flex items-center gap-2 animate-fade-in">
+            <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-emerald-700 text-xs flex items-center gap-2 animate-fade-in">
               <CheckCircle2 className="w-4 h-4" />
               <span>{promotionSuccessMsg}</span>
             </div>
@@ -479,14 +479,14 @@ export const AcademicsModule: React.FC = () => {
           {/* Step 1 & 2 Selectors */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-1 text-xs">
-              <label className="text-slate-400 font-semibold">1. Source {getLabel('group')} (Current):</label>
+              <label className="text-slate-600 font-semibold">1. Source {getLabel('group')} (Current):</label>
               <select
                 value={sourceClassId}
                 onChange={(e) => {
                   setSourceClassId(e.target.value);
                   setSelectedStudentIdsForPromotion([]);
                 }}
-                className="w-full p-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white font-semibold"
+                className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 font-semibold focus:bg-white focus:outline-none focus:border-emerald-500"
               >
                 {classes.map((c) => (
                   <option key={c.id} value={c.id}>
@@ -497,11 +497,11 @@ export const AcademicsModule: React.FC = () => {
             </div>
 
             <div className="space-y-1 text-xs">
-              <label className="text-slate-400 font-semibold">2. Target Destination {getLabel('group')}:</label>
+              <label className="text-slate-600 font-semibold">2. Target Destination {getLabel('group')}:</label>
               <select
                 value={destClassId}
                 onChange={(e) => setDestClassId(e.target.value)}
-                className="w-full p-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white font-semibold"
+                className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 font-semibold focus:bg-white focus:outline-none focus:border-emerald-500"
               >
                 {classes.map((c) => (
                   <option key={c.id} value={c.id}>
@@ -512,11 +512,11 @@ export const AcademicsModule: React.FC = () => {
             </div>
 
             <div className="space-y-1 text-xs">
-              <label className="text-slate-400 font-semibold">3. Target Academic Session:</label>
+              <label className="text-slate-600 font-semibold">3. Target Academic Session:</label>
               <select
                 value={targetSession}
                 onChange={(e) => setTargetSession(e.target.value)}
-                className="w-full p-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white font-semibold"
+                className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 font-semibold focus:bg-white focus:outline-none focus:border-emerald-500"
               >
                 <option value="2026–2027">2026–2027 (Active Session)</option>
                 <option value="2027–2028">2027–2028 (Upcoming Session)</option>
@@ -527,7 +527,7 @@ export const AcademicsModule: React.FC = () => {
           {/* Student Promotion Candidates Table */}
           <div className="space-y-3 pt-2">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-white uppercase tracking-wider">
+              <span className="text-xs font-bold text-slate-800 uppercase tracking-wider">
                 Promotion Candidates in Source Group ({sourceStudents.length} students)
               </span>
               <Button variant="outline" size="sm" onClick={handleSelectAllStudentsForPromotion}>
@@ -535,10 +535,10 @@ export const AcademicsModule: React.FC = () => {
               </Button>
             </div>
 
-            <div className="glass-panel rounded-2xl border border-slate-800 overflow-hidden">
+            <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden">
               <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs text-slate-300">
-                  <thead className="bg-slate-950 text-slate-400 uppercase text-[10px] border-b border-slate-800 font-mono">
+                <table className="w-full text-left text-xs text-slate-700">
+                  <thead className="bg-slate-50/90 text-slate-600 uppercase text-[10px] border-b border-slate-200 font-semibold">
                     <tr>
                       <th className="p-3 w-10 text-center">Select</th>
                       <th className="p-3">Student Name</th>
@@ -548,7 +548,7 @@ export const AcademicsModule: React.FC = () => {
                       <th className="p-3">Eligibility</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-800/60">
+                  <tbody className="divide-y divide-slate-100">
                     {sourceStudents.map((stu) => {
                       const isSelected = selectedStudentIdsForPromotion.includes(stu.id);
 
@@ -557,7 +557,7 @@ export const AcademicsModule: React.FC = () => {
                           key={stu.id}
                           onClick={() => handleToggleStudentPromotion(stu.id)}
                           className={`cursor-pointer transition-colors ${
-                            isSelected ? 'bg-sky-500/10' : 'hover:bg-slate-800/30'
+                            isSelected ? 'bg-emerald-50/50' : 'hover:bg-slate-50/60'
                           }`}
                         >
                           <td className="p-3 text-center">
@@ -565,18 +565,18 @@ export const AcademicsModule: React.FC = () => {
                               type="checkbox"
                               checked={isSelected}
                               onChange={() => {}}
-                              className="rounded border-slate-700 text-sky-500 focus:ring-0"
+                              className="rounded border-slate-300 text-emerald-600 focus:ring-0"
                             />
                           </td>
 
-                          <td className="p-3 font-bold text-white flex items-center gap-2">
-                            <img src={stu.photoUrl} alt="" className="w-6 h-6 rounded-full object-cover" />
+                          <td className="p-3 font-semibold text-slate-900 flex items-center gap-2">
+                            <img src={stu.photoUrl} alt="" className="w-6 h-6 rounded-full object-cover border border-slate-200" />
                             <span>{stu.firstName} {stu.lastName}</span>
                           </td>
 
-                          <td className="p-3 font-mono text-sky-400">{stu.admissionNo}</td>
-                          <td className="p-3 font-mono text-purple-300 font-bold">85.4% (Pass)</td>
-                          <td className="p-3 font-mono text-emerald-400 font-bold">92.0% (Clear)</td>
+                          <td className="p-3 font-mono text-emerald-700 font-semibold">{stu.admissionNo}</td>
+                          <td className="p-3 font-mono text-purple-700 font-bold">85.4% (Pass)</td>
+                          <td className="p-3 font-mono text-emerald-700 font-bold">92.0% (Clear)</td>
 
                           <td className="p-3">
                             <Badge variant="emerald" size="sm">
@@ -603,7 +603,7 @@ export const AcademicsModule: React.FC = () => {
       >
         <form onSubmit={handleCreateGroup} className="space-y-4 text-xs">
           <div className="space-y-1">
-            <label className="text-slate-400 font-semibold">
+            <label className="text-slate-700 font-semibold">
               {isSchool ? 'Class / Grade Name *' : 'Batch Title *'}
             </label>
             <input
@@ -612,45 +612,45 @@ export const AcademicsModule: React.FC = () => {
               value={newGroupName}
               onChange={(e) => setNewGroupName(e.target.value)}
               placeholder={isSchool ? 'e.g. Class 11 - Commerce' : 'e.g. JEE 2027 Evening Booster'}
-              className="w-full p-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white"
+              className="w-full p-2.5 bg-white border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:border-emerald-500"
             />
           </div>
 
           <div className="space-y-1">
-            <label className="text-slate-400 font-semibold">Maximum Student Capacity</label>
+            <label className="text-slate-700 font-semibold">Maximum Student Capacity</label>
             <input
               type="number"
               value={newCapacity}
               onChange={(e) => setNewCapacity(e.target.value)}
-              className="w-full p-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white font-mono"
+              className="w-full p-2.5 bg-white border border-slate-200 rounded-xl text-slate-900 font-mono focus:outline-none focus:border-emerald-500"
             />
           </div>
 
           {isCoaching && (
             <>
               <div className="space-y-1">
-                <label className="text-slate-400 font-semibold">Weekly Schedule</label>
+                <label className="text-slate-700 font-semibold">Weekly Schedule</label>
                 <input
                   type="text"
                   value={newSchedule}
                   onChange={(e) => setNewSchedule(e.target.value)}
-                  className="w-full p-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white font-mono"
+                  className="w-full p-2.5 bg-white border border-slate-200 rounded-xl text-slate-900 font-mono focus:outline-none focus:border-emerald-500"
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="text-slate-400 font-semibold">Room / Lab Allocation</label>
+                <label className="text-slate-700 font-semibold">Room / Lab Allocation</label>
                 <input
                   type="text"
                   value={newRoom}
                   onChange={(e) => setNewRoom(e.target.value)}
-                  className="w-full p-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white"
+                  className="w-full p-2.5 bg-white border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:border-emerald-500"
                 />
               </div>
             </>
           )}
 
-          <div className="flex justify-end gap-2 pt-2 border-t border-slate-800">
+          <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
             <Button variant="outline" type="button" onClick={() => setIsAddModalOpen(false)}>
               Cancel
             </Button>

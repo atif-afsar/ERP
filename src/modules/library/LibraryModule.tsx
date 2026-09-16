@@ -334,20 +334,19 @@ export const LibraryModule: React.FC = () => {
       )}
 
       {/* Header Banner */}
-      <div className="no-print p-6 rounded-3xl bg-slate-900/80 border border-slate-800 backdrop-blur-xl relative overflow-hidden shadow-2xl">
-        <div className="absolute -right-10 -bottom-10 w-80 h-80 bg-teal-500/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
+      <div className="no-print p-5 sm:p-6 rounded-2xl bg-white border border-slate-200/90 shadow-xs relative overflow-hidden">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-10">
           <div>
             <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-2xl bg-gradient-to-tr from-teal-500/20 to-emerald-600/20 border border-teal-500/30 text-teal-400 shadow-md shadow-teal-500/10">
-                <BookOpen className="w-6 h-6" />
+              <div className="p-2.5 rounded-xl bg-teal-50 border border-teal-200 text-teal-700 shadow-2xs">
+                <BookOpen className="w-5 h-5" />
               </div>
               <div>
                 <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
                   Library Management
-                  <span className="text-[11px] font-mono px-2.5 py-0.5 rounded-full bg-teal-50 border border-teal-200 text-teal-700">
-                    Doc 57 Canonical
-                  </span>
+                  <Badge variant="emerald" size="sm" dot>
+                    Catalog & OPAC
+                  </Badge>
                 </h1>
                 <p className="text-xs text-slate-500 mt-0.5">
                   Bibliographic catalog (OPAC), accession copy barcodes, book circulation desk, member loan limits, and overdue fines.
@@ -356,7 +355,7 @@ export const LibraryModule: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2.5">
             <Button
               variant="outline"
               size="sm"
@@ -370,7 +369,7 @@ export const LibraryModule: React.FC = () => {
               size="sm"
               leftIcon={<BookmarkCheck className="w-4 h-4" />}
               onClick={() => setIsIssueModalOpen(true)}
-              className="bg-teal-600 hover:bg-teal-500 shadow-lg shadow-teal-950/20"
+              className="bg-teal-600 hover:bg-teal-500 shadow-xs text-white"
             >
               Issue Book
             </Button>
@@ -378,7 +377,7 @@ export const LibraryModule: React.FC = () => {
         </div>
 
         {/* Tabs Navigation */}
-        <div className="mt-6 pt-4 border-t border-slate-800/80">
+        <div className="mt-5 pt-4 border-t border-slate-100">
           <Tabs
             activeTab={activeTab}
             onChange={(tab: any) => setActiveTab(tab)}
@@ -395,28 +394,28 @@ export const LibraryModule: React.FC = () => {
 
       {/* KPI Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-        <div className="glass-panel p-5 rounded-2xl border border-slate-800 space-y-1">
-          <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">Total Titles</span>
-          <h3 className="text-2xl font-black text-white font-mono">{titles.length} Titles</h3>
-          <p className="text-[11px] text-slate-400">{copies.length} Total physical copies cataloged</p>
+        <div className="p-5 rounded-2xl bg-white border border-slate-200/90 shadow-xs space-y-1">
+          <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">Total Titles</span>
+          <h3 className="text-2xl font-bold text-slate-900 tabular-nums">{titles.length} Titles</h3>
+          <p className="text-[11px] text-slate-500">{copies.length} Total physical copies cataloged</p>
         </div>
 
-        <div className="glass-panel p-5 rounded-2xl border border-slate-800 space-y-1">
-          <span className="text-xs font-semibold text-emerald-400 uppercase tracking-wider block">Available Copies</span>
-          <h3 className="text-2xl font-black text-emerald-400 font-mono">{totalAvailableCopies} Available</h3>
-          <p className="text-[11px] text-slate-400">Ready on shelves for borrowing</p>
+        <div className="p-5 rounded-2xl bg-white border border-slate-200/90 shadow-xs space-y-1">
+          <span className="text-xs font-semibold text-emerald-700 uppercase tracking-wider block">Available Copies</span>
+          <h3 className="text-2xl font-bold text-emerald-700 tabular-nums">{totalAvailableCopies} Available</h3>
+          <p className="text-[11px] text-slate-500">Ready on shelves for borrowing</p>
         </div>
 
-        <div className="glass-panel p-5 rounded-2xl border border-slate-800 space-y-1">
-          <span className="text-xs font-semibold text-sky-400 uppercase tracking-wider block">Active Loans</span>
-          <h3 className="text-2xl font-black text-sky-400 font-mono">{totalIssuedCopies} In Circulation</h3>
-          <p className="text-[11px] text-slate-400">Borrowed by students & faculty</p>
+        <div className="p-5 rounded-2xl bg-white border border-slate-200/90 shadow-xs space-y-1">
+          <span className="text-xs font-semibold text-teal-700 uppercase tracking-wider block">Active Loans</span>
+          <h3 className="text-2xl font-bold text-teal-700 tabular-nums">{totalIssuedCopies} In Circulation</h3>
+          <p className="text-[11px] text-slate-500">Borrowed by students & faculty</p>
         </div>
 
-        <div className="glass-panel p-5 rounded-2xl border border-slate-800 space-y-1">
-          <span className="text-xs font-semibold text-rose-400 uppercase tracking-wider block">Overdue Loans</span>
-          <h3 className="text-2xl font-black text-rose-400 font-mono">{overdueCount} Overdue</h3>
-          <p className="text-[11px] text-rose-400/80 font-mono">₹{totalUnpaidFines} Outstanding fines</p>
+        <div className="p-5 rounded-2xl bg-white border border-slate-200/90 shadow-xs space-y-1">
+          <span className="text-xs font-semibold text-rose-700 uppercase tracking-wider block">Overdue Loans</span>
+          <h3 className="text-2xl font-bold text-rose-700 tabular-nums">{overdueCount} Overdue</h3>
+          <p className="text-[11px] text-rose-600 font-medium">₹{totalUnpaidFines.toLocaleString('en-IN')} Outstanding fines</p>
         </div>
       </div>
 

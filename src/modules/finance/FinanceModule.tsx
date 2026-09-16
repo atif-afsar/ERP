@@ -369,20 +369,19 @@ export const FinanceModule: React.FC = () => {
       )}
 
       {/* Header Banner */}
-      <div className="no-print p-6 rounded-3xl bg-slate-900/80 border border-slate-800 backdrop-blur-xl relative overflow-hidden shadow-2xl">
-        <div className="absolute -right-10 -bottom-10 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
+      <div className="no-print p-5 sm:p-6 rounded-2xl bg-white border border-slate-200/90 shadow-xs relative overflow-hidden">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-10">
           <div>
             <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-2xl bg-gradient-to-tr from-purple-500/20 to-indigo-600/20 border border-purple-500/30 text-purple-400 shadow-md shadow-purple-500/10">
-                <Building className="w-6 h-6" />
+              <div className="p-2.5 rounded-xl bg-purple-50 border border-purple-200 text-purple-700 shadow-2xs">
+                <Building className="w-5 h-5" />
               </div>
               <div>
                 <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
                   Expenses, Finance & Accounting
-                  <span className="text-[11px] font-mono px-2.5 py-0.5 rounded-full bg-purple-50 border border-purple-200 text-purple-700">
-                    Doc 54 Canonical
-                  </span>
+                  <Badge variant="purple" size="sm" dot>
+                    Active Fiscal Ledger
+                  </Badge>
                 </h1>
                 <p className="text-xs text-slate-500 mt-0.5">
                   Institutional operational expenses, vendor bills payable, cash & bank treasury, and real-time P&L statements.
@@ -391,11 +390,11 @@ export const FinanceModule: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2.5">
             <Button
               variant="outline"
               size="sm"
-              leftIcon={<ArrowRightLeft className="w-4 h-4" />}
+              leftIcon={<ArrowRightLeft className="w-4 h-4 text-slate-600" />}
               onClick={() => setIsTransferModalOpen(true)}
             >
               Account Transfer
@@ -405,7 +404,7 @@ export const FinanceModule: React.FC = () => {
               size="sm"
               leftIcon={<Plus className="w-4 h-4" />}
               onClick={() => setIsAddExpenseModalOpen(true)}
-              className="bg-purple-600 hover:bg-purple-500 shadow-lg shadow-purple-950/20"
+              className="bg-purple-600 hover:bg-purple-500 shadow-xs"
             >
               Record Expense
             </Button>
@@ -413,7 +412,7 @@ export const FinanceModule: React.FC = () => {
         </div>
 
         {/* Tabs Navigation */}
-        <div className="mt-6 pt-4 border-t border-slate-800/80">
+        <div className="mt-5 pt-4 border-t border-slate-100">
           <Tabs
             activeTab={activeTab}
             onChange={(tab: any) => setActiveTab(tab)}
@@ -429,54 +428,66 @@ export const FinanceModule: React.FC = () => {
       </div>
 
       {/* Financial Health KPI Overview */}
-      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-        <div className="glass-panel p-5 rounded-2xl border border-slate-800 space-y-1">
-          <span className="text-xs font-semibold text-emerald-400 uppercase tracking-wider block">
-            Realized Fee Revenue
-          </span>
-          <h3 className="text-2xl font-black text-emerald-400 font-mono">
-            ₹{totalFeeRevenueRealized.toLocaleString()}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs space-y-1">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">
+              Realized Fee Revenue
+            </span>
+            <span className="w-2 h-2 rounded-full bg-emerald-500" />
+          </div>
+          <h3 className="text-2xl font-bold text-slate-900 tabular-nums">
+            ₹{totalFeeRevenueRealized.toLocaleString('en-IN')}
           </h3>
-          <p className="text-[11px] text-slate-400">Total student fee collections</p>
+          <p className="text-[11px] text-emerald-700 font-medium">Total student fee collections</p>
         </div>
 
-        <div className="glass-panel p-5 rounded-2xl border border-slate-800 space-y-1">
-          <span className="text-xs font-semibold text-rose-400 uppercase tracking-wider block">
-            Operating Expenses Paid
-          </span>
-          <h3 className="text-2xl font-black text-rose-400 font-mono">
-            ₹{totalExpensesPaid.toLocaleString()}
+        <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs space-y-1">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">
+              Operating Expenses Paid
+            </span>
+            <span className="w-2 h-2 rounded-full bg-rose-500" />
+          </div>
+          <h3 className="text-2xl font-bold text-slate-900 tabular-nums">
+            ₹{totalExpensesPaid.toLocaleString('en-IN')}
           </h3>
-          <p className="text-[11px] text-slate-400">₹{totalExpensesPending.toLocaleString()} pending approvals</p>
+          <p className="text-[11px] text-slate-500">₹{totalExpensesPending.toLocaleString('en-IN')} pending approvals</p>
         </div>
 
-        <div className="glass-panel p-5 rounded-2xl border border-slate-800 space-y-1">
-          <span className="text-xs font-semibold text-sky-400 uppercase tracking-wider block">
-            Net Operating Surplus
-          </span>
-          <h3 className={`text-2xl font-black font-mono ${netOperatingSurplus >= 0 ? 'text-sky-400' : 'text-rose-500'}`}>
-            ₹{netOperatingSurplus.toLocaleString()}
+        <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs space-y-1">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">
+              Net Operating Surplus
+            </span>
+            <span className={`w-2 h-2 rounded-full ${netOperatingSurplus >= 0 ? 'bg-emerald-500' : 'bg-rose-500'}`} />
+          </div>
+          <h3 className={`text-2xl font-bold tabular-nums ${netOperatingSurplus >= 0 ? 'text-emerald-700' : 'text-rose-600'}`}>
+            ₹{netOperatingSurplus.toLocaleString('en-IN')}
           </h3>
-          <p className="text-[11px] text-slate-400">Revenue minus expenses</p>
+          <p className="text-[11px] text-slate-500">Revenue minus expenses</p>
         </div>
 
-        <div className="glass-panel p-5 rounded-2xl border border-slate-800 space-y-1">
-          <span className="text-xs font-semibold text-purple-400 uppercase tracking-wider block">
-            Total Liquid Treasury
-          </span>
-          <h3 className="text-2xl font-black text-white font-mono">
-            ₹{totalLiquidCashBank.toLocaleString()}
+        <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs space-y-1">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">
+              Total Liquid Treasury
+            </span>
+            <span className="w-2 h-2 rounded-full bg-purple-500" />
+          </div>
+          <h3 className="text-2xl font-bold text-slate-900 tabular-nums">
+            ₹{totalLiquidCashBank.toLocaleString('en-IN')}
           </h3>
-          <p className="text-[11px] text-slate-400">Bank accounts + ₹{pettyCashBalance.toLocaleString()} Petty Cash</p>
+          <p className="text-[11px] text-slate-500">Bank accounts + ₹{pettyCashBalance.toLocaleString('en-IN')} petty cash</p>
         </div>
       </div>
 
       {/* ------------------------------------------------------------- */}
-      {/* TAB 1: EXPENSES REGISTER (Document 54 Section 5-10) */}
+      {/* TAB 1: EXPENSES REGISTER */}
       {/* ------------------------------------------------------------- */}
       {activeTab === 'expenses' && (
         <div className="space-y-6">
-          <div className="p-4 rounded-2xl bg-slate-900/60 border border-slate-800 flex flex-wrap items-center justify-between gap-4">
+          <div className="p-4 rounded-2xl bg-white border border-slate-200/90 shadow-xs flex flex-wrap items-center justify-between gap-4">
             <div className="relative max-w-sm flex-1">
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <input
@@ -484,16 +495,16 @@ export const FinanceModule: React.FC = () => {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Search by voucher, description or vendor..."
-                className="w-full pl-9 pr-4 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-purple-500"
+                className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-purple-500 focus:bg-white transition-colors"
               />
             </div>
 
             <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold text-slate-400">Category:</span>
+              <span className="text-xs font-semibold text-slate-500">Category:</span>
               <select
                 value={selectedCategoryFilter}
                 onChange={(e) => setSelectedCategoryFilter(e.target.value)}
-                className="px-3 py-1.5 rounded-xl text-xs bg-slate-950 border border-slate-800 text-white focus:outline-none"
+                className="px-3 py-1.5 rounded-xl text-xs bg-slate-50 border border-slate-200 text-slate-800 focus:outline-none focus:bg-white"
               >
                 <option value="ALL">All Expense Categories</option>
                 {categories.map((c) => (
@@ -506,10 +517,10 @@ export const FinanceModule: React.FC = () => {
           </div>
 
           {/* Expenses Ledger */}
-          <div className="p-6 rounded-3xl bg-slate-900/60 border border-slate-800">
+          <div className="p-5 sm:p-6 rounded-2xl bg-white border border-slate-200/90 shadow-xs overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs text-slate-300">
-                <thead className="bg-slate-950/60 text-slate-400 uppercase tracking-wider text-[10px] font-semibold border-b border-slate-800">
+              <table className="w-full text-left text-xs text-slate-700">
+                <thead className="bg-slate-50/90 text-slate-600 uppercase tracking-wider text-[10px] font-semibold border-b border-slate-200">
                   <tr>
                     <th className="py-3 px-4">Voucher No</th>
                     <th className="py-3 px-4">Date</th>
@@ -521,23 +532,23 @@ export const FinanceModule: React.FC = () => {
                     <th className="py-3 px-4 text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-800/60">
+                <tbody className="divide-y divide-slate-100">
                   {filteredExpenses.map((exp) => (
-                    <tr key={exp.id} className="hover:bg-slate-800/30 transition-colors">
-                      <td className="py-3 px-4 font-mono font-bold text-sky-400">{exp.voucherNo}</td>
-                      <td className="py-3 px-4 font-mono text-slate-400">{exp.date}</td>
+                    <tr key={exp.id} className="hover:bg-slate-50/60 transition-colors">
+                      <td className="py-3 px-4 font-mono font-bold text-purple-700">{exp.voucherNo}</td>
+                      <td className="py-3 px-4 font-mono text-slate-500">{exp.date}</td>
                       <td className="py-3 px-4">
-                        <span className="px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-300 text-[10px] font-semibold border border-purple-500/20">
+                        <span className="px-2 py-0.5 rounded-md bg-purple-50 text-purple-700 text-[10px] font-semibold border border-purple-200">
                           {exp.categoryName}
                         </span>
                       </td>
                       <td className="py-3 px-4">
-                        <span className="font-semibold text-white block">{exp.description}</span>
-                        <span className="text-[11px] text-slate-400">{exp.vendorName || 'General Supplier'}</span>
+                        <span className="font-semibold text-slate-900 block">{exp.description}</span>
+                        <span className="text-[11px] text-slate-500">{exp.vendorName || 'General Supplier'}</span>
                       </td>
-                      <td className="py-3 px-4 font-mono text-[11px] text-slate-300">{exp.paymentMethod}</td>
-                      <td className="py-3 px-4 text-center font-mono font-bold text-white">
-                        ₹{exp.totalAmount.toLocaleString()}
+                      <td className="py-3 px-4 font-mono text-[11px] text-slate-600">{exp.paymentMethod}</td>
+                      <td className="py-3 px-4 text-center font-bold text-slate-900 tabular-nums">
+                        ₹{exp.totalAmount.toLocaleString('en-IN')}
                       </td>
                       <td className="py-3 px-4 text-center">{renderExpenseBadge(exp.status)}</td>
                       <td className="py-3 px-4 text-right">
@@ -574,14 +585,14 @@ export const FinanceModule: React.FC = () => {
       )}
 
       {/* ------------------------------------------------------------- */}
-      {/* TAB 2: VENDORS & PAYABLES (Document 54 Section 21-24) */}
+      {/* TAB 2: VENDORS & PAYABLES */}
       {/* ------------------------------------------------------------- */}
       {activeTab === 'vendors' && (
         <div className="space-y-6">
           <div className="flex justify-between items-center">
             <div>
-              <h3 className="text-sm font-bold text-white">Suppliers & Vendor Bills Payable</h3>
-              <p className="text-xs text-slate-400">
+              <h3 className="text-sm font-bold text-slate-900">Suppliers & Vendor Bills Payable</h3>
+              <p className="text-xs text-slate-500">
                 Track supplier invoices, credit terms, and pending accounts payable.
               </p>
             </div>
@@ -601,24 +612,24 @@ export const FinanceModule: React.FC = () => {
               const totalDue = vendorBills.reduce((acc, b) => acc + b.dueAmount, 0);
 
               return (
-                <div key={v.id} className="p-5 rounded-3xl bg-slate-900/60 border border-slate-800 space-y-3">
+                <div key={v.id} className="p-5 rounded-2xl bg-white border border-slate-200/90 shadow-xs space-y-3">
                   <div className="flex justify-between items-start">
                     <div>
-                      <h4 className="font-bold text-white text-sm">{v.name}</h4>
-                      <p className="text-xs text-slate-400">Contact: {v.contactPerson}</p>
+                      <h4 className="font-bold text-slate-900 text-sm">{v.name}</h4>
+                      <p className="text-xs text-slate-500">Contact: {v.contactPerson}</p>
                     </div>
                     <Badge variant="purple">{v.category}</Badge>
                   </div>
 
-                  <div className="space-y-1 text-xs text-slate-300">
-                    <p>Phone: <span className="font-mono text-slate-400">{v.phone}</span></p>
-                    <p>GSTIN: <span className="font-mono text-slate-400">{v.gstin || 'Unregistered'}</span></p>
-                    <p>Credit Terms: <span className="font-semibold text-sky-400">{v.paymentTerms}</span></p>
+                  <div className="space-y-1 text-xs text-slate-600">
+                    <p>Phone: <span className="font-mono text-slate-500">{v.phone}</span></p>
+                    <p>GSTIN: <span className="font-mono text-slate-500">{v.gstin || 'Unregistered'}</span></p>
+                    <p>Credit Terms: <span className="font-semibold text-slate-800">{v.paymentTerms}</span></p>
                   </div>
 
-                  <div className="pt-3 border-t border-slate-800 flex justify-between items-center text-xs">
-                    <span className="text-slate-400">Pending Payables:</span>
-                    <span className="font-mono font-bold text-rose-400">₹{totalDue.toLocaleString()}</span>
+                  <div className="pt-3 border-t border-slate-100 flex justify-between items-center text-xs">
+                    <span className="text-slate-500">Pending Payables:</span>
+                    <span className="font-bold text-rose-600 tabular-nums">₹{totalDue.toLocaleString('en-IN')}</span>
                   </div>
                 </div>
               );
@@ -626,13 +637,13 @@ export const FinanceModule: React.FC = () => {
           </div>
 
           {/* Bills Ledger */}
-          <div className="p-6 rounded-3xl bg-slate-900/60 border border-slate-800">
-            <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-4">
+          <div className="p-5 sm:p-6 rounded-2xl bg-white border border-slate-200/90 shadow-xs overflow-hidden">
+            <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-4">
               Pending & Settled Vendor Invoices
             </h4>
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs text-slate-300">
-                <thead className="bg-slate-950/60 text-slate-400 uppercase tracking-wider text-[10px] font-semibold border-b border-slate-800">
+              <table className="w-full text-left text-xs text-slate-700">
+                <thead className="bg-slate-50/90 text-slate-600 uppercase tracking-wider text-[10px] font-semibold border-b border-slate-200">
                   <tr>
                     <th className="py-3 px-4">Bill No</th>
                     <th className="py-3 px-4">Vendor</th>
@@ -643,16 +654,16 @@ export const FinanceModule: React.FC = () => {
                     <th className="py-3 px-4 text-center">Status</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-800/60">
+                <tbody className="divide-y divide-slate-100">
                   {bills.map((b) => (
-                    <tr key={b.id} className="hover:bg-slate-800/30 transition-colors">
-                      <td className="py-3 px-4 font-mono font-bold text-white">{b.billNo}</td>
-                      <td className="py-3 px-4 font-semibold text-white">{b.vendorName}</td>
-                      <td className="py-3 px-4 font-mono text-slate-400">{b.dueDate}</td>
-                      <td className="py-3 px-4 text-slate-300">{b.category}</td>
-                      <td className="py-3 px-4 text-center font-mono font-bold">₹{b.amount.toLocaleString()}</td>
-                      <td className="py-3 px-4 text-center font-mono font-bold text-rose-400">
-                        ₹{b.dueAmount.toLocaleString()}
+                    <tr key={b.id} className="hover:bg-slate-50/60 transition-colors">
+                      <td className="py-3 px-4 font-mono font-bold text-slate-900">{b.billNo}</td>
+                      <td className="py-3 px-4 font-semibold text-slate-900">{b.vendorName}</td>
+                      <td className="py-3 px-4 font-mono text-slate-500">{b.dueDate}</td>
+                      <td className="py-3 px-4 text-slate-600">{b.category}</td>
+                      <td className="py-3 px-4 text-center font-bold text-slate-900 tabular-nums">₹{b.amount.toLocaleString('en-IN')}</td>
+                      <td className="py-3 px-4 text-center font-bold text-rose-600 tabular-nums">
+                        ₹{b.dueAmount.toLocaleString('en-IN')}
                       </td>
                       <td className="py-3 px-4 text-center">
                         <Badge variant={b.status === 'PAID' ? 'emerald' : b.status === 'PARTIAL' ? 'amber' : 'rose'}>
@@ -669,30 +680,30 @@ export const FinanceModule: React.FC = () => {
       )}
 
       {/* ------------------------------------------------------------- */}
-      {/* TAB 3: CASH & BANK TREASURY (Document 54 Section 26-28) */}
+      {/* TAB 3: CASH & BANK TREASURY */}
       {/* ------------------------------------------------------------- */}
       {activeTab === 'cash_bank' && (
         <div className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {bankAccounts.map((acc) => (
-              <div key={acc.id} className="p-6 rounded-3xl bg-slate-900/60 border border-slate-800 space-y-4">
+              <div key={acc.id} className="p-5 sm:p-6 rounded-2xl bg-white border border-slate-200/90 shadow-xs space-y-4">
                 <div className="flex justify-between items-start">
                   <div>
-                    <h4 className="font-bold text-white text-sm">{acc.accountName}</h4>
-                    <p className="text-xs text-slate-400">{acc.bankName} • {acc.branch}</p>
+                    <h4 className="font-bold text-slate-900 text-sm">{acc.accountName}</h4>
+                    <p className="text-xs text-slate-500">{acc.bankName} • {acc.branch}</p>
                   </div>
                   {acc.isPrimary && <Badge variant="purple">Primary</Badge>}
                 </div>
 
-                <div className="p-3 rounded-2xl bg-slate-950 border border-slate-800 space-y-1">
-                  <span className="text-[10px] uppercase font-semibold text-slate-400">Account Number</span>
-                  <p className="font-mono text-xs text-slate-200">{acc.accountNo} (IFSC: {acc.ifsc})</p>
+                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
+                  <span className="text-[10px] uppercase font-semibold text-slate-500">Account Number</span>
+                  <p className="font-mono text-xs text-slate-800">{acc.accountNo} (IFSC: {acc.ifsc})</p>
                 </div>
 
                 <div className="pt-2 flex justify-between items-center text-xs">
-                  <span className="text-slate-400 font-semibold">Available Liquidity:</span>
-                  <span className="font-mono font-black text-lg text-emerald-400">
-                    ₹{acc.balance.toLocaleString()}
+                  <span className="text-slate-500 font-semibold">Available Liquidity:</span>
+                  <span className="font-bold text-xl text-emerald-700 tabular-nums">
+                    ₹{acc.balance.toLocaleString('en-IN')}
                   </span>
                 </div>
               </div>
@@ -700,21 +711,21 @@ export const FinanceModule: React.FC = () => {
           </div>
 
           {/* Petty Cash Register */}
-          <div className="p-6 rounded-3xl bg-slate-900/60 border border-slate-800 space-y-4">
+          <div className="p-5 sm:p-6 rounded-2xl bg-white border border-slate-200/90 shadow-xs space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
-                <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                  <Coins className="w-4 h-4 text-amber-400" />
-                  Petty Cash Float & Imprest Vouchers (Section 28)
+                <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                  <Coins className="w-4 h-4 text-amber-500" />
+                  Petty Cash Float & Imprest Vouchers
                 </h3>
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-slate-500">
                   Daily small-value disbursements and top-up replenishments maintained by the accounting custodian.
                 </p>
               </div>
 
               <div className="flex items-center gap-3">
-                <span className="px-3 py-1.5 rounded-xl bg-slate-950 border border-slate-800 text-xs font-mono font-bold text-amber-400">
-                  Current Float: ₹{pettyCashBalance.toLocaleString()}
+                <span className="px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-200 text-xs font-bold text-amber-800 tabular-nums">
+                  Current Float: ₹{pettyCashBalance.toLocaleString('en-IN')}
                 </span>
                 <Button
                   variant="primary"
@@ -729,8 +740,8 @@ export const FinanceModule: React.FC = () => {
             </div>
 
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs text-slate-300">
-                <thead className="bg-slate-950/60 text-slate-400 uppercase tracking-wider text-[10px] font-semibold border-b border-slate-800">
+              <table className="w-full text-left text-xs text-slate-700">
+                <thead className="bg-slate-50/90 text-slate-600 uppercase tracking-wider text-[10px] font-semibold border-b border-slate-200">
                   <tr>
                     <th className="py-3 px-4">Voucher No</th>
                     <th className="py-3 px-4">Date</th>
@@ -741,17 +752,17 @@ export const FinanceModule: React.FC = () => {
                     <th className="py-3 px-4 text-right">Balance After</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-800/60">
+                <tbody className="divide-y divide-slate-100">
                   {pettyCash.map((p) => (
-                    <tr key={p.id} className="hover:bg-slate-800/30 transition-colors">
-                      <td className="py-3 px-4 font-mono font-bold text-amber-400">{p.voucherNo}</td>
-                      <td className="py-3 px-4 font-mono text-slate-400">{p.date}</td>
-                      <td className="py-3 px-4 text-slate-300">{p.category}</td>
-                      <td className="py-3 px-4 font-semibold text-white">{p.description}</td>
-                      <td className="py-3 px-4 text-slate-400">{p.custodian}</td>
-                      <td className="py-3 px-4 text-center font-mono font-bold text-rose-400">-₹{p.amount}</td>
-                      <td className="py-3 px-4 text-right font-mono font-bold text-slate-200">
-                        ₹{p.balanceAfter.toLocaleString()}
+                    <tr key={p.id} className="hover:bg-slate-50/60 transition-colors">
+                      <td className="py-3 px-4 font-mono font-bold text-amber-700">{p.voucherNo}</td>
+                      <td className="py-3 px-4 font-mono text-slate-500">{p.date}</td>
+                      <td className="py-3 px-4 text-slate-600">{p.category}</td>
+                      <td className="py-3 px-4 font-semibold text-slate-900">{p.description}</td>
+                      <td className="py-3 px-4 text-slate-500">{p.custodian}</td>
+                      <td className="py-3 px-4 text-center font-bold text-rose-600 tabular-nums">-₹{p.amount}</td>
+                      <td className="py-3 px-4 text-right font-bold text-slate-900 tabular-nums">
+                        ₹{p.balanceAfter.toLocaleString('en-IN')}
                       </td>
                     </tr>
                   ))}
@@ -763,7 +774,7 @@ export const FinanceModule: React.FC = () => {
       )}
 
       {/* ------------------------------------------------------------- */}
-      {/* TAB 4: DEPARTMENT BUDGETS (Document 54 Section 31 & 32) */}
+      {/* TAB 4: DEPARTMENT BUDGETS */}
       {/* ------------------------------------------------------------- */}
       {activeTab === 'budgets' && (
         <div className="space-y-6">
@@ -773,11 +784,11 @@ export const FinanceModule: React.FC = () => {
               const isWarning = utilPct >= b.alertThresholdPct;
 
               return (
-                <div key={b.id} className="p-6 rounded-3xl bg-slate-900/60 border border-slate-800 space-y-4">
+                <div key={b.id} className="p-5 sm:p-6 rounded-2xl bg-white border border-slate-200/90 shadow-xs space-y-4">
                   <div className="flex justify-between items-start">
                     <div>
-                      <h4 className="font-bold text-white text-sm">{b.department}</h4>
-                      <p className="text-xs text-slate-400 font-mono">Academic Year: {b.academicYear}</p>
+                      <h4 className="font-bold text-slate-900 text-sm">{b.department}</h4>
+                      <p className="text-xs text-slate-500 font-mono">Academic Year: {b.academicYear}</p>
                     </div>
                     {isWarning ? (
                       <Badge variant="rose">Threshold Alert: {utilPct}%</Badge>
@@ -788,24 +799,24 @@ export const FinanceModule: React.FC = () => {
 
                   {/* Progress Bar */}
                   <div className="space-y-1.5">
-                    <div className="w-full bg-slate-950 rounded-full h-3 overflow-hidden border border-slate-800">
+                    <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden border border-slate-200">
                       <div
                         className={`h-full rounded-full transition-all ${
-                          isWarning ? 'bg-gradient-to-r from-amber-500 to-rose-500' : 'bg-gradient-to-r from-emerald-500 to-teal-500'
+                          isWarning ? 'bg-amber-500' : 'bg-emerald-500'
                         }`}
                         style={{ width: `${Math.min(100, utilPct)}%` }}
                       />
                     </div>
-                    <div className="flex justify-between text-[11px] text-slate-400 font-mono">
-                      <span>Utilized: ₹{b.utilizedAmount.toLocaleString()}</span>
-                      <span>Cap: ₹{b.allocatedAmount.toLocaleString()}</span>
+                    <div className="flex justify-between text-[11px] text-slate-500 font-mono">
+                      <span>Utilized: ₹{b.utilizedAmount.toLocaleString('en-IN')}</span>
+                      <span>Cap: ₹{b.allocatedAmount.toLocaleString('en-IN')}</span>
                     </div>
                   </div>
 
-                  <div className="pt-2 border-t border-slate-800 flex justify-between items-center text-xs">
-                    <span className="text-slate-400 font-semibold">Remaining Headroom:</span>
-                    <span className="font-mono font-bold text-emerald-400">
-                      ₹{Math.max(0, b.allocatedAmount - b.utilizedAmount).toLocaleString()}
+                  <div className="pt-2 border-t border-slate-100 flex justify-between items-center text-xs">
+                    <span className="text-slate-500 font-semibold">Remaining Headroom:</span>
+                    <span className="font-bold text-emerald-700 tabular-nums">
+                      ₹{Math.max(0, b.allocatedAmount - b.utilizedAmount).toLocaleString('en-IN')}
                     </span>
                   </div>
                 </div>
@@ -816,18 +827,18 @@ export const FinanceModule: React.FC = () => {
       )}
 
       {/* ------------------------------------------------------------- */}
-      {/* TAB 5: FINANCIAL STATEMENTS (P&L & CASH FLOW) */}
+      {/* TAB 5: FINANCIAL STATEMENTS */}
       {/* ------------------------------------------------------------- */}
       {activeTab === 'statements' && (
         <div className="space-y-6">
-          <div className="print-container p-8 rounded-3xl bg-slate-900 border border-slate-800 space-y-6">
-            <div className="flex justify-between items-start border-b border-slate-800 pb-5">
+          <div className="print-container p-6 sm:p-8 rounded-2xl bg-white border border-slate-200/90 shadow-xs space-y-6">
+            <div className="flex justify-between items-start border-b border-slate-200 pb-5">
               <div>
-                <span className="text-[10px] font-bold uppercase tracking-widest text-purple-400 font-mono">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-purple-700 font-mono">
                   Financial Statement
                 </span>
-                <h2 className="text-xl font-black text-white">Profit & Loss (Income vs Expense)</h2>
-                <p className="text-xs text-slate-400">
+                <h2 className="text-xl font-bold text-slate-900">Profit & Loss (Income vs Expense)</h2>
+                <p className="text-xs text-slate-500">
                   Real-time operating statement for session {currentTenant.academicYear}
                 </p>
               </div>
@@ -840,51 +851,51 @@ export const FinanceModule: React.FC = () => {
 
             {/* Income Section */}
             <div className="space-y-2">
-              <h4 className="text-xs font-bold text-emerald-400 uppercase tracking-wider">A. Realized Incomes</h4>
-              <div className="space-y-1.5 text-xs text-slate-300">
-                <div className="flex justify-between py-1 border-b border-slate-800/60">
+              <h4 className="text-xs font-bold text-emerald-700 uppercase tracking-wider">A. Realized Incomes</h4>
+              <div className="space-y-1.5 text-xs text-slate-700">
+                <div className="flex justify-between py-1 border-b border-slate-100">
                   <span>Student Tuition & Course Fee Collections:</span>
-                  <span className="font-mono font-bold text-white">₹{totalFeeRevenueRealized.toLocaleString()}</span>
+                  <span className="font-bold text-slate-900 tabular-nums">₹{totalFeeRevenueRealized.toLocaleString('en-IN')}</span>
                 </div>
-                <div className="flex justify-between py-1 border-b border-slate-800/60">
+                <div className="flex justify-between py-1 border-b border-slate-100">
                   <span>Ancillary Income (Prospectus, Exam Kit & Facility):</span>
-                  <span className="font-mono font-bold text-white">₹45,000</span>
+                  <span className="font-bold text-slate-900 tabular-nums">₹45,000</span>
                 </div>
-                <div className="flex justify-between py-1.5 font-bold text-emerald-400">
+                <div className="flex justify-between py-1.5 font-bold text-emerald-700">
                   <span>Total Realized Income:</span>
-                  <span className="font-mono">₹{(totalFeeRevenueRealized + 45000).toLocaleString()}</span>
+                  <span className="tabular-nums">₹{(totalFeeRevenueRealized + 45000).toLocaleString('en-IN')}</span>
                 </div>
               </div>
             </div>
 
             {/* Expenses Section */}
             <div className="space-y-2 pt-2">
-              <h4 className="text-xs font-bold text-rose-400 uppercase tracking-wider">B. Operating Expenses</h4>
-              <div className="space-y-1.5 text-xs text-slate-300">
+              <h4 className="text-xs font-bold text-rose-700 uppercase tracking-wider">B. Operating Expenses</h4>
+              <div className="space-y-1.5 text-xs text-slate-700">
                 {categories.map((cat) => {
                   const catSpent = expenses
                     .filter((e) => e.categoryId === cat.id && e.status === 'PAID')
                     .reduce((a, b) => a + b.totalAmount, 0);
 
                   return (
-                    <div key={cat.id} className="flex justify-between py-1 border-b border-slate-800/60">
+                    <div key={cat.id} className="flex justify-between py-1 border-b border-slate-100">
                       <span>{cat.name}:</span>
-                      <span className="font-mono text-white">₹{catSpent.toLocaleString()}</span>
+                      <span className="font-medium text-slate-800 tabular-nums">₹{catSpent.toLocaleString('en-IN')}</span>
                     </div>
                   );
                 })}
-                <div className="flex justify-between py-1.5 font-bold text-rose-400">
+                <div className="flex justify-between py-1.5 font-bold text-rose-700">
                   <span>Total Operating Expenses:</span>
-                  <span className="font-mono">₹{totalExpensesPaid.toLocaleString()}</span>
+                  <span className="tabular-nums">₹{totalExpensesPaid.toLocaleString('en-IN')}</span>
                 </div>
               </div>
             </div>
 
             {/* Net Surplus Bar */}
-            <div className="pt-4 border-t-2 border-slate-700 flex justify-between items-center text-sm font-bold">
-              <span className="text-white uppercase tracking-wider">Net Operating Surplus / (Deficit):</span>
-              <span className={`font-mono text-lg ${netOperatingSurplus >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                ₹{(netOperatingSurplus + 45000).toLocaleString()}
+            <div className="pt-4 border-t-2 border-slate-200 flex justify-between items-center text-sm font-bold">
+              <span className="text-slate-900 uppercase tracking-wider">Net Operating Surplus / (Deficit):</span>
+              <span className={`text-lg tabular-nums ${netOperatingSurplus >= 0 ? 'text-emerald-700' : 'text-rose-600'}`}>
+                ₹{(netOperatingSurplus + 45000).toLocaleString('en-IN')}
               </span>
             </div>
           </div>
@@ -897,24 +908,24 @@ export const FinanceModule: React.FC = () => {
       <Modal isOpen={isAddExpenseModalOpen} onClose={() => setIsAddExpenseModalOpen(false)} title="Record Operational Expense">
         <form onSubmit={handleCreateExpense} className="space-y-4 text-xs">
           <div>
-            <label className="block font-semibold text-slate-300 mb-1">Expense Description</label>
+            <label className="block font-semibold text-slate-700 mb-1">Expense Description</label>
             <input
               type="text"
               required
               placeholder="e.g. Physics Optical Equipment Replenishment"
               value={expenseForm.description}
               onChange={(e) => setExpenseForm({ ...expenseForm, description: e.target.value })}
-              className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white"
+              className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-purple-500"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block font-semibold text-slate-300 mb-1">Category</label>
+              <label className="block font-semibold text-slate-700 mb-1">Category</label>
               <select
                 value={expenseForm.categoryId}
                 onChange={(e) => setExpenseForm({ ...expenseForm, categoryId: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white"
+                className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 focus:outline-none focus:border-purple-500"
               >
                 {categories.map((c) => (
                   <option key={c.id} value={c.id}>
@@ -924,35 +935,35 @@ export const FinanceModule: React.FC = () => {
               </select>
             </div>
             <div>
-              <label className="block font-semibold text-slate-300 mb-1">Total Amount (₹)</label>
+              <label className="block font-semibold text-slate-700 mb-1">Total Amount (₹)</label>
               <input
                 type="number"
                 required
                 min={100}
                 value={expenseForm.amount}
                 onChange={(e) => setExpenseForm({ ...expenseForm, amount: Number(e.target.value) })}
-                className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white font-mono"
+                className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 font-semibold focus:outline-none focus:border-purple-500"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block font-semibold text-slate-300 mb-1">Vendor / Payee</label>
+              <label className="block font-semibold text-slate-700 mb-1">Vendor / Payee</label>
               <input
                 type="text"
                 placeholder="e.g. National Stationery Press"
                 value={expenseForm.vendorName}
                 onChange={(e) => setExpenseForm({ ...expenseForm, vendorName: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white"
+                className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-purple-500"
               />
             </div>
             <div>
-              <label className="block font-semibold text-slate-300 mb-1">Disbursement Method</label>
+              <label className="block font-semibold text-slate-700 mb-1">Disbursement Method</label>
               <select
                 value={expenseForm.paymentMethod}
                 onChange={(e: any) => setExpenseForm({ ...expenseForm, paymentMethod: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white"
+                className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 focus:outline-none focus:border-purple-500"
               >
                 <option value="BANK_TRANSFER">Direct Bank Transfer (NEFT/RTGS)</option>
                 <option value="CHEQUE">Bank Cheque</option>
@@ -962,7 +973,7 @@ export const FinanceModule: React.FC = () => {
             </div>
           </div>
 
-          <div className="pt-3 border-t border-slate-800 flex justify-end gap-2">
+          <div className="pt-3 border-t border-slate-100 flex justify-end gap-2">
             <Button variant="ghost" size="sm" onClick={() => setIsAddExpenseModalOpen(false)}>
               Cancel
             </Button>
@@ -979,48 +990,48 @@ export const FinanceModule: React.FC = () => {
       <Modal isOpen={isTransferModalOpen} onClose={() => setIsTransferModalOpen(false)} title="Inter-Account Treasury Transfer">
         <form onSubmit={handleExecuteTransfer} className="space-y-4 text-xs">
           <div>
-            <label className="block font-semibold text-slate-300 mb-1">Source Account (Debit)</label>
+            <label className="block font-semibold text-slate-700 mb-1">Source Account (Debit)</label>
             <select
               value={transferForm.fromAccountId}
               onChange={(e) => setTransferForm({ ...transferForm, fromAccountId: e.target.value })}
-              className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white"
+              className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 focus:outline-none focus:border-purple-500"
             >
               {bankAccounts.map((a) => (
                 <option key={a.id} value={a.id}>
-                  {a.accountName} (Bal: ₹{a.balance.toLocaleString()})
+                  {a.accountName} (Bal: ₹{a.balance.toLocaleString('en-IN')})
                 </option>
               ))}
             </select>
           </div>
 
           <div>
-            <label className="block font-semibold text-slate-300 mb-1">Destination Account (Credit)</label>
+            <label className="block font-semibold text-slate-700 mb-1">Destination Account (Credit)</label>
             <select
               value={transferForm.toAccountId}
               onChange={(e) => setTransferForm({ ...transferForm, toAccountId: e.target.value })}
-              className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white"
+              className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 focus:outline-none focus:border-purple-500"
             >
               {bankAccounts.map((a) => (
                 <option key={a.id} value={a.id}>
-                  {a.accountName} (Bal: ₹{a.balance.toLocaleString()})
+                  {a.accountName} (Bal: ₹{a.balance.toLocaleString('en-IN')})
                 </option>
               ))}
             </select>
           </div>
 
           <div>
-            <label className="block font-semibold text-slate-300 mb-1">Transfer Amount (₹)</label>
+            <label className="block font-semibold text-slate-700 mb-1">Transfer Amount (₹)</label>
             <input
               type="number"
               required
               min={1000}
               value={transferForm.amount}
               onChange={(e) => setTransferForm({ ...transferForm, amount: Number(e.target.value) })}
-              className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white font-mono"
+              className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 font-semibold focus:outline-none focus:border-purple-500"
             />
           </div>
 
-          <div className="pt-3 border-t border-slate-800 flex justify-end gap-2">
+          <div className="pt-3 border-t border-slate-100 flex justify-end gap-2">
             <Button variant="ghost" size="sm" onClick={() => setIsTransferModalOpen(false)}>
               Cancel
             </Button>
@@ -1037,7 +1048,7 @@ export const FinanceModule: React.FC = () => {
       <Modal isOpen={isPettyCashModalOpen} onClose={() => setIsPettyCashModalOpen(false)} title="Record Petty Cash Disbursement">
         <form onSubmit={handlePettyCashDisburse} className="space-y-4 text-xs">
           <div>
-            <label className="block font-semibold text-slate-300 mb-1">Amount (₹)</label>
+            <label className="block font-semibold text-slate-700 mb-1">Amount (₹)</label>
             <input
               type="number"
               required
@@ -1045,33 +1056,33 @@ export const FinanceModule: React.FC = () => {
               max={pettyCashBalance}
               value={pettyForm.amount}
               onChange={(e) => setPettyForm({ ...pettyForm, amount: Number(e.target.value) })}
-              className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white font-mono"
+              className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 font-semibold focus:outline-none focus:border-amber-500"
             />
           </div>
 
           <div>
-            <label className="block font-semibold text-slate-300 mb-1">Category</label>
+            <label className="block font-semibold text-slate-700 mb-1">Category</label>
             <input
               type="text"
               required
               value={pettyForm.category}
               onChange={(e) => setPettyForm({ ...pettyForm, category: e.target.value })}
-              className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white"
+              className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 focus:outline-none focus:border-amber-500"
             />
           </div>
 
           <div>
-            <label className="block font-semibold text-slate-300 mb-1">Purpose / Expense Details</label>
+            <label className="block font-semibold text-slate-700 mb-1">Purpose / Expense Details</label>
             <input
               type="text"
               required
               value={pettyForm.description}
               onChange={(e) => setPettyForm({ ...pettyForm, description: e.target.value })}
-              className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white"
+              className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 focus:outline-none focus:border-amber-500"
             />
           </div>
 
-          <div className="pt-3 border-t border-slate-800 flex justify-end gap-2">
+          <div className="pt-3 border-t border-slate-100 flex justify-end gap-2">
             <Button variant="ghost" size="sm" onClick={() => setIsPettyCashModalOpen(false)}>
               Cancel
             </Button>
@@ -1088,40 +1099,40 @@ export const FinanceModule: React.FC = () => {
       <Modal isOpen={isAddVendorModalOpen} onClose={() => setIsAddVendorModalOpen(false)} title="Register Supplier / Vendor">
         <form onSubmit={handleCreateVendor} className="space-y-4 text-xs">
           <div>
-            <label className="block font-semibold text-slate-300 mb-1">Company / Vendor Name</label>
+            <label className="block font-semibold text-slate-700 mb-1">Company / Vendor Name</label>
             <input
               type="text"
               required
               value={vendorForm.name}
               onChange={(e) => setVendorForm({ ...vendorForm, name: e.target.value })}
-              className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white"
+              className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 focus:outline-none focus:border-purple-500"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block font-semibold text-slate-300 mb-1">Contact Person</label>
+              <label className="block font-semibold text-slate-700 mb-1">Contact Person</label>
               <input
                 type="text"
                 required
                 value={vendorForm.contactPerson}
                 onChange={(e) => setVendorForm({ ...vendorForm, contactPerson: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white"
+                className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 focus:outline-none focus:border-purple-500"
               />
             </div>
             <div>
-              <label className="block font-semibold text-slate-300 mb-1">Phone Number</label>
+              <label className="block font-semibold text-slate-700 mb-1">Phone Number</label>
               <input
                 type="text"
                 required
                 value={vendorForm.phone}
                 onChange={(e) => setVendorForm({ ...vendorForm, phone: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white"
+                className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 focus:outline-none focus:border-purple-500"
               />
             </div>
           </div>
 
-          <div className="pt-3 border-t border-slate-800 flex justify-end gap-2">
+          <div className="pt-3 border-t border-slate-100 flex justify-end gap-2">
             <Button variant="ghost" size="sm" onClick={() => setIsAddVendorModalOpen(false)}>
               Cancel
             </Button>

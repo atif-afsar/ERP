@@ -80,35 +80,22 @@
   animation: pulse-subtle 2s infinite ease-in-out;
 }
 
-/* Light Enterprise Theme & Legibility Safeguards */
-main h1.text-white,
-main h2.text-white,
-main h3.text-white,
-main h4.text-white,
-main h5.text-white {
-  color: #0f172a !important;
+/* Hide scrollbar utility */
+.no-scrollbar::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+.no-scrollbar {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
 }
 
+/* Light Enterprise Theme & Legibility Safeguards */
 main table thead[class*="bg-slate-9"] {
   background-color: #f8fafc !important;
   color: #64748b !important;
   border-bottom: 1px solid #e2e8f0 !important;
-}
-
-main th.text-white {
-  color: #475569 !important;
-}
-
-main td.text-white {
-  color: #0f172a !important;
-}
-
-main p.text-white:not(button *) {
-  color: #0f172a !important;
-}
-
-main span.text-white:not(button *):not([class*="bg-"]) {
-  color: #0f172a !important;
 }
 
 main input[class*="bg-slate-9"],

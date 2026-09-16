@@ -236,20 +236,19 @@ export const MessModule: React.FC = () => {
       )}
 
       {/* Header Banner */}
-      <div className="no-print p-6 rounded-3xl bg-slate-900/80 border border-slate-800 backdrop-blur-xl relative overflow-hidden shadow-2xl">
-        <div className="absolute -right-10 -bottom-10 w-80 h-80 bg-orange-500/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
+      <div className="no-print p-5 sm:p-6 rounded-2xl bg-white border border-slate-200/90 shadow-xs relative overflow-hidden">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-10">
           <div>
             <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-2xl bg-gradient-to-tr from-orange-500/20 to-amber-600/20 border border-orange-500/30 text-orange-400 shadow-md shadow-orange-500/10">
-                <UtensilsCrossed className="w-6 h-6" />
+              <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-700 shadow-2xs">
+                <UtensilsCrossed className="w-5 h-5" />
               </div>
               <div>
                 <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
                   Hostel Mess & Dining Management
-                  <span className="text-[11px] font-mono px-2.5 py-0.5 rounded-full bg-amber-50 border border-amber-200 text-amber-700">
-                    Doc 60 Canonical
-                  </span>
+                  <Badge variant="amber" size="sm" dot>
+                    Dining Services
+                  </Badge>
                 </h1>
                 <p className="text-xs text-slate-500 mt-0.5">
                   Dining halls, 7-day rotating weekly menus, subscription meal plans (Veg/Non-Veg/Jain), and meal token check-ins.
@@ -258,11 +257,11 @@ export const MessModule: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2.5">
             <Button
               variant="outline"
               size="sm"
-              leftIcon={<Star className="w-4 h-4 text-amber-400" />}
+              leftIcon={<Star className="w-4 h-4 text-amber-500" />}
               onClick={() => setIsFeedbackModalOpen(true)}
             >
               Rate Today's Meal
@@ -272,7 +271,7 @@ export const MessModule: React.FC = () => {
               size="sm"
               leftIcon={<Plus className="w-4 h-4" />}
               onClick={() => setIsSubscribeModalOpen(true)}
-              className="bg-orange-600 hover:bg-orange-500 shadow-lg shadow-orange-950/20"
+              className="bg-amber-600 hover:bg-amber-500 shadow-xs text-white"
             >
               Subscribe Student to Mess
             </Button>
@@ -280,7 +279,7 @@ export const MessModule: React.FC = () => {
         </div>
 
         {/* Tabs Navigation */}
-        <div className="mt-6 pt-4 border-t border-slate-800/80">
+        <div className="mt-5 pt-4 border-t border-slate-100">
           <Tabs
             activeTab={activeTab}
             onChange={(tab: any) => setActiveTab(tab)}
@@ -297,31 +296,31 @@ export const MessModule: React.FC = () => {
 
       {/* KPI Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-        <div className="glass-panel p-5 rounded-2xl border border-slate-800 space-y-1">
-          <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">Dining Halls</span>
-          <h3 className="text-2xl font-black text-white font-mono">{messes.length} Facilities</h3>
-          <p className="text-[11px] text-slate-400">Total capacity: 270 seats</p>
+        <div className="p-5 rounded-2xl bg-white border border-slate-200/90 shadow-xs space-y-1">
+          <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">Dining Halls</span>
+          <h3 className="text-2xl font-bold text-slate-900 tabular-nums">{messes.length} Facilities</h3>
+          <p className="text-[11px] text-slate-500">Total capacity: 270 seats</p>
         </div>
 
-        <div className="glass-panel p-5 rounded-2xl border border-slate-800 space-y-1">
-          <span className="text-xs font-semibold text-orange-400 uppercase tracking-wider block">Meal Subscribers</span>
-          <h3 className="text-2xl font-black text-orange-400 font-mono">{totalSubscribers} Students</h3>
-          <p className="text-[11px] text-slate-400">Boarding resident meal plans</p>
+        <div className="p-5 rounded-2xl bg-white border border-slate-200/90 shadow-xs space-y-1">
+          <span className="text-xs font-semibold text-amber-700 uppercase tracking-wider block">Meal Subscribers</span>
+          <h3 className="text-2xl font-bold text-amber-700 tabular-nums">{totalSubscribers} Students</h3>
+          <p className="text-[11px] text-slate-500">Boarding resident meal plans</p>
         </div>
 
-        <div className="glass-panel p-5 rounded-2xl border border-slate-800 space-y-1">
-          <span className="text-xs font-semibold text-emerald-400 uppercase tracking-wider block">Today's Meals Served</span>
-          <h3 className="text-2xl font-black text-emerald-400 font-mono">{todayMealsServed} Meals</h3>
-          <p className="text-[11px] text-slate-400">Breakfast & lunch served today</p>
+        <div className="p-5 rounded-2xl bg-white border border-slate-200/90 shadow-xs space-y-1">
+          <span className="text-xs font-semibold text-emerald-700 uppercase tracking-wider block">Today's Meals Served</span>
+          <h3 className="text-2xl font-bold text-emerald-700 tabular-nums">{todayMealsServed} Meals</h3>
+          <p className="text-[11px] text-slate-500">Breakfast & lunch served today</p>
         </div>
 
-        <div className="glass-panel p-5 rounded-2xl border border-slate-800 space-y-1">
-          <span className="text-xs font-semibold text-amber-400 uppercase tracking-wider block">Quality Rating</span>
-          <h3 className="text-2xl font-black text-amber-400 font-mono flex items-center gap-1">
-            <Star className="w-5 h-5 fill-amber-400 text-amber-400" />
+        <div className="p-5 rounded-2xl bg-white border border-slate-200/90 shadow-xs space-y-1">
+          <span className="text-xs font-semibold text-amber-700 uppercase tracking-wider block">Quality Rating</span>
+          <h3 className="text-2xl font-bold text-amber-700 tabular-nums flex items-center gap-1">
+            <Star className="w-5 h-5 fill-amber-400 text-amber-500" />
             {averageRating} / 5.0
           </h3>
-          <p className="text-[11px] text-slate-400">{feedback.length} Student reviews received</p>
+          <p className="text-[11px] text-slate-500">{feedback.length} Student reviews received</p>
         </div>
       </div>
 

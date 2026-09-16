@@ -619,20 +619,19 @@ export const ExamsModule: React.FC<ExamsModuleProps> = ({ defaultTab }) => {
 
       {/* Header Banner (Hidden during Student / Parent single view) */}
       {!isStudent && !isParent && (
-        <div className="no-print p-6 rounded-3xl bg-slate-900/80 border border-slate-800 backdrop-blur-xl relative overflow-hidden shadow-2xl">
-          <div className="absolute -right-10 -bottom-10 w-80 h-80 bg-sky-500/10 rounded-full blur-3xl pointer-events-none" />
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
+        <div className="no-print p-5 sm:p-6 rounded-2xl bg-white border border-slate-200/90 shadow-xs relative overflow-hidden">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-10">
             <div>
               <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-2xl bg-gradient-to-tr from-sky-500/20 to-blue-600/20 border border-sky-500/30 text-sky-400 shadow-md shadow-sky-500/10">
-                  <Award className="w-6 h-6" />
+                <div className="p-2.5 rounded-xl bg-sky-50 border border-sky-200 text-sky-700 shadow-2xs">
+                  <Award className="w-5 h-5" />
                 </div>
                 <div>
                   <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
                     {isSchool ? 'Examinations & Report Cards' : 'Test Series & Performance Ranking'}
-                    <span className="text-[11px] font-mono px-2.5 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700">
-                      Doc 52 Canonical
-                    </span>
+                    <Badge variant="blue" size="sm" dot>
+                      Academic Assessment
+                    </Badge>
                   </h1>
                   <p className="text-xs text-slate-500 mt-0.5">
                     Deterministic result calculation, CBSE/GPA grade scale configuration, grace marks moderation & branded official report cards.
@@ -642,16 +641,16 @@ export const ExamsModule: React.FC<ExamsModuleProps> = ({ defaultTab }) => {
             </div>
 
             {/* Exam Selector & Action Controls */}
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="flex items-center gap-2 bg-slate-950 px-3 py-1.5 rounded-xl border border-slate-800">
-                <span className="text-[11px] font-semibold text-slate-400">Exam:</span>
+            <div className="flex flex-wrap items-center gap-2.5">
+              <div className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200">
+                <span className="text-[11px] font-semibold text-slate-500">Exam:</span>
                 <select
                   value={selectedExamId}
                   onChange={(e) => setSelectedExamId(e.target.value)}
-                  className="bg-transparent text-xs text-white font-medium focus:outline-none cursor-pointer"
+                  className="bg-transparent text-xs text-slate-900 font-semibold focus:outline-none cursor-pointer"
                 >
                   {exams.map((ex) => (
-                    <option key={ex.id} value={ex.id} className="bg-slate-900 text-white">
+                    <option key={ex.id} value={ex.id} className="bg-white text-slate-900">
                       {ex.name} ({ex.status || 'DRAFT'})
                     </option>
                   ))}
@@ -664,6 +663,7 @@ export const ExamsModule: React.FC<ExamsModuleProps> = ({ defaultTab }) => {
                   size="sm"
                   leftIcon={<Plus className="w-4 h-4" />}
                   onClick={() => setIsAddExamModalOpen(true)}
+                  className="bg-emerald-600 hover:bg-emerald-500 shadow-xs"
                 >
                   Schedule Exam
                 </Button>
@@ -672,7 +672,7 @@ export const ExamsModule: React.FC<ExamsModuleProps> = ({ defaultTab }) => {
           </div>
 
           {/* Tab Navigation */}
-          <div className="mt-6 pt-4 border-t border-slate-800/80">
+          <div className="mt-5 pt-4 border-t border-slate-100">
             <Tabs
               activeTab={activeTab}
               onChange={(tab: any) => setActiveTab(tab)}
@@ -703,45 +703,45 @@ export const ExamsModule: React.FC<ExamsModuleProps> = ({ defaultTab }) => {
                   onClick={() => setSelectedExamId(exam.id)}
                   className={`p-5 rounded-2xl border transition-all cursor-pointer relative ${
                     isSelected
-                      ? 'bg-sky-500/10 border-sky-500/40 shadow-xl shadow-sky-950/20'
-                      : 'bg-slate-900/60 border-slate-800 hover:border-slate-700'
+                      ? 'bg-sky-50/40 border-sky-400 ring-2 ring-sky-500/20 shadow-xs'
+                      : 'bg-white border-slate-200/90 hover:border-slate-300 hover:shadow-xs'
                   }`}
                 >
                   <div className="flex items-start justify-between gap-3 mb-3">
                     <div>
-                      <h3 className="text-sm font-bold text-white tracking-tight">{exam.name}</h3>
-                      <span className="text-[11px] text-slate-400 font-mono">
+                      <h3 className="text-sm font-bold text-slate-900 tracking-tight">{exam.name}</h3>
+                      <span className="text-[11px] text-slate-500 font-mono">
                         {exam.startDate} to {exam.endDate}
                       </span>
                     </div>
                     {renderStatusBadge(exam.status || (exam.isPublished ? 'PUBLISHED' : 'PROCESSING'))}
                   </div>
 
-                  <div className="space-y-1.5 pt-2 border-t border-slate-800/60 text-xs text-slate-300">
+                  <div className="space-y-1.5 pt-3 border-t border-slate-100 text-xs text-slate-600">
                     <div className="flex justify-between">
-                      <span className="text-slate-400">Total Marks:</span>
-                      <span className="font-semibold text-white">{exam.totalMarks} pts</span>
+                      <span className="text-slate-500">Total Marks:</span>
+                      <span className="font-bold text-slate-900 tabular-nums">{exam.totalMarks} pts</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-slate-400">Subjects Configured:</span>
-                      <span className="font-semibold text-sky-400">{exam.subjects.length} Subjects</span>
+                      <span className="text-slate-500">Subjects Configured:</span>
+                      <span className="font-semibold text-sky-700">{exam.subjects.length} Subjects</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-slate-400">Pass Rule:</span>
-                      <span className="font-mono text-[11px] text-emerald-400">
+                      <span className="text-slate-500">Pass Rule:</span>
+                      <span className="font-semibold text-emerald-700">
                         Min {exam.passingRules?.overallMinPercentage || 40}% agg.
                       </span>
                     </div>
                   </div>
 
-                  <div className="mt-4 pt-3 border-t border-slate-800/60 flex items-center justify-between text-xs">
+                  <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
                         setSelectedExamId(exam.id);
                         setActiveTab('marks_entry');
                       }}
-                      className="text-sky-400 hover:text-sky-300 font-semibold flex items-center gap-1"
+                      className="text-sky-700 hover:text-sky-800 font-semibold flex items-center gap-1 cursor-pointer"
                     >
                       <Edit3 className="w-3.5 h-3.5" /> Enter Marks
                     </button>
@@ -751,7 +751,7 @@ export const ExamsModule: React.FC<ExamsModuleProps> = ({ defaultTab }) => {
                         setSelectedExamId(exam.id);
                         setActiveTab('report_cards');
                       }}
-                      className="text-slate-400 hover:text-white font-medium flex items-center gap-1"
+                      className="text-slate-600 hover:text-slate-900 font-medium flex items-center gap-1 cursor-pointer"
                     >
                       <FileCheck className="w-3.5 h-3.5" /> View Results
                     </button>
@@ -763,13 +763,13 @@ export const ExamsModule: React.FC<ExamsModuleProps> = ({ defaultTab }) => {
 
           {/* Selected Exam Timetable / Hall Ticket Matrix */}
           {currentExam && (
-            <div className="p-6 rounded-3xl bg-slate-900/60 border border-slate-800">
+            <div className="p-5 sm:p-6 rounded-2xl bg-white border border-slate-200/90 shadow-xs">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
                 <div>
-                  <h2 className="text-sm font-bold text-white tracking-tight">
+                  <h2 className="text-sm font-bold text-slate-900 tracking-tight">
                     Assessment Sessions & Schedule Matrix: {currentExam.name}
                   </h2>
-                  <p className="text-xs text-slate-400">
+                  <p className="text-xs text-slate-500">
                     Subject slot timetable, maximum scores, and theoretical/practical weightage.
                   </p>
                 </div>
@@ -779,13 +779,13 @@ export const ExamsModule: React.FC<ExamsModuleProps> = ({ defaultTab }) => {
                   leftIcon={<Printer className="w-4 h-4" />}
                   onClick={() => window.print()}
                 >
-                  Print Examination Hall Tickets
+                  Print Hall Tickets
                 </Button>
               </div>
 
               <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs text-slate-300">
-                  <thead className="bg-slate-950/60 text-slate-400 uppercase tracking-wider text-[10px] font-semibold border-b border-slate-800">
+                <table className="w-full text-left text-xs text-slate-700">
+                  <thead className="bg-slate-50/90 text-slate-600 uppercase tracking-wider text-[10px] font-semibold border-b border-slate-200">
                     <tr>
                       <th className="py-3 px-4">Subject</th>
                       <th className="py-3 px-4">Date</th>
@@ -796,23 +796,23 @@ export const ExamsModule: React.FC<ExamsModuleProps> = ({ defaultTab }) => {
                       <th className="py-3 px-4 text-right">Total Max</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-800/60">
+                  <tbody className="divide-y divide-slate-100">
                     {currentExam.subjects.map((sub, idx) => (
-                      <tr key={idx} className="hover:bg-slate-800/30 transition-colors">
-                        <td className="py-3 px-4 font-semibold text-white flex items-center gap-2">
-                          <BookOpen className="w-4 h-4 text-sky-400" />
+                      <tr key={idx} className="hover:bg-slate-50/60 transition-colors">
+                        <td className="py-3 px-4 font-semibold text-slate-900 flex items-center gap-2">
+                          <BookOpen className="w-4 h-4 text-sky-600" />
                           {sub.subjectName}
                         </td>
-                        <td className="py-3 px-4 font-mono text-slate-300">{sub.date}</td>
-                        <td className="py-3 px-4 text-slate-400">
+                        <td className="py-3 px-4 font-mono text-slate-600">{sub.date}</td>
+                        <td className="py-3 px-4 text-slate-500">
                           {sub.startTime || '09:00 AM'} - {sub.endTime || '12:00 PM'}
                         </td>
-                        <td className="py-3 px-4 text-center font-mono">{sub.theoryMax || sub.maxMarks} pts</td>
-                        <td className="py-3 px-4 text-center font-mono text-slate-400">
+                        <td className="py-3 px-4 text-center font-mono font-medium">{sub.theoryMax || sub.maxMarks} pts</td>
+                        <td className="py-3 px-4 text-center font-mono text-slate-500">
                           {(sub.practicalMax || 0) + (sub.internalMax || 0)} pts
                         </td>
-                        <td className="py-3 px-4 text-center font-mono text-amber-400">{sub.passMarks} pts (33%)</td>
-                        <td className="py-3 px-4 text-right font-bold text-white font-mono">{sub.maxMarks} pts</td>
+                        <td className="py-3 px-4 text-center font-mono font-bold text-amber-700">{sub.passMarks} pts (33%)</td>
+                        <td className="py-3 px-4 text-right font-bold text-slate-900 tabular-nums">{sub.maxMarks} pts</td>
                       </tr>
                     ))}
                   </tbody>
@@ -828,18 +828,18 @@ export const ExamsModule: React.FC<ExamsModuleProps> = ({ defaultTab }) => {
       {/* ------------------------------------------------------------- */}
       {activeTab === 'marks_entry' && !isStudent && !isParent && (
         <div className="space-y-6">
-          <div className="p-5 rounded-2xl bg-slate-900/60 border border-slate-800 flex flex-wrap items-center justify-between gap-4">
+          <div className="p-5 rounded-2xl bg-white border border-slate-200/90 shadow-xs flex flex-wrap items-center justify-between gap-4">
             <div className="flex flex-wrap items-center gap-3">
-              <span className="text-xs font-semibold text-slate-400">Target Subject:</span>
+              <span className="text-xs font-semibold text-slate-500">Target Subject:</span>
               <div className="flex flex-wrap gap-2">
                 {currentExam?.subjects.map((sub) => (
                   <button
                     key={sub.subjectName}
                     onClick={() => setSelectedSubjectName(sub.subjectName)}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
                       selectedSubjectName === sub.subjectName
-                        ? 'bg-sky-500 text-white shadow-md shadow-sky-500/20'
-                        : 'bg-slate-800 text-slate-400 hover:text-white'
+                        ? 'bg-sky-600 text-white shadow-xs'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900'
                     }`}
                   >
                     {sub.subjectName}
@@ -851,10 +851,10 @@ export const ExamsModule: React.FC<ExamsModuleProps> = ({ defaultTab }) => {
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setIsMarksLocked(!isMarksLocked)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${
                   isMarksLocked
-                    ? 'bg-rose-500/10 text-rose-400 border-rose-500/30'
-                    : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+                    ? 'bg-rose-50 text-rose-700 border-rose-200'
+                    : 'bg-emerald-50 text-emerald-700 border-emerald-200'
                 }`}
               >
                 {isMarksLocked ? <Lock className="w-3.5 h-3.5" /> : <Unlock className="w-3.5 h-3.5" />}
@@ -876,32 +876,32 @@ export const ExamsModule: React.FC<ExamsModuleProps> = ({ defaultTab }) => {
           </div>
 
           {marksToast && (
-            <div className="p-3 rounded-xl bg-sky-500/10 border border-sky-500/30 text-sky-300 text-xs font-medium">
+            <div className="p-3 rounded-xl bg-sky-50 border border-sky-200 text-sky-800 text-xs font-medium">
               {marksToast}
             </div>
           )}
 
           {/* Student Marks Entry Table */}
-          <div className="p-6 rounded-3xl bg-slate-900/60 border border-slate-800">
+          <div className="p-5 sm:p-6 rounded-2xl bg-white border border-slate-200/90 shadow-xs">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h3 className="text-sm font-bold text-white">
+                <h3 className="text-sm font-bold text-slate-900">
                   Marks Roster: {selectedSubjectName} (Max:{' '}
                   {currentExam?.subjects.find((s) => s.subjectName === selectedSubjectName)?.maxMarks || 100} pts)
                 </h3>
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-slate-500">
                   Enter student marks. Validation prevents negative marks or values exceeding component maximum.
                 </p>
               </div>
-              <span className="text-xs font-mono text-slate-400">
+              <span className="text-xs font-mono text-slate-500">
                 Passing Mark:{' '}
                 {currentExam?.subjects.find((s) => s.subjectName === selectedSubjectName)?.passMarks || 33} pts
               </span>
             </div>
 
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs text-slate-300">
-                <thead className="bg-slate-950/60 text-slate-400 uppercase tracking-wider text-[10px] font-semibold border-b border-slate-800">
+              <table className="w-full text-left text-xs text-slate-700">
+                <thead className="bg-slate-50/90 text-slate-600 uppercase tracking-wider text-[10px] font-semibold border-b border-slate-200">
                   <tr>
                     <th className="py-3 px-4">Student Name</th>
                     <th className="py-3 px-4">Admission No</th>
@@ -912,22 +912,22 @@ export const ExamsModule: React.FC<ExamsModuleProps> = ({ defaultTab }) => {
                     <th className="py-3 px-4 text-right">Pass Status</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-800/60">
+                <tbody className="divide-y divide-slate-100">
                   {students.slice(0, 8).map((st) => {
                     const studentData = marksState[st.id] || { theory: 70, practical: 0, internal: 15 };
                     const totalObt = (studentData.theory || 0) + (studentData.practical || 0) + (studentData.internal || 0);
                     const isPassing = totalObt >= 33;
 
                     return (
-                      <tr key={st.id} className="hover:bg-slate-800/30 transition-colors">
-                        <td className="py-3 px-4 font-semibold text-white flex items-center gap-2">
-                          <div className="w-7 h-7 rounded-lg bg-sky-500/20 text-sky-400 flex items-center justify-center text-xs font-bold">
+                      <tr key={st.id} className="hover:bg-slate-50/60 transition-colors">
+                        <td className="py-3 px-4 font-semibold text-slate-900 flex items-center gap-2">
+                          <div className="w-7 h-7 rounded-lg bg-sky-100 text-sky-700 flex items-center justify-center text-xs font-bold">
                             {st.firstName[0]}
                           </div>
                           {getStudentName(st)}
                         </td>
-                        <td className="py-3 px-4 font-mono text-slate-400">{st.admissionNo}</td>
-                        <td className="py-3 px-4 text-slate-300">{getStudentGroupName(st)}</td>
+                        <td className="py-3 px-4 font-mono text-slate-500">{st.admissionNo}</td>
+                        <td className="py-3 px-4 text-slate-600">{getStudentGroupName(st)}</td>
                         <td className="py-3 px-4 text-center">
                           <input
                             type="number"
@@ -942,7 +942,7 @@ export const ExamsModule: React.FC<ExamsModuleProps> = ({ defaultTab }) => {
                                 [st.id]: { ...studentData, theory: val },
                               }));
                             }}
-                            className="w-16 text-center py-1 rounded-lg bg-slate-950 border border-slate-800 text-white font-mono text-xs focus:border-sky-500 focus:outline-none disabled:opacity-50"
+                            className="w-16 text-center py-1 rounded-lg bg-white border border-slate-200 text-slate-900 font-mono text-xs focus:border-sky-500 focus:outline-none disabled:opacity-50"
                           />
                         </td>
                         <td className="py-3 px-4 text-center">
@@ -959,14 +959,14 @@ export const ExamsModule: React.FC<ExamsModuleProps> = ({ defaultTab }) => {
                                 [st.id]: { ...studentData, internal: val },
                               }));
                             }}
-                            className="w-16 text-center py-1 rounded-lg bg-slate-950 border border-slate-800 text-white font-mono text-xs focus:border-sky-500 focus:outline-none disabled:opacity-50"
+                            className="w-16 text-center py-1 rounded-lg bg-white border border-slate-200 text-slate-900 font-mono text-xs focus:border-sky-500 focus:outline-none disabled:opacity-50"
                           />
                         </td>
-                        <td className="py-3 px-4 text-center font-bold text-white font-mono">{totalObt} / 100</td>
+                        <td className="py-3 px-4 text-center font-bold text-slate-900 font-mono">{totalObt} / 100</td>
                         <td className="py-3 px-4 text-right">
                           <span
                             className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${
-                              isPassing ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+                              isPassing ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200'
                             }`}
                           >
                             {isPassing ? 'PASS' : 'FAIL'}
@@ -988,24 +988,24 @@ export const ExamsModule: React.FC<ExamsModuleProps> = ({ defaultTab }) => {
       {activeTab === 'result_engine' && !isStudent && !isParent && (
         <div className="space-y-6">
           {/* Engine Action Dashboard */}
-          <div className="p-6 rounded-3xl bg-slate-900/80 border border-slate-800 flex flex-col lg:flex-row lg:items-center justify-between gap-6 shadow-xl">
+          <div className="p-5 sm:p-6 rounded-2xl bg-white border border-slate-200/90 flex flex-col lg:flex-row lg:items-center justify-between gap-6 shadow-xs">
             <div className="space-y-2 max-w-xl">
               <div className="flex items-center gap-2">
-                <Sliders className="w-5 h-5 text-sky-400" />
-                <h2 className="text-base font-bold text-white tracking-tight">
+                <Sliders className="w-5 h-5 text-sky-600" />
+                <h2 className="text-base font-bold text-slate-900 tracking-tight">
                   Deterministic Result Processing Engine
                 </h2>
               </div>
-              <p className="text-xs text-slate-400 leading-relaxed">
+              <p className="text-xs text-slate-500 leading-relaxed">
                 Applies configured grade bands ({activeGradeScale.name}), subject passing minimums (33%), and overall
                 thresholds (40%) to derive certified academic records.
               </p>
               <div className="flex flex-wrap items-center gap-2 pt-1 text-xs">
-                <span className="text-slate-400">Current Exam Status:</span>
+                <span className="text-slate-500">Current Exam Status:</span>
                 {renderStatusBadge(currentExam?.status || 'PROCESSING')}
-                <span className="text-slate-500">•</span>
-                <span className="text-slate-400">Grade Scale:</span>
-                <span className="font-semibold text-sky-400">{activeGradeScale.name}</span>
+                <span className="text-slate-300">•</span>
+                <span className="text-slate-500">Grade Scale:</span>
+                <span className="font-semibold text-sky-700">{activeGradeScale.name}</span>
               </div>
             </div>
 
@@ -1038,14 +1038,14 @@ export const ExamsModule: React.FC<ExamsModuleProps> = ({ defaultTab }) => {
                   size="sm"
                   leftIcon={<Send className="w-4 h-4" />}
                   onClick={handlePublishResults}
-                  className="bg-emerald-600 hover:bg-emerald-500 shadow-lg shadow-emerald-950/20"
+                  className="bg-emerald-600 hover:bg-emerald-500 shadow-xs"
                 >
                   Publish Official Results
                 </Button>
               )}
 
               {currentExam?.status === 'PUBLISHED' && (
-                <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold">
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold">
                   <CheckCircle2 className="w-4 h-4" /> Results Published Live
                 </div>
               )}
@@ -1053,24 +1053,24 @@ export const ExamsModule: React.FC<ExamsModuleProps> = ({ defaultTab }) => {
           </div>
 
           {/* Results Table with Grace Marks & Revision Triggers */}
-          <div className="p-6 rounded-3xl bg-slate-900/60 border border-slate-800">
+          <div className="p-5 sm:p-6 rounded-2xl bg-white border border-slate-200/90 shadow-xs">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
               <div>
-                <h3 className="text-sm font-bold text-white">Calculated Student Results Ledger</h3>
-                <p className="text-xs text-slate-400">
+                <h3 className="text-sm font-bold text-slate-900">Calculated Student Results Ledger</h3>
+                <p className="text-xs text-slate-500">
                   Review student percentages, grades, GPA, and perform authorized revisions or grace marks moderation.
                 </p>
               </div>
 
               <div className="flex items-center gap-3">
                 <div className="relative">
-                  <Search className="w-3.5 h-3.5 absolute left-3 top-2.5 text-slate-500" />
+                  <Search className="w-3.5 h-3.5 absolute left-3 top-2.5 text-slate-400" />
                   <input
                     type="text"
                     placeholder="Search student or roll..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-8 pr-3 py-1.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-sky-500"
+                    className="pl-8 pr-3 py-1.5 rounded-xl bg-white border border-slate-200 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-sky-500"
                   />
                 </div>
                 <Button variant="outline" size="sm" leftIcon={<Download className="w-4 h-4" />} onClick={handleExportCSV}>
@@ -1080,8 +1080,8 @@ export const ExamsModule: React.FC<ExamsModuleProps> = ({ defaultTab }) => {
             </div>
 
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs text-slate-300">
-                <thead className="bg-slate-950/60 text-slate-400 uppercase tracking-wider text-[10px] font-semibold border-b border-slate-800">
+              <table className="w-full text-left text-xs text-slate-700">
+                <thead className="bg-slate-50/90 text-slate-600 uppercase tracking-wider text-[10px] font-semibold border-b border-slate-200">
                   <tr>
                     <th className="py-3 px-4">Rank</th>
                     <th className="py-3 px-4">Student Name</th>
@@ -1095,7 +1095,7 @@ export const ExamsModule: React.FC<ExamsModuleProps> = ({ defaultTab }) => {
                     <th className="py-3 px-4 text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-800/60">
+                <tbody className="divide-y divide-slate-100">
                   {currentExamResults.length === 0 ? (
                     <tr>
                       <td colSpan={10} className="py-8 text-center text-slate-500">
@@ -1104,36 +1104,36 @@ export const ExamsModule: React.FC<ExamsModuleProps> = ({ defaultTab }) => {
                     </tr>
                   ) : (
                     currentExamResults.map((res) => (
-                      <tr key={res.id} className="hover:bg-slate-800/30 transition-colors">
-                        <td className="py-3 px-4 font-bold text-sky-400 font-mono">#{res.rank || '-'}</td>
-                        <td className="py-3 px-4 font-semibold text-white">{res.studentName}</td>
-                        <td className="py-3 px-4 font-mono text-slate-400">
+                      <tr key={res.id} className="hover:bg-slate-50/60 transition-colors">
+                        <td className="py-3 px-4 font-bold text-sky-700 font-mono">#{res.rank || '-'}</td>
+                        <td className="py-3 px-4 font-semibold text-slate-900">{res.studentName}</td>
+                        <td className="py-3 px-4 font-mono text-slate-500">
                           {res.admissionNo} • {res.rollNo || '-'}
                         </td>
-                        <td className="py-3 px-4 text-center font-mono font-medium">
+                        <td className="py-3 px-4 text-center font-mono font-medium text-slate-700">
                           {res.totalMarks} / {res.totalMaxMarks}
                         </td>
-                        <td className="py-3 px-4 text-center font-bold text-white font-mono">{res.percentage}%</td>
+                        <td className="py-3 px-4 text-center font-bold text-slate-900 font-mono">{res.percentage}%</td>
                         <td className="py-3 px-4 text-center">
-                          <span className="px-2 py-0.5 rounded-full bg-sky-500/10 text-sky-300 font-bold border border-sky-500/20">
+                          <span className="px-2 py-0.5 rounded-full bg-sky-50 text-sky-700 font-bold border border-sky-200">
                             {res.grade}
                           </span>
                         </td>
-                        <td className="py-3 px-4 text-center font-mono text-amber-400 font-bold">
+                        <td className="py-3 px-4 text-center font-mono text-amber-700 font-bold">
                           {res.gpa?.toFixed(2) || '-'}
                         </td>
                         <td className="py-3 px-4 text-center">
                           <span
                             className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${
                               res.passStatus === 'PASS'
-                                ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                                : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+                                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                : 'bg-rose-50 text-rose-700 border border-rose-200'
                             }`}
                           >
                             {res.passStatus}
                           </span>
                         </td>
-                        <td className="py-3 px-4 text-center font-mono text-slate-400">v{res.version || 1}</td>
+                        <td className="py-3 px-4 text-center font-mono text-slate-500">v{res.version || 1}</td>
                         <td className="py-3 px-4 text-right">
                           <div className="flex items-center justify-end gap-2">
                             {/* Grace marks button */}
@@ -1144,7 +1144,7 @@ export const ExamsModule: React.FC<ExamsModuleProps> = ({ defaultTab }) => {
                                   subjectName: res.marksObtained[0]?.subjectName || 'Mathematics',
                                 })
                               }
-                              className="px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-[11px] font-semibold text-amber-400"
+                              className="px-2 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-[11px] font-semibold text-amber-800 cursor-pointer"
                               title="Apply Audited Grace Marks"
                             >
                               Grace
@@ -1153,7 +1153,7 @@ export const ExamsModule: React.FC<ExamsModuleProps> = ({ defaultTab }) => {
                             {/* Revise result button */}
                             <button
                               onClick={() => setRevisionModalData(res)}
-                              className="px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-[11px] font-semibold text-sky-400"
+                              className="px-2 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-[11px] font-semibold text-sky-800 cursor-pointer"
                               title="Authorized Revision (v2+)"
                             >
                               Revise
@@ -1165,7 +1165,7 @@ export const ExamsModule: React.FC<ExamsModuleProps> = ({ defaultTab }) => {
                                 setSelectedStudentForReport(res);
                                 setActiveTab('report_cards');
                               }}
-                              className="px-2 py-1 rounded-lg bg-sky-500/20 hover:bg-sky-500/30 text-[11px] font-semibold text-sky-300"
+                              className="px-2 py-1 rounded-lg bg-sky-50 hover:bg-sky-100 text-[11px] font-semibold text-sky-700 border border-sky-200 cursor-pointer"
                             >
                               Report Card
                             </button>
@@ -1189,8 +1189,8 @@ export const ExamsModule: React.FC<ExamsModuleProps> = ({ defaultTab }) => {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Active Scales Column */}
             <div className="space-y-4">
-              <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                <Sliders className="w-4 h-4 text-sky-400" />
+              <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                <Sliders className="w-4 h-4 text-sky-600" />
                 Configured Grade Scales
               </h3>
               {gradeScales.map((scale) => (
@@ -1198,22 +1198,22 @@ export const ExamsModule: React.FC<ExamsModuleProps> = ({ defaultTab }) => {
                   key={scale.id}
                   className={`p-4 rounded-2xl border transition-all ${
                     scale.id === activeGradeScale.id
-                      ? 'bg-sky-500/10 border-sky-500/40 shadow-lg'
-                      : 'bg-slate-900/60 border-slate-800'
+                      ? 'bg-sky-50/50 border-sky-300 shadow-xs'
+                      : 'bg-white border-slate-200/90 hover:border-slate-300'
                   }`}
                 >
                   <div className="flex items-center justify-between mb-2">
-                    <h4 className="text-sm font-bold text-white">{scale.name}</h4>
+                    <h4 className="text-sm font-bold text-slate-900">{scale.name}</h4>
                     {scale.isDefault && <Badge variant="purple">Default</Badge>}
                   </div>
-                  <p className="text-xs text-slate-400 mb-3">
-                    Type: <span className="font-mono text-sky-400">{scale.scaleType}</span> • {scale.bands.length} Grade Bands
+                  <p className="text-xs text-slate-500 mb-3">
+                    Type: <span className="font-mono text-sky-700 font-semibold">{scale.scaleType}</span> • {scale.bands.length} Grade Bands
                   </p>
                   <div className="flex flex-wrap gap-1.5">
                     {scale.bands.map((b) => (
                       <span
                         key={b.id}
-                        className="px-2 py-0.5 rounded bg-slate-950 text-[10px] font-mono text-slate-300 border border-slate-800"
+                        className="px-2 py-0.5 rounded bg-slate-100 text-[10px] font-mono text-slate-700 border border-slate-200"
                       >
                         {b.grade} ({b.minPercentage}-{b.maxPercentage}%)
                       </span>
@@ -1223,38 +1223,38 @@ export const ExamsModule: React.FC<ExamsModuleProps> = ({ defaultTab }) => {
               ))}
 
               {/* Passing Rules Card */}
-              <div className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800">
-                <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-3 flex items-center gap-2">
-                  <ShieldCheck className="w-4 h-4 text-emerald-400" />
+              <div className="p-5 rounded-2xl bg-white border border-slate-200/90 shadow-xs">
+                <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-3 flex items-center gap-2">
+                  <ShieldCheck className="w-4 h-4 text-emerald-600" />
                   Canonical Passing Rules
                 </h4>
                 <div className="space-y-2.5 text-xs">
-                  <div className="flex justify-between text-slate-300">
+                  <div className="flex justify-between text-slate-600">
                     <span>Overall Aggregate Passing:</span>
-                    <span className="font-mono font-bold text-emerald-400">≥ 40.0%</span>
+                    <span className="font-mono font-bold text-emerald-700">≥ 40.0%</span>
                   </div>
-                  <div className="flex justify-between text-slate-300">
+                  <div className="flex justify-between text-slate-600">
                     <span>Individual Subject Minimum:</span>
-                    <span className="font-mono font-bold text-emerald-400">≥ 33.0%</span>
+                    <span className="font-mono font-bold text-emerald-700">≥ 33.0%</span>
                   </div>
-                  <div className="flex justify-between text-slate-300">
+                  <div className="flex justify-between text-slate-600">
                     <span>Grace Marks Permitted:</span>
-                    <span className="font-mono font-bold text-sky-400">Yes (Max 5 pts / subj)</span>
+                    <span className="font-mono font-bold text-sky-700">Yes (Max 5 pts / subj)</span>
                   </div>
-                  <div className="flex justify-between text-slate-300">
+                  <div className="flex justify-between text-slate-600">
                     <span>Grace Ceiling Across Exam:</span>
-                    <span className="font-mono font-bold text-sky-400">Max 10 pts Total</span>
+                    <span className="font-mono font-bold text-sky-700">Max 10 pts Total</span>
                   </div>
                 </div>
               </div>
             </div>
 
             {/* Bands Breakdown Table */}
-            <div className="lg:col-span-2 p-6 rounded-3xl bg-slate-900/60 border border-slate-800">
+            <div className="lg:col-span-2 p-5 sm:p-6 rounded-2xl bg-white border border-slate-200/90 shadow-xs">
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h3 className="text-sm font-bold text-white">{activeGradeScale.name} - Grade Bands</h3>
-                  <p className="text-xs text-slate-400">
+                  <h3 className="text-sm font-bold text-slate-900">{activeGradeScale.name} - Grade Bands</h3>
+                  <p className="text-xs text-slate-500">
                     Threshold percentage limits, Grade Points, and evaluation criteria.
                   </p>
                 </div>
@@ -1262,8 +1262,8 @@ export const ExamsModule: React.FC<ExamsModuleProps> = ({ defaultTab }) => {
               </div>
 
               <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs text-slate-300">
-                  <thead className="bg-slate-950/60 text-slate-400 uppercase tracking-wider text-[10px] font-semibold border-b border-slate-800">
+                <table className="w-full text-left text-xs text-slate-700">
+                  <thead className="bg-slate-50/90 text-slate-600 uppercase tracking-wider text-[10px] font-semibold border-b border-slate-200">
                     <tr>
                       <th className="py-3 px-4">Grade</th>
                       <th className="py-3 px-4 text-center">Min %</th>
@@ -1273,27 +1273,27 @@ export const ExamsModule: React.FC<ExamsModuleProps> = ({ defaultTab }) => {
                       <th className="py-3 px-4">Academic Description</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-800/60">
+                  <tbody className="divide-y divide-slate-100">
                     {activeGradeScale.bands.map((band) => (
-                      <tr key={band.id} className="hover:bg-slate-800/30 transition-colors">
-                        <td className="py-3 px-4 font-bold text-sky-400 font-mono text-sm">{band.grade}</td>
-                        <td className="py-3 px-4 text-center font-mono">{band.minPercentage}%</td>
-                        <td className="py-3 px-4 text-center font-mono">{band.maxPercentage}%</td>
-                        <td className="py-3 px-4 text-center font-mono font-bold text-amber-400">
+                      <tr key={band.id} className="hover:bg-slate-50/60 transition-colors">
+                        <td className="py-3 px-4 font-bold text-sky-700 font-mono text-sm">{band.grade}</td>
+                        <td className="py-3 px-4 text-center font-mono text-slate-600">{band.minPercentage}%</td>
+                        <td className="py-3 px-4 text-center font-mono text-slate-600">{band.maxPercentage}%</td>
+                        <td className="py-3 px-4 text-center font-mono font-bold text-amber-700">
                           {band.gradePoint.toFixed(1)}
                         </td>
                         <td className="py-3 px-4">
                           <span
                             className={`px-2 py-0.5 rounded text-[10px] font-bold ${
                               band.isPassing
-                                ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                                : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+                                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                : 'bg-rose-50 text-rose-700 border border-rose-200'
                             }`}
                           >
                             {band.isPassing ? 'PASS' : 'FAIL / REPEAT'}
                           </span>
                         </td>
-                        <td className="py-3 px-4 text-slate-400">{band.description}</td>
+                        <td className="py-3 px-4 text-slate-500">{band.description}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -1310,16 +1310,16 @@ export const ExamsModule: React.FC<ExamsModuleProps> = ({ defaultTab }) => {
       {activeTab === 'report_cards' && (
         <div className="space-y-6">
           {/* Top Controls (Hidden in Print) */}
-          <div className="no-print p-5 rounded-2xl bg-slate-900/60 border border-slate-800 flex flex-wrap items-center justify-between gap-4">
+          <div className="no-print p-5 rounded-2xl bg-white border border-slate-200/90 shadow-xs flex flex-wrap items-center justify-between gap-4">
             <div className="flex flex-wrap items-center gap-3">
-              <span className="text-xs font-semibold text-slate-400">Select Student:</span>
+              <span className="text-xs font-semibold text-slate-500">Select Student:</span>
               <select
                 value={selectedStudentForReport?.id || currentExamResults[0]?.id || ''}
                 onChange={(e) => {
                   const target = currentExamResults.find((r) => r.id === e.target.value);
                   if (target) setSelectedStudentForReport(target);
                 }}
-                className="bg-slate-950 border border-slate-800 text-xs text-white px-3 py-1.5 rounded-xl font-medium focus:outline-none focus:border-sky-500"
+                className="bg-white border border-slate-200 text-xs text-slate-900 px-3 py-1.5 rounded-xl font-medium focus:outline-none focus:border-sky-500"
               >
                 {currentExamResults.map((r) => (
                   <option key={r.id} value={r.id}>
@@ -1329,19 +1329,19 @@ export const ExamsModule: React.FC<ExamsModuleProps> = ({ defaultTab }) => {
               </select>
 
               {/* View mode toggle */}
-              <div className="flex items-center bg-slate-950 rounded-xl p-1 border border-slate-800">
+              <div className="flex items-center bg-slate-100 rounded-xl p-1 border border-slate-200">
                 <button
                   onClick={() => setReportViewMode('card')}
-                  className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all ${
-                    reportViewMode === 'card' ? 'bg-sky-500 text-white' : 'text-slate-400 hover:text-white'
+                  className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                    reportViewMode === 'card' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
                   Official Report Card
                 </button>
                 <button
                   onClick={() => setReportViewMode('marksheet')}
-                  className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all ${
-                    reportViewMode === 'marksheet' ? 'bg-sky-500 text-white' : 'text-slate-400 hover:text-white'
+                  className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                    reportViewMode === 'marksheet' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
                   Tabular Mark Sheet
@@ -1355,7 +1355,7 @@ export const ExamsModule: React.FC<ExamsModuleProps> = ({ defaultTab }) => {
                 size="sm"
                 leftIcon={<Printer className="w-4 h-4" />}
                 onClick={() => window.print()}
-                className="shadow-lg shadow-sky-950/20"
+                className="shadow-xs"
               >
                 Print Official Report Card
               </Button>
@@ -1364,13 +1364,13 @@ export const ExamsModule: React.FC<ExamsModuleProps> = ({ defaultTab }) => {
 
           {/* If MarkSheet mode selected */}
           {reportViewMode === 'marksheet' ? (
-            <div className="p-6 rounded-3xl bg-slate-900/60 border border-slate-800">
+            <div className="p-5 sm:p-6 rounded-2xl bg-white border border-slate-200/90 shadow-xs">
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h3 className="text-sm font-bold text-white">
+                  <h3 className="text-sm font-bold text-slate-900">
                     Master Academic Mark Sheet Ledger: {currentExam?.name}
                   </h3>
-                  <p className="text-xs text-slate-400">
+                  <p className="text-xs text-slate-500">
                     Comprehensive cross-sectional marks ledger with internal, practical, and aggregate percentiles.
                   </p>
                 </div>
@@ -1378,8 +1378,8 @@ export const ExamsModule: React.FC<ExamsModuleProps> = ({ defaultTab }) => {
               </div>
 
               <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs text-slate-300">
-                  <thead className="bg-slate-950/60 text-slate-400 uppercase tracking-wider text-[10px] font-semibold border-b border-slate-800">
+                <table className="w-full text-left text-xs text-slate-700">
+                  <thead className="bg-slate-50/90 text-slate-600 uppercase tracking-wider text-[10px] font-semibold border-b border-slate-200">
                     <tr>
                       <th className="py-3 px-3">Roll</th>
                       <th className="py-3 px-3">Student</th>
@@ -1395,31 +1395,31 @@ export const ExamsModule: React.FC<ExamsModuleProps> = ({ defaultTab }) => {
                       <th className="py-3 px-3 text-right">Result</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-800/60">
+                  <tbody className="divide-y divide-slate-100">
                     {currentExamResults.map((res) => (
-                      <tr key={res.id} className="hover:bg-slate-800/30 transition-colors">
-                        <td className="py-2.5 px-3 font-mono text-slate-400">{res.rollNo || '-'}</td>
-                        <td className="py-2.5 px-3 font-semibold text-white">{res.studentName}</td>
+                      <tr key={res.id} className="hover:bg-slate-50/60 transition-colors">
+                        <td className="py-2.5 px-3 font-mono text-slate-500">{res.rollNo || '-'}</td>
+                        <td className="py-2.5 px-3 font-semibold text-slate-900">{res.studentName}</td>
                         {currentExam?.subjects.map((sub) => {
                           const sMarks = res.marksObtained.find((m) => m.subjectName === sub.subjectName);
                           return (
-                            <td key={sub.subjectName} className="py-2.5 px-3 text-center font-mono text-slate-300">
+                            <td key={sub.subjectName} className="py-2.5 px-3 text-center font-mono text-slate-600">
                               {sMarks?.marks ?? '-'}
                             </td>
                           );
                         })}
-                        <td className="py-2.5 px-3 text-center font-mono font-bold text-white">
+                        <td className="py-2.5 px-3 text-center font-mono font-bold text-slate-900">
                           {res.totalMarks} / {res.totalMaxMarks}
                         </td>
-                        <td className="py-2.5 px-3 text-center font-bold text-sky-400 font-mono">{res.percentage}%</td>
-                        <td className="py-2.5 px-3 text-center font-bold">{res.grade}</td>
-                        <td className="py-2.5 px-3 text-center font-mono text-amber-400">#{res.rank || '-'}</td>
+                        <td className="py-2.5 px-3 text-center font-bold text-sky-700 font-mono">{res.percentage}%</td>
+                        <td className="py-2.5 px-3 text-center font-bold text-slate-900">{res.grade}</td>
+                        <td className="py-2.5 px-3 text-center font-mono text-amber-700">#{res.rank || '-'}</td>
                         <td className="py-2.5 px-3 text-right">
                           <span
                             className={`px-2 py-0.5 rounded text-[10px] font-bold ${
                               res.passStatus === 'PASS'
-                                ? 'bg-emerald-500/10 text-emerald-400'
-                                : 'bg-rose-500/10 text-rose-400'
+                                ? 'bg-emerald-50 text-emerald-700'
+                                : 'bg-rose-50 text-rose-700'
                             }`}
                           >
                             {res.passStatus}
@@ -1437,7 +1437,7 @@ export const ExamsModule: React.FC<ExamsModuleProps> = ({ defaultTab }) => {
               const targetReport = selectedStudentForReport || currentExamResults[0];
               if (!targetReport) {
                 return (
-                  <div className="p-12 text-center text-slate-500 bg-slate-900/40 rounded-3xl border border-slate-800">
+                  <div className="p-12 text-center text-slate-500 bg-white rounded-2xl border border-slate-200">
                     <AlertCircle className="w-8 h-8 text-slate-400 mx-auto mb-2" />
                     No published report cards are available for this student or examination.
                   </div>
@@ -1445,79 +1445,79 @@ export const ExamsModule: React.FC<ExamsModuleProps> = ({ defaultTab }) => {
               }
 
               return (
-                <div className="print-container max-w-4xl mx-auto p-8 sm:p-10 rounded-3xl bg-slate-900 border-2 border-slate-700/80 shadow-2xl relative">
+                <div className="print-container max-w-4xl mx-auto p-8 sm:p-10 rounded-3xl bg-white border-2 border-slate-200 shadow-md relative">
                   {/* Watermark Logo Background */}
                   <div className="absolute inset-0 flex items-center justify-center opacity-[0.03] pointer-events-none">
                     <img src={currentTenant.logo} alt="" className="w-96 h-96 object-contain grayscale" />
                   </div>
 
                   {/* Header: Institution Branding (Section 44) */}
-                  <div className="flex items-start justify-between border-b-2 border-slate-700/80 pb-6 mb-6">
+                  <div className="flex items-start justify-between border-b-2 border-slate-200 pb-6 mb-6">
                     <div className="flex items-center gap-4">
                       <img
                         src={currentTenant.logo}
                         alt={currentTenant.name}
-                        className="w-16 h-16 rounded-2xl object-cover ring-2 ring-sky-500/40"
+                        className="w-16 h-16 rounded-2xl object-cover ring-2 ring-sky-500/20"
                       />
                       <div>
-                        <span className="text-[10px] font-bold uppercase tracking-widest text-sky-400 font-mono">
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-sky-700 font-mono">
                           {isSchool ? 'CBSE Affiliated Senior Secondary School' : 'National Centre for Advanced Engineering & Medical Coaching'}
                         </span>
-                        <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight">
+                        <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
                           {currentTenant.name}
                         </h1>
-                        <p className="text-xs text-slate-400">
-                          {currentTenant.address} • Affiliation Code: <span className="font-mono text-slate-300">EDX-{currentTenant.code}-2026</span>
+                        <p className="text-xs text-slate-500">
+                          {currentTenant.address} • Affiliation Code: <span className="font-mono text-slate-700">EDX-{currentTenant.code}-2026</span>
                         </p>
                       </div>
                     </div>
 
                     <div className="text-right">
-                      <span className="px-3 py-1 rounded-lg bg-sky-500/20 text-sky-300 font-bold text-xs uppercase tracking-wider border border-sky-500/30">
+                      <span className="px-3 py-1 rounded-lg bg-sky-50 text-sky-700 font-bold text-xs uppercase tracking-wider border border-sky-200">
                         Official Academic Record
                       </span>
-                      <p className="text-[11px] font-mono text-slate-400 mt-1.5">
+                      <p className="text-[11px] font-mono text-slate-500 mt-1.5">
                         Academic Session: {targetReport.academicYear || currentTenant.academicYear}
                       </p>
-                      <p className="text-[10px] text-slate-500 font-mono">
+                      <p className="text-[10px] text-slate-400 font-mono">
                         Record Hash: {targetReport.id.slice(0, 14).toUpperCase()}
                       </p>
                     </div>
                   </div>
 
                   {/* Student Profile Card (Section 37) */}
-                  <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800 grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6 text-xs">
+                  <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6 text-xs">
                     <div>
-                      <span className="text-slate-400 block text-[10px] uppercase font-semibold">Student Name:</span>
-                      <span className="font-bold text-white text-sm">{targetReport.studentName}</span>
+                      <span className="text-slate-500 block text-[10px] uppercase font-semibold">Student Name:</span>
+                      <span className="font-bold text-slate-900 text-sm">{targetReport.studentName}</span>
                     </div>
                     <div>
-                      <span className="text-slate-400 block text-[10px] uppercase font-semibold">Admission / Scholar No:</span>
-                      <span className="font-mono text-sky-400 font-bold">{targetReport.admissionNo}</span>
+                      <span className="text-slate-500 block text-[10px] uppercase font-semibold">Admission / Scholar No:</span>
+                      <span className="font-mono text-sky-700 font-bold">{targetReport.admissionNo}</span>
                     </div>
                     <div>
-                      <span className="text-slate-400 block text-[10px] uppercase font-semibold">Class / Batch:</span>
-                      <span className="font-semibold text-white">{targetReport.groupName}</span>
+                      <span className="text-slate-500 block text-[10px] uppercase font-semibold">Class / Batch:</span>
+                      <span className="font-semibold text-slate-900">{targetReport.groupName}</span>
                     </div>
                     <div>
-                      <span className="text-slate-400 block text-[10px] uppercase font-semibold">Roll Number:</span>
-                      <span className="font-mono text-white font-bold">{targetReport.rollNo || '10A-01'}</span>
+                      <span className="text-slate-500 block text-[10px] uppercase font-semibold">Roll Number:</span>
+                      <span className="font-mono text-slate-900 font-bold">{targetReport.rollNo || '10A-01'}</span>
                     </div>
                     <div>
-                      <span className="text-slate-400 block text-[10px] uppercase font-semibold">Examination:</span>
-                      <span className="font-semibold text-slate-200">{targetReport.examName}</span>
+                      <span className="text-slate-500 block text-[10px] uppercase font-semibold">Examination:</span>
+                      <span className="font-semibold text-slate-800">{targetReport.examName}</span>
                     </div>
                     <div>
-                      <span className="text-slate-400 block text-[10px] uppercase font-semibold">Attendance Record:</span>
-                      <span className="font-bold text-emerald-400">{targetReport.attendancePercentage || 95.4}% Present</span>
+                      <span className="text-slate-500 block text-[10px] uppercase font-semibold">Attendance Record:</span>
+                      <span className="font-bold text-emerald-700">{targetReport.attendancePercentage || 95.4}% Present</span>
                     </div>
                     <div>
-                      <span className="text-slate-400 block text-[10px] uppercase font-semibold">Assessment Model:</span>
-                      <span className="font-medium text-slate-300">{targetReport.gradeScaleName}</span>
+                      <span className="text-slate-500 block text-[10px] uppercase font-semibold">Assessment Model:</span>
+                      <span className="font-medium text-slate-700">{targetReport.gradeScaleName}</span>
                     </div>
                     <div>
-                      <span className="text-slate-400 block text-[10px] uppercase font-semibold">Record Version:</span>
-                      <span className="font-mono text-sky-400 font-bold">
+                      <span className="text-slate-500 block text-[10px] uppercase font-semibold">Record Version:</span>
+                      <span className="font-mono text-sky-700 font-bold">
                         v{targetReport.version || 1} {targetReport.status === 'REVISED' ? '(Audited Revision)' : '(Certified)'}
                       </span>
                     </div>
@@ -1525,9 +1525,9 @@ export const ExamsModule: React.FC<ExamsModuleProps> = ({ defaultTab }) => {
 
                   {/* Subject Result Breakdown Table (Section 38 & 46) */}
                   <div className="overflow-x-auto mb-6">
-                    <table className="w-full text-left text-xs border border-slate-800 rounded-xl overflow-hidden">
-                      <thead className="bg-slate-950 text-slate-300 uppercase tracking-wider text-[10px] font-semibold">
-                        <tr className="border-b border-slate-800">
+                    <table className="w-full text-left text-xs border border-slate-200 rounded-xl overflow-hidden">
+                      <thead className="bg-slate-100 text-slate-700 uppercase tracking-wider text-[10px] font-semibold">
+                        <tr className="border-b border-slate-200">
                           <th className="py-3 px-4">Subject Name</th>
                           <th className="py-3 px-3 text-center">Theory (80)</th>
                           <th className="py-3 px-3 text-center">Practical / Internal (20)</th>
@@ -1539,27 +1539,27 @@ export const ExamsModule: React.FC<ExamsModuleProps> = ({ defaultTab }) => {
                           <th className="py-3 px-4 text-right">Result</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-800 text-slate-200 bg-slate-900/40">
+                      <tbody className="divide-y divide-slate-200 text-slate-800 bg-white">
                         {targetReport.marksObtained.map((sub, idx) => (
-                          <tr key={idx} className="hover:bg-slate-800/20">
-                            <td className="py-3 px-4 font-semibold text-white">{sub.subjectName}</td>
-                            <td className="py-3 px-3 text-center font-mono text-slate-300">{sub.theoryMarks || sub.marks}</td>
-                            <td className="py-3 px-3 text-center font-mono text-slate-400">
+                          <tr key={idx} className="hover:bg-slate-50/50">
+                            <td className="py-3 px-4 font-semibold text-slate-900">{sub.subjectName}</td>
+                            <td className="py-3 px-3 text-center font-mono text-slate-700">{sub.theoryMarks || sub.marks}</td>
+                            <td className="py-3 px-3 text-center font-mono text-slate-500">
                               {(sub.practicalMarks || 0) + (sub.internalMarks || 0)}
                             </td>
-                            <td className="py-3 px-3 text-center font-bold text-white font-mono">{sub.marks}</td>
-                            <td className="py-3 px-3 text-center font-mono text-slate-400">{sub.maxMarks}</td>
-                            <td className="py-3 px-3 text-center font-mono text-sky-400 font-semibold">{sub.percentage}%</td>
-                            <td className="py-3 px-3 text-center font-bold text-white">{sub.grade}</td>
-                            <td className="py-3 px-3 text-center font-mono text-amber-400">
+                            <td className="py-3 px-3 text-center font-bold text-slate-900 font-mono">{sub.marks}</td>
+                            <td className="py-3 px-3 text-center font-mono text-slate-500">{sub.maxMarks}</td>
+                            <td className="py-3 px-3 text-center font-mono text-sky-700 font-semibold">{sub.percentage}%</td>
+                            <td className="py-3 px-3 text-center font-bold text-slate-900">{sub.grade}</td>
+                            <td className="py-3 px-3 text-center font-mono text-amber-700 font-bold">
                               {sub.gradePoint?.toFixed(1) || '-'}
                             </td>
                             <td className="py-3 px-4 text-right">
                               <span
                                 className={`px-2 py-0.5 rounded text-[10px] font-bold ${
                                   sub.passStatus === 'PASS'
-                                    ? 'bg-emerald-500/10 text-emerald-400'
-                                    : 'bg-rose-500/10 text-rose-400'
+                                    ? 'bg-emerald-50 text-emerald-700'
+                                    : 'bg-rose-50 text-rose-700'
                                 }`}
                               >
                                 {sub.passStatus || 'PASS'}
@@ -1569,25 +1569,25 @@ export const ExamsModule: React.FC<ExamsModuleProps> = ({ defaultTab }) => {
                         ))}
                       </tbody>
                       {/* Grand Summary Footer */}
-                      <tfoot className="bg-slate-950 font-bold border-t-2 border-slate-700/80">
+                      <tfoot className="bg-slate-50 font-bold border-t-2 border-slate-300">
                         <tr>
-                          <td className="py-3 px-4 text-white uppercase text-xs" colSpan={3}>
+                          <td className="py-3 px-4 text-slate-900 uppercase text-xs" colSpan={3}>
                             Aggregate Assessment Summary
                           </td>
-                          <td className="py-3 px-3 text-center font-mono text-white text-sm">
+                          <td className="py-3 px-3 text-center font-mono text-slate-900 text-sm">
                             {targetReport.totalMarks}
                           </td>
-                          <td className="py-3 px-3 text-center font-mono text-slate-400 text-sm">
+                          <td className="py-3 px-3 text-center font-mono text-slate-500 text-sm">
                             {targetReport.totalMaxMarks}
                           </td>
-                          <td className="py-3 px-3 text-center font-mono text-sky-400 text-sm">
+                          <td className="py-3 px-3 text-center font-mono text-sky-700 text-sm">
                             {targetReport.percentage}%
                           </td>
-                          <td className="py-3 px-3 text-center text-amber-300 text-sm">{targetReport.grade}</td>
-                          <td className="py-3 px-3 text-center font-mono text-amber-400 text-sm">
+                          <td className="py-3 px-3 text-center text-amber-800 text-sm">{targetReport.grade}</td>
+                          <td className="py-3 px-3 text-center font-mono text-amber-700 text-sm">
                             {targetReport.gpa?.toFixed(2) || '-'}
                           </td>
-                          <td className="py-3 px-4 text-right text-emerald-400 text-xs tracking-wider">
+                          <td className="py-3 px-4 text-right text-emerald-700 text-xs tracking-wider">
                             {targetReport.passStatus}
                           </td>
                         </tr>
@@ -1597,80 +1597,80 @@ export const ExamsModule: React.FC<ExamsModuleProps> = ({ defaultTab }) => {
 
                   {/* Performance Summary Cards (Section 39) */}
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-                    <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 text-center">
-                      <span className="text-[10px] uppercase font-bold text-slate-400">Aggregate Score</span>
-                      <p className="text-lg font-black text-white mt-0.5 font-mono">{targetReport.percentage}%</p>
+                    <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-center">
+                      <span className="text-[10px] uppercase font-bold text-slate-500">Aggregate Score</span>
+                      <p className="text-lg font-black text-slate-900 mt-0.5 font-mono">{targetReport.percentage}%</p>
                     </div>
-                    <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 text-center">
-                      <span className="text-[10px] uppercase font-bold text-slate-400">Overall Grade</span>
-                      <p className="text-lg font-black text-sky-400 mt-0.5">{targetReport.grade}</p>
+                    <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-center">
+                      <span className="text-[10px] uppercase font-bold text-slate-500">Overall Grade</span>
+                      <p className="text-lg font-black text-sky-700 mt-0.5">{targetReport.grade}</p>
                     </div>
-                    <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 text-center">
-                      <span className="text-[10px] uppercase font-bold text-slate-400">Rank in Cohort</span>
-                      <p className="text-lg font-black text-amber-400 mt-0.5 font-mono">
-                        #{targetReport.rank || 1} <span className="text-xs font-normal text-slate-400">/ {targetReport.totalInGroup || 38}</span>
+                    <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-center">
+                      <span className="text-[10px] uppercase font-bold text-slate-500">Rank in Cohort</span>
+                      <p className="text-lg font-black text-amber-700 mt-0.5 font-mono">
+                        #{targetReport.rank || 1} <span className="text-xs font-normal text-slate-500">/ {targetReport.totalInGroup || 38}</span>
                       </p>
                     </div>
-                    <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 text-center">
-                      <span className="text-[10px] uppercase font-bold text-slate-400">Final Result</span>
-                      <p className="text-lg font-black text-emerald-400 mt-0.5">{targetReport.passStatus}</p>
+                    <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-center">
+                      <span className="text-[10px] uppercase font-bold text-slate-500">Final Result</span>
+                      <p className="text-lg font-black text-emerald-700 mt-0.5">{targetReport.passStatus}</p>
                     </div>
                   </div>
 
                   {/* Teacher & Administrator Remarks (Section 41 & 42) */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
-                    <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-sky-400 block mb-1">
+                    <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-sky-700 block mb-1">
                         Class Faculty Remarks
                       </span>
-                      <p className="text-xs text-slate-300 italic leading-relaxed">
+                      <p className="text-xs text-slate-600 italic leading-relaxed">
                         "{targetReport.teacherRemarks || 'Consistent academic enthusiasm and exemplary discipline demonstrated in all coursework.'}"
                       </p>
                     </div>
-                    <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400 block mb-1">
+                    <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-amber-700 block mb-1">
                         Principal & Academic Directorate Remarks
                       </span>
-                      <p className="text-xs text-slate-300 italic leading-relaxed">
+                      <p className="text-xs text-slate-600 italic leading-relaxed">
                         "{targetReport.principalRemarks || 'Academic distinction verified. Qualified for next term advancement.'}"
                       </p>
                     </div>
                   </div>
 
                   {/* Official Signature Blocks & Seal (Section 45) */}
-                  <div className="pt-6 border-t-2 border-slate-700/80 grid grid-cols-3 gap-4 text-center text-xs">
+                  <div className="pt-6 border-t-2 border-slate-200 grid grid-cols-3 gap-4 text-center text-xs">
                     <div>
-                      <div className="h-10 flex items-end justify-center font-serif text-slate-400 italic text-sm">
+                      <div className="h-10 flex items-end justify-center font-serif text-slate-600 italic text-sm">
                         Sunita Sharma
                       </div>
-                      <div className="border-t border-slate-600 pt-1">
-                        <span className="font-bold text-white text-[11px] block">Class Teacher Signature</span>
-                        <span className="text-[10px] text-slate-400">Verified Educator</span>
+                      <div className="border-t border-slate-300 pt-1">
+                        <span className="font-bold text-slate-900 text-[11px] block">Class Teacher Signature</span>
+                        <span className="text-[10px] text-slate-500">Verified Educator</span>
                       </div>
                     </div>
 
                     <div className="flex flex-col items-center justify-center">
-                      <div className="w-14 h-14 rounded-full border-2 border-dashed border-sky-500/50 flex items-center justify-center text-[9px] font-mono text-sky-400 uppercase text-center p-1 leading-tight font-bold">
+                      <div className="w-14 h-14 rounded-full border-2 border-dashed border-sky-600 flex items-center justify-center text-[9px] font-mono text-sky-700 uppercase text-center p-1 leading-tight font-bold">
                         Institutional Seal
                       </div>
                       <span className="text-[9px] text-slate-500 mt-1">Official Registry Stamp</span>
                     </div>
 
                     <div>
-                      <div className="h-10 flex items-end justify-center font-serif text-slate-400 italic text-sm">
+                      <div className="h-10 flex items-end justify-center font-serif text-slate-600 italic text-sm">
                         Dr. Rajesh Rao
                       </div>
-                      <div className="border-t border-slate-600 pt-1">
-                        <span className="font-bold text-white text-[11px] block">
+                      <div className="border-t border-slate-300 pt-1">
+                        <span className="font-bold text-slate-900 text-[11px] block">
                           {isSchool ? 'Principal & Controller of Exams' : 'Academic Director'}
                         </span>
-                        <span className="text-[10px] text-slate-400">Certified Official</span>
+                        <span className="text-[10px] text-slate-500">Certified Official</span>
                       </div>
                     </div>
                   </div>
 
                   {/* Audit Footer (Section 71) */}
-                  <div className="mt-8 pt-3 border-t border-slate-800/80 text-center text-[10px] text-slate-500 font-mono">
+                  <div className="mt-8 pt-3 border-t border-slate-200 text-center text-[10px] text-slate-400 font-mono">
                     Published officially on {targetReport.publishedAt ? new Date(targetReport.publishedAt).toLocaleString() : 'Recent Official Run'} • This digital document represents a tamper-audited academic transcript generated by EduNexus Enterprise ERP.
                   </div>
                 </div>
@@ -1687,9 +1687,9 @@ export const ExamsModule: React.FC<ExamsModuleProps> = ({ defaultTab }) => {
         <div className="space-y-6">
           {/* Top Metric Cards */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
-            <div className="p-5 rounded-2xl bg-slate-900/60 border border-slate-800">
-              <span className="text-xs font-semibold text-slate-400 block">Overall Pass Percentage</span>
-              <p className="text-2xl font-black text-emerald-400 mt-1 font-mono">
+            <div className="p-5 rounded-2xl bg-white border border-slate-200/90 shadow-xs">
+              <span className="text-xs font-semibold text-slate-500 block">Overall Pass Percentage</span>
+              <p className="text-2xl font-black text-emerald-600 mt-1 font-mono">
                 {analyticsSummary.passRate}%
               </p>
               <span className="text-[11px] text-slate-500 mt-1 block">
@@ -1697,29 +1697,29 @@ export const ExamsModule: React.FC<ExamsModuleProps> = ({ defaultTab }) => {
               </span>
             </div>
 
-            <div className="p-5 rounded-2xl bg-slate-900/60 border border-slate-800">
-              <span className="text-xs font-semibold text-slate-400 block">Class Average Score</span>
-              <p className="text-2xl font-black text-sky-400 mt-1 font-mono">{analyticsSummary.avgScore}%</p>
+            <div className="p-5 rounded-2xl bg-white border border-slate-200/90 shadow-xs">
+              <span className="text-xs font-semibold text-slate-500 block">Class Average Score</span>
+              <p className="text-2xl font-black text-sky-600 mt-1 font-mono">{analyticsSummary.avgScore}%</p>
               <span className="text-[11px] text-slate-500 mt-1 block">Based on evaluated cohort</span>
             </div>
 
-            <div className="p-5 rounded-2xl bg-slate-900/60 border border-slate-800">
-              <span className="text-xs font-semibold text-slate-400 block">Highest Achieved Score</span>
-              <p className="text-2xl font-black text-amber-400 mt-1 font-mono">{analyticsSummary.highest}%</p>
+            <div className="p-5 rounded-2xl bg-white border border-slate-200/90 shadow-xs">
+              <span className="text-xs font-semibold text-slate-500 block">Highest Achieved Score</span>
+              <p className="text-2xl font-black text-amber-600 mt-1 font-mono">{analyticsSummary.highest}%</p>
               <span className="text-[11px] text-slate-500 mt-1 block">Top distinction tier</span>
             </div>
 
-            <div className="p-5 rounded-2xl bg-slate-900/60 border border-slate-800">
-              <span className="text-xs font-semibold text-slate-400 block">Students Evaluated</span>
-              <p className="text-2xl font-black text-white mt-1 font-mono">{analyticsSummary.totalAppeared}</p>
+            <div className="p-5 rounded-2xl bg-white border border-slate-200/90 shadow-xs">
+              <span className="text-xs font-semibold text-slate-500 block">Students Evaluated</span>
+              <p className="text-2xl font-black text-slate-900 mt-1 font-mono">{analyticsSummary.totalAppeared}</p>
               <span className="text-[11px] text-slate-500 mt-1 block">All registered examinees</span>
             </div>
           </div>
 
           {/* Subject Performance Breakdown */}
-          <div className="p-6 rounded-3xl bg-slate-900/60 border border-slate-800">
-            <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
-              <BarChart3 className="w-4 h-4 text-sky-400" />
+          <div className="p-5 sm:p-6 rounded-2xl bg-white border border-slate-200/90 shadow-xs">
+            <h3 className="text-sm font-bold text-slate-900 mb-4 flex items-center gap-2">
+              <BarChart3 className="w-4 h-4 text-sky-600" />
               Subject Performance Comparative Matrix (Document 52 Section 58)
             </h3>
 
@@ -1733,20 +1733,20 @@ export const ExamsModule: React.FC<ExamsModuleProps> = ({ defaultTab }) => {
                 const top = subScores.length ? Math.max(...subScores) : 98;
 
                 return (
-                  <div key={sub.subjectName} className="p-4 rounded-2xl bg-slate-950 border border-slate-800">
-                    <h4 className="text-xs font-bold text-white truncate mb-2">{sub.subjectName}</h4>
-                    <div className="space-y-1.5 text-xs text-slate-300">
+                  <div key={sub.subjectName} className="p-4 rounded-2xl bg-slate-50 border border-slate-200">
+                    <h4 className="text-xs font-bold text-slate-900 truncate mb-2">{sub.subjectName}</h4>
+                    <div className="space-y-1.5 text-xs text-slate-600">
                       <div className="flex justify-between">
                         <span className="text-slate-500">Average:</span>
-                        <span className="font-bold text-sky-400 font-mono">{avg}%</span>
+                        <span className="font-bold text-sky-700 font-mono">{avg}%</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-slate-500">Highest:</span>
-                        <span className="font-bold text-amber-400 font-mono">{top}%</span>
+                        <span className="font-bold text-amber-700 font-mono">{top}%</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-slate-500">Pass Rate:</span>
-                        <span className="font-bold text-emerald-400 font-mono">92%</span>
+                        <span className="font-bold text-emerald-700 font-mono">92%</span>
                       </div>
                     </div>
                   </div>
@@ -1756,15 +1756,15 @@ export const ExamsModule: React.FC<ExamsModuleProps> = ({ defaultTab }) => {
           </div>
 
           {/* Top Rankers Leaderboard */}
-          <div className="p-6 rounded-3xl bg-slate-900/60 border border-slate-800">
-            <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
-              <TrendingUp className="w-4 h-4 text-amber-400" />
+          <div className="p-5 sm:p-6 rounded-2xl bg-white border border-slate-200/90 shadow-xs">
+            <h3 className="text-sm font-bold text-slate-900 mb-4 flex items-center gap-2">
+              <TrendingUp className="w-4 h-4 text-amber-600" />
               Academic Merit Leaderboard & Cohort Standings (Section 62)
             </h3>
 
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs text-slate-300">
-                <thead className="bg-slate-950/60 text-slate-400 uppercase tracking-wider text-[10px] font-semibold border-b border-slate-800">
+              <table className="w-full text-left text-xs text-slate-700">
+                <thead className="bg-slate-50/90 text-slate-600 uppercase tracking-wider text-[10px] font-semibold border-b border-slate-200">
                   <tr>
                     <th className="py-3 px-4">Rank</th>
                     <th className="py-3 px-4">Student Name</th>
@@ -1775,26 +1775,26 @@ export const ExamsModule: React.FC<ExamsModuleProps> = ({ defaultTab }) => {
                     <th className="py-3 px-4 text-right">Merit Distinction</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-800/60">
+                <tbody className="divide-y divide-slate-100">
                   {currentExamResults.slice(0, 10).map((res) => (
-                    <tr key={res.id} className="hover:bg-slate-800/30 transition-colors">
-                      <td className="py-3 px-4 font-mono font-bold text-sky-400">#{res.rank}</td>
-                      <td className="py-3 px-4 font-semibold text-white">{res.studentName}</td>
-                      <td className="py-3 px-4 font-mono text-slate-400">{res.admissionNo}</td>
-                      <td className="py-3 px-4 text-slate-300">{res.groupName}</td>
-                      <td className="py-3 px-4 text-center font-mono font-bold text-white">{res.percentage}%</td>
+                    <tr key={res.id} className="hover:bg-slate-50/60 transition-colors">
+                      <td className="py-3 px-4 font-mono font-bold text-sky-700">#{res.rank}</td>
+                      <td className="py-3 px-4 font-semibold text-slate-900">{res.studentName}</td>
+                      <td className="py-3 px-4 font-mono text-slate-500">{res.admissionNo}</td>
+                      <td className="py-3 px-4 text-slate-600">{res.groupName}</td>
+                      <td className="py-3 px-4 text-center font-mono font-bold text-slate-900">{res.percentage}%</td>
                       <td className="py-3 px-4 text-center">
-                        <span className="px-2 py-0.5 rounded-full bg-sky-500/10 text-sky-300 font-bold border border-sky-500/20">
+                        <span className="px-2 py-0.5 rounded-full bg-sky-50 text-sky-700 font-bold border border-sky-200">
                           {res.grade}
                         </span>
                       </td>
                       <td className="py-3 px-4 text-right">
                         {(res.rank || 99) <= 3 ? (
-                          <span className="px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 text-[10px] font-bold border border-amber-500/20">
+                          <span className="px-2 py-0.5 rounded bg-amber-50 text-amber-700 text-[10px] font-bold border border-amber-200">
                             Gold Distinction Tier
                           </span>
                         ) : (
-                          <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-400 text-[10px]">
+                          <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-600 text-[10px]">
                             Qualified
                           </span>
                         )}
@@ -1814,46 +1814,46 @@ export const ExamsModule: React.FC<ExamsModuleProps> = ({ defaultTab }) => {
       <Modal isOpen={isAddExamModalOpen} onClose={() => setIsAddExamModalOpen(false)} title="Schedule New Examination">
         <form onSubmit={handleCreateExam} className="space-y-4 text-xs">
           <div>
-            <label className="block font-semibold text-slate-300 mb-1">Examination Title</label>
+            <label className="block font-semibold text-slate-700 mb-1">Examination Title</label>
             <input
               type="text"
               required
               placeholder="e.g. Annual Final Board Prep 2026"
               value={examForm.name}
               onChange={(e) => setExamForm({ ...examForm, name: e.target.value })}
-              className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white focus:outline-none focus:border-sky-500"
+              className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 focus:outline-none focus:border-sky-500"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block font-semibold text-slate-300 mb-1">Start Date</label>
+              <label className="block font-semibold text-slate-700 mb-1">Start Date</label>
               <input
                 type="date"
                 required
                 value={examForm.startDate}
                 onChange={(e) => setExamForm({ ...examForm, startDate: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white focus:outline-none focus:border-sky-500"
+                className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 focus:outline-none focus:border-sky-500"
               />
             </div>
             <div>
-              <label className="block font-semibold text-slate-300 mb-1">End Date</label>
+              <label className="block font-semibold text-slate-700 mb-1">End Date</label>
               <input
                 type="date"
                 required
                 value={examForm.endDate}
                 onChange={(e) => setExamForm({ ...examForm, endDate: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white focus:outline-none focus:border-sky-500"
+                className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 focus:outline-none focus:border-sky-500"
               />
             </div>
           </div>
 
           <div>
-            <label className="block font-semibold text-slate-300 mb-1">Associated Class / Batch</label>
+            <label className="block font-semibold text-slate-700 mb-1">Associated Class / Batch</label>
             <select
               value={examForm.groupId}
               onChange={(e) => setExamForm({ ...examForm, groupId: e.target.value })}
-              className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white focus:outline-none focus:border-sky-500"
+              className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 focus:outline-none focus:border-sky-500"
             >
               {isSchool
                 ? classes.map((c) => (
@@ -1870,11 +1870,11 @@ export const ExamsModule: React.FC<ExamsModuleProps> = ({ defaultTab }) => {
           </div>
 
           <div>
-            <label className="block font-semibold text-slate-300 mb-1">Grading Scale (Doc 52)</label>
+            <label className="block font-semibold text-slate-700 mb-1">Grading Scale (Doc 52)</label>
             <select
               value={examForm.gradeScaleId}
               onChange={(e) => setExamForm({ ...examForm, gradeScaleId: e.target.value })}
-              className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white focus:outline-none focus:border-sky-500"
+              className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 focus:outline-none focus:border-sky-500"
             >
               {gradeScales.map((s) => (
                 <option key={s.id} value={s.id}>
@@ -1884,7 +1884,7 @@ export const ExamsModule: React.FC<ExamsModuleProps> = ({ defaultTab }) => {
             </select>
           </div>
 
-          <div className="pt-4 border-t border-slate-800 flex justify-end gap-2">
+          <div className="pt-4 border-t border-slate-100 flex justify-end gap-2">
             <Button variant="ghost" size="sm" onClick={() => setIsAddExamModalOpen(false)}>
               Cancel
             </Button>
@@ -1905,19 +1905,19 @@ export const ExamsModule: React.FC<ExamsModuleProps> = ({ defaultTab }) => {
           title={`Apply Audited Grace Marks: ${graceModalData.result.studentName}`}
         >
           <div className="space-y-4 text-xs">
-            <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs">
+            <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs">
               <strong>Section 21 Audit Policy:</strong> Grace marks require explicit authorization, subject
               ceiling limits, and permanent immutable audit trails.
             </div>
 
             <div>
-              <label className="block font-semibold text-slate-300 mb-1">Subject</label>
+              <label className="block font-semibold text-slate-700 mb-1">Subject</label>
               <select
                 value={graceModalData.subjectName}
                 onChange={(e) =>
                   setGraceModalData({ ...graceModalData, subjectName: e.target.value })
                 }
-                className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white focus:outline-none"
+                className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 focus:outline-none"
               >
                 {graceModalData.result.marksObtained.map((sub) => (
                   <option key={sub.subjectName} value={sub.subjectName}>
@@ -1928,29 +1928,29 @@ export const ExamsModule: React.FC<ExamsModuleProps> = ({ defaultTab }) => {
             </div>
 
             <div>
-              <label className="block font-semibold text-slate-300 mb-1">Grace Points to Add (Max 5)</label>
+              <label className="block font-semibold text-slate-700 mb-1">Grace Points to Add (Max 5)</label>
               <input
                 type="number"
                 min={1}
                 max={5}
                 value={graceMarksInput}
                 onChange={(e) => setGraceMarksInput(Number(e.target.value))}
-                className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white font-mono"
+                className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 font-mono"
               />
             </div>
 
             <div>
-              <label className="block font-semibold text-slate-300 mb-1">Official Reason & Justification</label>
+              <label className="block font-semibold text-slate-700 mb-1">Official Reason & Justification</label>
               <input
                 type="text"
                 value={graceReasonInput}
                 onChange={(e) => setGraceReasonInput(e.target.value)}
                 placeholder="e.g. Qualifying subject pass moderation under Academic Rule 4.2"
-                className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white"
+                className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900"
               />
             </div>
 
-            <div className="pt-3 border-t border-slate-800 flex justify-end gap-2">
+            <div className="pt-3 border-t border-slate-100 flex justify-end gap-2">
               <Button variant="ghost" size="sm" onClick={() => setGraceModalData(null)}>
                 Cancel
               </Button>
@@ -1972,30 +1972,30 @@ export const ExamsModule: React.FC<ExamsModuleProps> = ({ defaultTab }) => {
           title={`Authorized Result Revision: ${revisionModalData.studentName} (v${(revisionModalData.version || 1) + 1})`}
         >
           <div className="space-y-4 text-xs">
-            <div className="p-3 rounded-xl bg-sky-500/10 border border-sky-500/20 text-sky-300">
+            <div className="p-3 rounded-xl bg-sky-50 border border-sky-200 text-sky-800">
               <strong>Section 34 Revision Protection:</strong> Published academic records cannot be silently overwritten.
               Performing a revision generates a tracked new version with previous values preserved.
             </div>
 
             <div>
-              <span className="text-slate-400 block mb-1">Current Version:</span>
-              <span className="font-mono text-white font-bold">
+              <span className="text-slate-500 block mb-1">Current Version:</span>
+              <span className="font-mono text-slate-900 font-bold">
                 Version {revisionModalData.version || 1} • {revisionModalData.percentage}% ({revisionModalData.grade})
               </span>
             </div>
 
             <div>
-              <label className="block font-semibold text-slate-300 mb-1">Mandatory Revision Justification</label>
+              <label className="block font-semibold text-slate-700 mb-1">Mandatory Revision Justification</label>
               <textarea
                 rows={3}
                 required
                 value={revisionReason}
                 onChange={(e) => setRevisionReason(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white focus:outline-none"
+                className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 focus:outline-none"
               />
             </div>
 
-            <div className="pt-3 border-t border-slate-800 flex justify-end gap-2">
+            <div className="pt-3 border-t border-slate-100 flex justify-end gap-2">
               <Button variant="ghost" size="sm" onClick={() => setRevisionModalData(null)}>
                 Cancel
               </Button>
