@@ -1,4 +1,4 @@
-﻿import { Student } from '../types';
+import { Student } from '../types';
 import { ServiceResult, ok, fail } from '../types/serviceResult';
 import { studentRepository } from '../repositories/studentRepository';
 
@@ -67,5 +67,19 @@ export const studentService = {
     };
     await studentRepository.save(updated);
     return ok(true);
+  },
+
+  async saveStudent(student: Student): Promise<ServiceResult<Student>> {
+    if (!student.firstName?.trim()) {
+      return fail('VALIDATION_ERROR', 'Student first name is required.');
+    }
+    return studentRepository.save(student);
+  },
+
+  async deleteStudent(id: string, tenantId: string): Promise<ServiceResult<boolean>> {
+    if (!id || !tenantId) {
+      return fail('VALIDATION_ERROR', 'Student ID and Tenant ID are required for deletion.');
+    }
+    return studentRepository.delete(id, tenantId);
   },
 };

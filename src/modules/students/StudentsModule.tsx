@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Users,
   Search,
@@ -53,17 +53,45 @@ import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { Modal } from '../../components/ui/Modal';
 import { Tabs } from '../../components/ui/Tabs';
+import { DataStateWrapper } from '../../components/ui/DataStateWrapper';
+import { studentService } from '../../services/studentService';
+import { isSupabaseConfigured } from '../../lib/supabase/client';
 
 export const StudentsModule: React.FC = () => {
   const { currentTenant, getLabel, isSchool, isCoaching } = useTenant();
 
   // Primary State
   const [activeSubTab, setActiveSubTab] = useState<'students' | 'guardians' | 'enrollments'>('students');
-  const [students, setStudents] = useState<Student[]>(() => storage.getStudents(currentTenant.id));
+  const [students, setStudents] = useState<Student[]>([]);
+  const [isLoadingStudents, setIsLoadingStudents] = useState<boolean>(true);
+  const [studentError, setStudentError] = useState<string | null>(null);
+  const [isOfflineSource, setIsOfflineSource] = useState<boolean>(!isSupabaseConfigured());
   const [guardians, setGuardians] = useState<Guardian[]>(() => storage.getGuardians(currentTenant.id));
   const [studentGuardians, setStudentGuardians] = useState<StudentGuardian[]>(() => storage.getStudentGuardians());
   const [enrollments, setEnrollments] = useState<Enrollment[]>(() => storage.getEnrollments());
   const [documents, setDocuments] = useState<DocumentMeta[]>(() => storage.getDocuments());
+
+  const fetchStudents = async () => {
+    setIsLoadingStudents(true);
+    setStudentError(null);
+    try {
+      const result = await studentService.getStudents(currentTenant.id);
+      if (result.error) {
+        setStudentError(result.error.message);
+      } else {
+        setStudents(result.data);
+        setIsOfflineSource(!!result.isOffline);
+      }
+    } catch (err: any) {
+      setStudentError(err?.message || 'Failed to fetch students from data layer');
+    } finally {
+      setIsLoadingStudents(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchStudents();
+  }, [currentTenant.id]);
 
   // Search & Filters
   const [searchQuery, setSearchQuery] = useState('');
@@ -140,7 +168,7 @@ export const StudentsModule: React.FC = () => {
   });
 
   // Handle Add Student
-  const handleCreateStudent = (e: React.FormEvent) => {
+  const handleCreateStudent = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!studentForm.firstName || !studentForm.parentPhone) return;
 
@@ -172,8 +200,8 @@ export const StudentsModule: React.FC = () => {
       qrCode: `${currentTenant.code}-STU-${newId}-${studentForm.firstName?.toUpperCase()}`,
     };
 
-    // 1. Save Student
-    storage.saveStudent(newStudent);
+    // 1. Save Student via domain service
+    await studentService.saveStudent(newStudent);
 
     // 2. Automatically Create & Link Guardian if provided
     if (studentForm.parentName && studentForm.parentPhone) {
@@ -219,7 +247,7 @@ export const StudentsModule: React.FC = () => {
     });
 
     // Refresh state
-    setStudents(storage.getStudents(currentTenant.id));
+    await fetchStudents();
     setGuardians(storage.getGuardians(currentTenant.id));
     setStudentGuardians(storage.getStudentGuardians());
     setEnrollments(storage.getEnrollments());
@@ -286,10 +314,10 @@ export const StudentsModule: React.FC = () => {
     setIsUploadDocModalOpen(false);
   };
 
-  const handleDeleteStudent = (id: string) => {
+  const handleDeleteStudent = async (id: string) => {
     if (confirm(`Are you sure you want to remove this ${getLabel('student').toLowerCase()}?`)) {
-      storage.deleteStudent(id);
-      setStudents(storage.getStudents(currentTenant.id));
+      await studentService.deleteStudent(id, currentTenant.id);
+      await fetchStudents();
       if (selectedStudent?.id === id) setSelectedStudent(null);
     }
   };
@@ -331,6 +359,20 @@ export const StudentsModule: React.FC = () => {
             </h2>
             <span className="px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-[10px] font-mono text-emerald-700">
               Canonical Workspace v1.0
+            </span>
+            <span
+              className={`px-2 py-0.5 rounded-full border text-[10px] font-mono flex items-center gap-1.5 ${
+                isOfflineSource
+                  ? 'bg-amber-50 border-amber-200 text-amber-700'
+                  : 'bg-emerald-50 border-emerald-200 text-emerald-700'
+              }`}
+            >
+              <span
+                className={`w-1.5 h-1.5 rounded-full ${
+                  isOfflineSource ? 'bg-amber-500' : 'bg-emerald-500 animate-pulse'
+                }`}
+              />
+              {isOfflineSource ? 'Offline Local Cache' : 'Supabase Live DB'}
             </span>
           </div>
           <p className="text-xs text-slate-500 mt-0.5">
@@ -410,88 +452,106 @@ export const StudentsModule: React.FC = () => {
             </div>
           </div>
 
-          {/* Students Table */}
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs text-slate-600">
-                <thead className="bg-slate-50 text-slate-500 uppercase text-[10px] border-b border-slate-200 font-mono">
-                  <tr>
-                    <th className="p-3.5">{getLabel('student')} Name</th>
-                    <th className="p-3.5">{getLabel('admission')} No</th>
-                    <th className="p-3.5">{getLabel('group')}</th>
-                    <th className="p-3.5">Primary Guardian</th>
-                    <th className="p-3.5">Status</th>
-                    <th className="p-3.5 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {filteredStudents.map((s) => {
-                    const studentClass = classes.find((c) => c.id === s.classId);
-                    const studentBatch = batches.find((b) => s.batchIds?.includes(b.id));
-                    const groupLabel = isSchool ? studentClass?.name : studentBatch?.name;
+          {/* Students Table Wrapped in DataStateWrapper */}
+          <DataStateWrapper
+            isLoading={isLoadingStudents}
+            error={studentError}
+            isEmpty={filteredStudents.length === 0}
+            emptyTitle={`No ${getLabel('studentPlural')} Found`}
+            emptyDescription={
+              searchQuery || classFilter !== 'ALL' || statusFilter !== 'ALL'
+                ? 'No student records match your active search and filter criteria.'
+                : `No ${getLabel('studentPlural').toLowerCase()} are currently registered. Click below to add your first admission.`
+            }
+            emptyAction={{
+              label: `New ${getLabel('admission')}`,
+              onClick: () => setIsAddStudentModalOpen(true),
+              icon: <Plus className="w-3.5 h-3.5" />,
+            }}
+            onRetry={fetchStudents}
+          >
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs text-slate-600">
+                  <thead className="bg-slate-50 text-slate-500 uppercase text-[10px] border-b border-slate-200 font-mono">
+                    <tr>
+                      <th className="p-3.5">{getLabel('student')} Name</th>
+                      <th className="p-3.5">{getLabel('admission')} No</th>
+                      <th className="p-3.5">{getLabel('group')}</th>
+                      <th className="p-3.5">Primary Guardian</th>
+                      <th className="p-3.5">Status</th>
+                      <th className="p-3.5 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {filteredStudents.map((s) => {
+                      const studentClass = classes.find((c) => c.id === s.classId);
+                      const studentBatch = batches.find((b) => s.batchIds?.includes(b.id));
+                      const groupLabel = isSchool ? studentClass?.name : studentBatch?.name;
 
-                    return (
-                      <tr key={s.id} className="hover:bg-slate-50/80 transition-colors">
-                        <td className="p-3.5">
-                          <div className="flex items-center gap-3">
-                            <img
-                              src={s.photoUrl}
-                              alt={s.firstName}
-                              className="w-8 h-8 rounded-full object-cover border border-slate-200"
-                            />
-                            <div>
-                              <p className="font-bold text-slate-900 text-xs">
-                                {s.firstName} {s.lastName}
-                              </p>
-                              <p className="text-[10px] text-slate-500">{s.gender} • DOB: {s.dob}</p>
+                      return (
+                        <tr key={s.id} className="hover:bg-slate-50/80 transition-colors">
+                          <td className="p-3.5">
+                            <div className="flex items-center gap-3">
+                              <img
+                                src={s.photoUrl}
+                                alt={s.firstName}
+                                className="w-8 h-8 rounded-full object-cover border border-slate-200"
+                              />
+                              <div>
+                                <p className="font-bold text-slate-900 text-xs">
+                                  {s.firstName} {s.lastName}
+                                </p>
+                                <p className="text-[10px] text-slate-500">{s.gender} • DOB: {s.dob}</p>
+                              </div>
                             </div>
-                          </div>
-                        </td>
+                          </td>
 
-                        <td className="p-3.5 font-mono text-emerald-700 font-semibold">{s.admissionNo}</td>
-                        <td className="p-3.5 text-slate-700 font-medium">{groupLabel || 'Unassigned'}</td>
+                          <td className="p-3.5 font-mono text-emerald-700 font-semibold">{s.admissionNo}</td>
+                          <td className="p-3.5 text-slate-700 font-medium">{groupLabel || 'Unassigned'}</td>
 
-                        <td className="p-3.5">
-                          <p className="font-semibold text-slate-900">{s.parentName}</p>
-                          <p className="text-[10px] text-slate-500 flex items-center gap-1 font-mono">
-                            <Phone className="w-3 h-3 text-slate-400" /> {s.parentPhone}
-                          </p>
-                        </td>
+                          <td className="p-3.5">
+                            <p className="font-semibold text-slate-900">{s.parentName}</p>
+                            <p className="text-[10px] text-slate-500 flex items-center gap-1 font-mono">
+                              <Phone className="w-3 h-3 text-slate-400" /> {s.parentPhone}
+                            </p>
+                          </td>
 
-                        <td className="p-3.5">
-                          <Badge variant={s.status === 'ACTIVE' ? 'emerald' : 'rose'} size="sm">
-                            {s.status}
-                          </Badge>
-                        </td>
+                          <td className="p-3.5">
+                            <Badge variant={s.status === 'ACTIVE' ? 'emerald' : 'rose'} size="sm">
+                              {s.status}
+                            </Badge>
+                          </td>
 
-                        <td className="p-3.5 text-right">
-                          <div className="flex items-center justify-end gap-1.5">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                setSelectedStudent(s);
-                                setProfileTab('overview');
-                              }}
-                              leftIcon={<Eye className="w-3.5 h-3.5" />}
-                            >
-                              Workspace
-                            </Button>
-                            <button
-                              onClick={() => handleDeleteStudent(s.id)}
-                              className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+                          <td className="p-3.5 text-right">
+                            <div className="flex items-center justify-end gap-1.5">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  setSelectedStudent(s);
+                                  setProfileTab('overview');
+                                }}
+                                leftIcon={<Eye className="w-3.5 h-3.5" />}
+                              >
+                                Workspace
+                              </Button>
+                              <button
+                                onClick={() => handleDeleteStudent(s.id)}
+                                className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
             </div>
-          </div>
+          </DataStateWrapper>
         </div>
       )}
 

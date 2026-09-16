@@ -1,0 +1,11 @@
+export * from './tenantService';
+export * from './academicService';
+export * from './studentService';
+export * from './students';
+export * from './staff';
+export * from './attendance';
+export * from './fees';
+export * from './exams';
+export * from './finance';
+export * from './payroll';
+export { storage } from './storageService';
