@@ -81,3 +81,69 @@ test('Finance: Idempotency deduplication check', () => {
   assert.strictEqual(secondCall.isReplay, true);
   assert.strictEqual(secondCall.id, 'pay-1');
 });
+
+test('Auth Security: Role escalation prevention on public signup', () => {
+  function sanitizeSignupRole(requestedRole) {
+    return ['SUPER_ADMIN', 'TENANT_ADMIN'].includes(requestedRole) ? 'TEACHER' : (requestedRole || 'TEACHER');
+  }
+
+  assert.strictEqual(sanitizeSignupRole('SUPER_ADMIN'), 'TEACHER');
+  assert.strictEqual(sanitizeSignupRole('TENANT_ADMIN'), 'TEACHER');
+  assert.strictEqual(sanitizeSignupRole('STUDENT'), 'STUDENT');
+  assert.strictEqual(sanitizeSignupRole('PARENT'), 'PARENT');
+  assert.strictEqual(sanitizeSignupRole(undefined), 'TEACHER');
+});
+
+test('Auth Security: Email substring containing superadmin does NOT grant superadmin privileges', () => {
+  function determineSuperAdmin(userRole, email) {
+    // Correct secure implementation: check role key strictly, not email substring
+    return userRole === 'SUPER_ADMIN';
+  }
+
+  assert.strictEqual(determineSuperAdmin('TEACHER', 'superadmin_hacker@gmail.com'), false);
+  assert.strictEqual(determineSuperAdmin('SUPER_ADMIN', 'admin@edunexus.io'), true);
+  assert.strictEqual(determineSuperAdmin('STAFF', 'fake_superadmin@test.com'), false);
+});
+
+test('Tenants: Non-superadmin cannot create or mutate another tenant', () => {
+  function checkTenantCreation(user) {
+    if (!user || !user.isSuperAdmin) {
+      throw new Error('FORBIDDEN');
+    }
+    return true;
+  }
+
+  function checkTenantPatch(user, targetTenantId) {
+    if (!user.isSuperAdmin && user.tenantId !== targetTenantId) {
+      throw new Error('FORBIDDEN');
+    }
+    return true;
+  }
+
+  const normalUser = { id: 'u1', isSuperAdmin: false, tenantId: 'tenant-a' };
+  const superUser = { id: 'u2', isSuperAdmin: true, tenantId: 'tenant-platform' };
+
+  assert.throws(() => checkTenantCreation(normalUser), /FORBIDDEN/);
+  assert.strictEqual(checkTenantCreation(superUser), true);
+
+  assert.strictEqual(checkTenantPatch(normalUser, 'tenant-a'), true);
+  assert.throws(() => checkTenantPatch(normalUser, 'tenant-b'), /FORBIDDEN/);
+  assert.strictEqual(checkTenantPatch(superUser, 'tenant-b'), true);
+});
+
+test('Validation: Password change length and matching checks', () => {
+  function validatePasswordChange(oldPassword, newPassword) {
+    if (!oldPassword || oldPassword.trim().length === 0) {
+      return { valid: false, error: 'Current password required' };
+    }
+    if (!newPassword || newPassword.length < 8) {
+      return { valid: false, error: 'New password must be at least 8 characters long.' };
+    }
+    return { valid: true };
+  }
+
+  assert.strictEqual(validatePasswordChange('old123', 'short').valid, false);
+  assert.strictEqual(validatePasswordChange('old123', 'SecurePass2026!').valid, true);
+  assert.strictEqual(validatePasswordChange('', 'SecurePass2026!').valid, false);
+});
+

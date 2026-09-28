@@ -77,8 +77,8 @@ if (config.nodeEnv !== 'test') {
   app.use(morgan(':method :url :status :res[content-length] - :response-time ms'));
 }
 
-// Health check endpoint
-app.get('/health', async (req, res) => {
+// Health check handler
+const healthHandler: express.RequestHandler = async (req, res) => {
   const dbHealth = await checkDbHealth();
   const isHealthy = dbHealth.ok;
 
@@ -94,10 +94,13 @@ app.get('/health', async (req, res) => {
     timestamp: new Date().toISOString(),
     environment: config.nodeEnv,
   });
-});
+};
+
+app.get('/health', healthHandler);
 
 // API Routes Router (Supports both /api/v1 and /api base paths seamlessly)
 const apiRouter = express.Router();
+apiRouter.get('/health', healthHandler);
 apiRouter.use('/auth', authRoutes);
 apiRouter.use('/tenants', tenantsRoutes);
 apiRouter.use('/students', studentsRoutes);

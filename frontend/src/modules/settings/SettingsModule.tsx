@@ -381,7 +381,7 @@ export const SettingsModule: React.FC = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Change Password Form */}
             <form
-              onSubmit={(e) => {
+              onSubmit={async (e) => {
                 e.preventDefault();
                 setPwError(null);
                 setPwSuccess(false);
@@ -389,7 +389,7 @@ export const SettingsModule: React.FC = () => {
                   setPwError('New passwords do not match.');
                   return;
                 }
-                const res = changePassword(oldPassword, newPassword);
+                const res = await changePassword(oldPassword, newPassword);
                 if (res.success) {
                   setPwSuccess(true);
                   setOldPassword('');

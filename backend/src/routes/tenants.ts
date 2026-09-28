@@ -43,6 +43,10 @@ router.get('/:id', optionalAuth, async (req: Request, res: Response) => {
 
 // POST /api/v1/tenants
 router.post('/', requireAuth, async (req: Request, res: Response) => {
+  if (!req.user?.isSuperAdmin) {
+    throw new AppError('Only Super Administrators can create institutions.', 403, 'FORBIDDEN');
+  }
+
   const { name, slug, tenantType = 'school', status = 'active', email, phone, city, state } = req.body;
 
   if (!name || !slug) {
@@ -71,6 +75,11 @@ router.post('/', requireAuth, async (req: Request, res: Response) => {
 // PATCH /api/v1/tenants/:id
 router.patch('/:id', requireAuth, async (req: Request, res: Response) => {
   const { id } = req.params;
+
+  if (!req.user?.isSuperAdmin && req.user?.tenantId !== id) {
+    throw new AppError('You do not have permission to modify this institution.', 403, 'FORBIDDEN');
+  }
+
   const updates = req.body;
 
   const allowedFields = ['name', 'tenant_type', 'status', 'email', 'phone', 'website', 'city', 'state', 'logo_url'];

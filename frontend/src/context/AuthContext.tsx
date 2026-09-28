@@ -21,7 +21,7 @@ interface AuthContextType {
   logoutAllDevices: () => void;
   expireSessionSimulator: () => void;
   forgotPassword: (email: string) => { success: boolean; message: string };
-  changePassword: (oldPassword: string, newPassword: string) => { success: boolean; error?: string };
+  changePassword: (oldPassword: string, newPassword: string) => Promise<{ success: boolean; error?: string }>;
   inviteUser: (email: string, name: string, role: UserRole, branchId?: string) => { success: boolean; invitation?: UserInvitation };
   switchUser: (userId: string) => void;
   switchRole: (role: UserRole) => void;
@@ -420,9 +420,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   };
 
-  const changePassword = (oldPassword: string, newPassword: string) => {
+  const changePassword = async (oldPassword: string, newPassword: string) => {
     if (newPassword.length < 8) {
       return { success: false, error: 'New password must be at least 8 characters long.' };
+    }
+    const res = await authService.updatePassword(oldPassword, newPassword);
+    if (res.error) {
+      logSecurityEvent('PASSWORD_CHANGED', `Failed to update password for ${currentUser.email}: ${res.error.message}`, 'FAILED');
+      return { success: false, error: res.error.message };
     }
     logSecurityEvent('PASSWORD_CHANGED', `Password updated successfully for ${currentUser.email}`);
     return { success: true };

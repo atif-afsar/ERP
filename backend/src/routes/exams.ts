@@ -154,4 +154,26 @@ router.post('/results', optionalAuth, tenantContext(true), async (req: Request, 
   });
 });
 
+// POST /api/v1/exams/:examId/publish
+router.post('/:examId/publish', optionalAuth, tenantContext(true), async (req: Request, res: Response) => {
+  const tenantId = req.tenantId!;
+  const { examId } = req.params;
+
+  const result = await query(
+    `UPDATE exams SET status = 'PUBLISHED', updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING *`,
+    [examId, tenantId]
+  );
+
+  if (result.rows.length === 0) {
+    throw new AppError('Exam not found.', 404, 'NOT_FOUND');
+  }
+
+  res.json({
+    data: result.rows[0],
+    message: 'Exam published successfully.',
+    requestId: req.id,
+    timestamp: new Date().toISOString(),
+  });
+});
+
 export default router;

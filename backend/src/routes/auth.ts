@@ -33,7 +33,7 @@ const changePasswordSchema = z.object({
 
 // Helper to sign JWT
 export function createToken(payload: { id: string; email: string; role: string; tenantId?: string; isSuperAdmin: boolean }) {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: '7d' });
+  return jwt.sign(payload, JWT_SECRET, { expiresIn: (JWT_EXPIRES_IN || '7d') as any });
 }
 
 // POST /api/v1/auth/signin
@@ -69,8 +69,8 @@ router.post('/signin', validateBody(signInSchema), async (req: Request, res: Res
     throw new AppError('Invalid email or password.', 401, 'INVALID_CREDENTIALS');
   }
 
-  const role = user.role_key || 'SUPER_ADMIN';
-  const isSuperAdmin = role === 'SUPER_ADMIN' || normalizedEmail.includes('superadmin');
+  const role = user.role_key || 'TEACHER';
+  const isSuperAdmin = role === 'SUPER_ADMIN';
   const token = createToken({
     id: user.id,
     email: user.email,
@@ -106,6 +106,9 @@ router.post('/signup', validateBody(signUpSchema), async (req: Request, res: Res
   const { email, password, name, role = 'TEACHER', tenantId } = req.body;
   const normalizedEmail = email.trim().toLowerCase();
 
+  // Prevent role escalation: public signup cannot grant SUPER_ADMIN or TENANT_ADMIN
+  const safeRole = ['SUPER_ADMIN', 'TENANT_ADMIN'].includes(role) ? 'TEACHER' : role;
+
   const existing = await query('SELECT id FROM users WHERE LOWER(email) = $1', [normalizedEmail]);
   if (existing.rows.length > 0) {
     throw new AppError('A user with this email already exists.', 409, 'USER_EXISTS');
@@ -138,7 +141,7 @@ router.post('/signup', validateBody(signUpSchema), async (req: Request, res: Res
     }
 
     if (assignedTenantId) {
-      let roleRes = await client.query('SELECT id FROM roles WHERE key = $1 LIMIT 1', [role]);
+      let roleRes = await client.query('SELECT id FROM roles WHERE key = $1 LIMIT 1', [safeRole]);
       const roleId = roleRes.rows.length > 0 ? roleRes.rows[0].id : '33333333-3333-3333-3333-333333333333';
 
       await client.query(
@@ -152,11 +155,11 @@ router.post('/signup', validateBody(signUpSchema), async (req: Request, res: Res
     return { newUser, assignedTenantId };
   });
 
-  const isSuperAdmin = role === 'SUPER_ADMIN';
+  const isSuperAdmin = false;
   const token = createToken({
     id: result.newUser.id,
     email: result.newUser.email,
-    role,
+    role: safeRole,
     tenantId: result.assignedTenantId,
     isSuperAdmin,
   });
@@ -167,7 +170,7 @@ router.post('/signup', validateBody(signUpSchema), async (req: Request, res: Res
         id: result.newUser.id,
         email: result.newUser.email,
         name,
-        role,
+        role: safeRole,
         tenantId: result.assignedTenantId,
         status: result.newUser.status,
       },

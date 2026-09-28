@@ -236,4 +236,23 @@ router.delete('/:id', optionalAuth, tenantContext(true), async (req: Request, re
   });
 });
 
+// POST /api/v1/students/:id/archive
+router.post('/:id/archive', optionalAuth, tenantContext(true), async (req: Request, res: Response) => {
+  const result = await query(
+    "UPDATE students SET status = 'ARCHIVED', updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING *",
+    [req.params.id, req.tenantId]
+  );
+
+  if (result.rows.length === 0) {
+    throw new AppError('Student not found.', 404, 'NOT_FOUND');
+  }
+
+  res.json({
+    data: mapStudentFromDb(result.rows[0]),
+    message: 'Student archived successfully.',
+    requestId: req.id,
+    timestamp: new Date().toISOString(),
+  });
+});
+
 export default router;

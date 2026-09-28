@@ -64,8 +64,8 @@ router.get('/', optionalAuth, tenantContext(true), async (req: Request, res: Res
   });
 });
 
-// POST /api/v1/attendance
-router.post('/', optionalAuth, tenantContext(true), async (req: Request, res: Response) => {
+// POST /api/v1/attendance and /api/v1/attendance/bulk
+router.post(['/', '/bulk'], optionalAuth, tenantContext(true), async (req: Request, res: Response) => {
   const tenantId = req.tenantId!;
   const body = req.body;
   const records = Array.isArray(body) ? body : body.records ? body.records : [body];

@@ -77,8 +77,8 @@ router.post('/structures', optionalAuth, tenantContext(true), async (req: Reques
   });
 });
 
-// GET /api/v1/fees/assignments (Also aliased for fee_invoices)
-router.get('/assignments', optionalAuth, tenantContext(true), async (req: Request, res: Response) => {
+// GET /api/v1/fees/assignments and /api/v1/fees/ledgers
+router.get(['/assignments', '/ledgers'], optionalAuth, tenantContext(true), async (req: Request, res: Response) => {
   const tenantId = req.tenantId!;
   const studentId = req.query.studentId as string;
 
