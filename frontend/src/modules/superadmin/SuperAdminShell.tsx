@@ -40,23 +40,23 @@ export const SuperAdminShell: React.FC<SuperAdminShellProps> = ({ onNavigate, ac
   ];
 
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-100 flex flex-col antialiased selection:bg-amber-500 selection:text-slate-950">
+    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col antialiased selection:bg-amber-500 selection:text-slate-950">
       {/* Top Bar */}
-      <header className="h-16 bg-slate-950 border-b border-slate-800 px-6 flex items-center justify-between sticky top-0 z-30 shadow-md">
+      <header className="h-16 bg-white border-b border-slate-200 px-6 flex items-center justify-between sticky top-0 z-30 shadow-sm">
         <div className="flex items-center gap-3">
           <img
             src="/logo.png"
             alt="EduNexus"
-            className="w-10 h-10 rounded-xl object-contain shadow-md bg-white p-0.5 border border-slate-700 shrink-0"
+            className="w-10 h-10 rounded-xl object-contain shadow-sm bg-slate-50 p-0.5 border border-slate-200 shrink-0"
           />
           <div>
             <div className="flex items-center gap-2">
-              <span className="font-extrabold text-white text-base tracking-tight">EduNexus Cloud</span>
-              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+              <span className="font-extrabold text-slate-900 text-base tracking-tight">EduNexus Cloud</span>
+              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
                 Super Admin
               </span>
             </div>
-            <p className="text-[10px] text-slate-400">Platform Management Console</p>
+            <p className="text-[10px] text-slate-500">Platform Management Console</p>
           </div>
         </div>
 
@@ -64,7 +64,7 @@ export const SuperAdminShell: React.FC<SuperAdminShellProps> = ({ onNavigate, ac
           <Button
             variant="ghost"
             size="sm"
-            className="text-xs text-slate-400 hover:text-white"
+            className="text-xs text-slate-500 hover:text-slate-800"
             leftIcon={<ArrowLeft className="w-4 h-4" />}
             onClick={() => onNavigate('app/dashboard')}
           >
@@ -74,22 +74,22 @@ export const SuperAdminShell: React.FC<SuperAdminShellProps> = ({ onNavigate, ac
           <Button
             variant="outline"
             size="sm"
-            className="border-amber-500/40 text-amber-300 hover:bg-amber-500/10 text-xs"
-            leftIcon={<Sparkles className="w-4 h-4 text-amber-400" />}
+            className="border-amber-500/40 text-amber-700 hover:bg-amber-50 text-xs"
+            leftIcon={<Sparkles className="w-4 h-4 text-amber-500" />}
             onClick={onOpenAi}
           >
             AI Platform Advisor
           </Button>
 
-          <div className="pl-3 border-l border-slate-800 flex items-center gap-2">
-            <img 
-              src={currentUser.avatarUrl} 
-              alt={currentUser.name} 
-              className="w-8 h-8 rounded-full ring-1 ring-amber-500/30 object-cover" 
+          <div className="pl-3 border-l border-slate-200 flex items-center gap-2">
+            <img
+              src={currentUser.avatarUrl}
+              alt={currentUser.name}
+              className="w-8 h-8 rounded-full ring-1 ring-amber-300 object-cover"
             />
             <div className="hidden sm:block text-left text-xs">
-              <p className="font-bold text-white leading-tight">{currentUser.name}</p>
-              <p className="text-[10px] text-amber-400 font-semibold">Super Administrator</p>
+              <p className="font-bold text-slate-900 leading-tight">{currentUser.name}</p>
+              <p className="text-[10px] text-amber-600 font-semibold">Super Administrator</p>
             </div>
           </div>
         </div>
@@ -99,7 +99,7 @@ export const SuperAdminShell: React.FC<SuperAdminShellProps> = ({ onNavigate, ac
       <div className="flex-1 flex max-w-7xl mx-auto w-full p-4 sm:p-6 lg:p-8 gap-8">
         {/* Left Side Navigation */}
         <aside className="w-64 space-y-1.5 hidden md:block shrink-0">
-          <div className="px-3 pb-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+          <div className="px-3 pb-2 text-[10px] font-bold uppercase tracking-wider text-slate-500">
             Platform Product Surface
           </div>
           {navItems.map((item) => {
@@ -111,16 +111,16 @@ export const SuperAdminShell: React.FC<SuperAdminShellProps> = ({ onNavigate, ac
                 onClick={() => setActiveTab(item.id)}
                 className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-colors ${
                   isActive
-                    ? 'bg-amber-500/15 text-amber-300 border border-amber-500/30'
-                    : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                    ? 'bg-amber-100 text-amber-800 border border-amber-200'
+                    : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100'
                 }`}
               >
                 <div className="flex items-center gap-2.5">
-                  <Icon className={`w-4 h-4 ${isActive ? 'text-amber-400' : 'text-slate-500'}`} />
+                  <Icon className={`w-4 h-4 ${isActive ? 'text-amber-600' : 'text-slate-400'}`} />
                   <span>{item.label}</span>
                 </div>
                 {item.count !== undefined && (
-                  <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-slate-800 text-slate-400 font-mono">
+                  <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-slate-100 text-slate-500 font-mono">
                     {item.count}
                   </span>
                 )}
@@ -135,42 +135,42 @@ export const SuperAdminShell: React.FC<SuperAdminShellProps> = ({ onNavigate, ac
           {activeTab === 'dashboard' && (
             <div className="space-y-6 animate-fade-in">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="p-5 bg-slate-800/80 border border-slate-700 rounded-2xl space-y-1 shadow-lg">
-                  <p className="text-xs text-slate-400 uppercase font-semibold">Active Institutional Tenants</p>
-                  <p className="text-3xl font-extrabold text-white">{allTenants.length}</p>
-                  <p className="text-xs text-emerald-400">100% Active • Zero Suspensions</p>
+                <div className="p-5 bg-white border border-slate-200 rounded-2xl space-y-1 shadow-xs">
+                  <p className="text-xs text-slate-500 uppercase font-semibold">Active Institutional Tenants</p>
+                  <p className="text-3xl font-extrabold text-slate-900">{allTenants.length}</p>
+                  <p className="text-xs text-emerald-600">100% Active • Zero Suspensions</p>
                 </div>
-                <div className="p-5 bg-slate-800/80 border border-slate-700 rounded-2xl space-y-1 shadow-lg">
-                  <p className="text-xs text-slate-400 uppercase font-semibold">Global Student Base</p>
-                  <p className="text-3xl font-extrabold text-white">{allStudents.length}</p>
-                  <p className="text-xs text-amber-300">Across 2 Provisioned Campuses</p>
+                <div className="p-5 bg-white border border-slate-200 rounded-2xl space-y-1 shadow-xs">
+                  <p className="text-xs text-slate-500 uppercase font-semibold">Global Student Base</p>
+                  <p className="text-3xl font-extrabold text-slate-900">{allStudents.length}</p>
+                  <p className="text-xs text-amber-600">Across 2 Provisioned Campuses</p>
                 </div>
-                <div className="p-5 bg-slate-800/80 border border-slate-700 rounded-2xl space-y-1 shadow-lg">
-                  <p className="text-xs text-slate-400 uppercase font-semibold">Platform Monthly MRR</p>
-                  <p className="text-3xl font-extrabold text-white">₹4.85 Lakh</p>
-                  <p className="text-xs text-emerald-400">Automated Billing & Invoicing</p>
+                <div className="p-5 bg-white border border-slate-200 rounded-2xl space-y-1 shadow-xs">
+                  <p className="text-xs text-slate-500 uppercase font-semibold">Platform Monthly MRR</p>
+                  <p className="text-3xl font-extrabold text-slate-900">₹4.85 Lakh</p>
+                  <p className="text-xs text-emerald-600">Automated Billing & Invoicing</p>
                 </div>
               </div>
 
               {/* Institutions Directory */}
-              <div className="p-6 bg-slate-800/60 border border-slate-700 rounded-2xl space-y-4">
+              <div className="p-6 bg-slate-50 border border-slate-200 rounded-2xl space-y-4">
                 <div className="flex items-center justify-between">
-                  <h3 className="font-bold text-white text-base">Provisioned SaaS Tenants</h3>
+                  <h3 className="font-bold text-slate-900 text-base">Provisioned SaaS Tenants</h3>
                   <Badge variant="amber" size="sm">Multi-Tenant Isolated</Badge>
                 </div>
                 <div className="space-y-3">
                   {allTenants.map((t) => (
-                    <div key={t.id} className="p-4 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between gap-4">
+                    <div key={t.id} className="p-4 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between gap-4">
                       <div className="flex items-center gap-3">
                         <img src={t.logo} alt={t.name} className="w-10 h-10 rounded-lg object-cover" />
                         <div>
-                          <h4 className="font-bold text-white text-sm">{t.name}</h4>
-                          <p className="text-xs text-slate-400">{t.tenantType} • Plan: {t.planName}</p>
+                          <h4 className="font-bold text-slate-900 text-sm">{t.name}</h4>
+                          <p className="text-xs text-slate-500">{t.tenantType} • Plan: {t.planName}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
                         <Badge variant="emerald" size="sm">{t.status.toUpperCase()}</Badge>
-                        <span className="text-xs text-slate-400">Renews {t.subscriptionRenewalDate}</span>
+                        <span className="text-xs text-slate-500">Renews {t.subscriptionRenewalDate}</span>
                       </div>
                     </div>
                   ))}
@@ -182,19 +182,19 @@ export const SuperAdminShell: React.FC<SuperAdminShellProps> = ({ onNavigate, ac
           {/* TAB: Organizations */}
           {activeTab === 'organizations' && (
             <div className="space-y-4 animate-fade-in">
-              <h3 className="text-lg font-bold text-white">Tenants & Campus Organizations</h3>
+              <h3 className="text-lg font-bold text-slate-900">Tenants & Campus Organizations</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {allTenants.map((t) => (
-                  <div key={t.id} className="p-5 bg-slate-800/80 border border-slate-700 rounded-xl space-y-3">
+                  <div key={t.id} className="p-5 bg-white border border-slate-200 rounded-xl space-y-3 shadow-xs">
                     <div className="flex items-start justify-between">
                       <div>
-                        <h4 className="font-bold text-white text-base">{t.name}</h4>
-                        <p className="text-xs text-slate-400">{t.address}</p>
+                        <h4 className="font-bold text-slate-900 text-base">{t.name}</h4>
+                        <p className="text-xs text-slate-500">{t.address}</p>
                       </div>
                       <Badge variant="emerald" size="sm">{t.status}</Badge>
                     </div>
-                    <div className="text-xs text-slate-300 space-y-1">
-                      <p>Tenant UUID: <span className="font-mono text-amber-300">{t.id}</span></p>
+                    <div className="text-xs text-slate-600 space-y-1">
+                      <p>Tenant UUID: <span className="font-mono text-amber-700">{t.id}</span></p>
                       <p>Contact: {t.email} • {t.phone}</p>
                     </div>
                   </div>
@@ -206,22 +206,22 @@ export const SuperAdminShell: React.FC<SuperAdminShellProps> = ({ onNavigate, ac
           {/* TAB: Subscriptions */}
           {activeTab === 'subscriptions' && (
             <div className="space-y-4 animate-fade-in">
-              <h3 className="text-lg font-bold text-white">SaaS Subscription Plans</h3>
+              <h3 className="text-lg font-bold text-slate-900">SaaS Subscription Plans</h3>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="p-5 bg-slate-800/60 border border-slate-700 rounded-xl space-y-2">
-                  <h4 className="font-bold text-white text-sm">Starter Academy</h4>
-                  <p className="text-2xl font-bold text-amber-300">₹1,999<span className="text-xs text-slate-400">/mo</span></p>
-                  <p className="text-xs text-slate-400">Up to 300 students per campus.</p>
+                <div className="p-5 bg-white border border-slate-200 rounded-xl space-y-2 shadow-xs">
+                  <h4 className="font-bold text-slate-900 text-sm">Starter Academy</h4>
+                  <p className="text-2xl font-bold text-amber-600">₹1,999<span className="text-xs text-slate-500">/mo</span></p>
+                  <p className="text-xs text-slate-500">Up to 300 students per campus.</p>
                 </div>
-                <div className="p-5 bg-slate-800/60 border border-amber-500/40 rounded-xl space-y-2">
-                  <h4 className="font-bold text-white text-sm">Campus Pro</h4>
-                  <p className="text-2xl font-bold text-amber-300">₹4,999<span className="text-xs text-slate-400">/mo</span></p>
-                  <p className="text-xs text-slate-400">Up to 1,500 students with Online Fees.</p>
+                <div className="p-5 bg-white border-2 border-amber-400 rounded-xl space-y-2 shadow-xs">
+                  <h4 className="font-bold text-slate-900 text-sm">Campus Pro</h4>
+                  <p className="text-2xl font-bold text-amber-600">₹4,999<span className="text-xs text-slate-500">/mo</span></p>
+                  <p className="text-xs text-slate-500">Up to 1,500 students with Online Fees.</p>
                 </div>
-                <div className="p-5 bg-slate-800/60 border border-slate-700 rounded-xl space-y-2">
-                  <h4 className="font-bold text-white text-sm">Institutional Trust</h4>
-                  <p className="text-2xl font-bold text-amber-300">₹9,999<span className="text-xs text-slate-400">/mo</span></p>
-                  <p className="text-xs text-slate-400">Unlimited students & multi-campus RLS.</p>
+                <div className="p-5 bg-white border border-slate-200 rounded-xl space-y-2 shadow-xs">
+                  <h4 className="font-bold text-slate-900 text-sm">Institutional Trust</h4>
+                  <p className="text-2xl font-bold text-amber-600">₹9,999<span className="text-xs text-slate-500">/mo</span></p>
+                  <p className="text-xs text-slate-500">Unlimited students & multi-campus RLS.</p>
                 </div>
               </div>
             </div>
@@ -230,22 +230,22 @@ export const SuperAdminShell: React.FC<SuperAdminShellProps> = ({ onNavigate, ac
           {/* TAB: Features */}
           {activeTab === 'features' && (
             <div className="space-y-4 animate-fade-in">
-              <h3 className="text-lg font-bold text-white">Platform Feature Catalog</h3>
-              <div className="p-5 bg-slate-800/60 border border-slate-700 rounded-xl space-y-3 text-xs">
-                <div className="flex items-center justify-between pb-2 border-b border-slate-700">
-                  <span className="font-semibold text-white">Automated QR Gate Attendance</span>
+              <h3 className="text-lg font-bold text-slate-900">Platform Feature Catalog</h3>
+              <div className="p-5 bg-white border border-slate-200 rounded-xl space-y-3 text-xs shadow-xs">
+                <div className="flex items-center justify-between pb-2 border-b border-slate-200">
+                  <span className="font-semibold text-slate-900">Automated QR Gate Attendance</span>
                   <Badge variant="emerald" size="sm">Enabled Globally</Badge>
                 </div>
-                <div className="flex items-center justify-between pb-2 border-b border-slate-700">
-                  <span className="font-semibold text-white">CBSE Report Cards & Marksheets</span>
+                <div className="flex items-center justify-between pb-2 border-b border-slate-200">
+                  <span className="font-semibold text-slate-900">CBSE Report Cards & Marksheets</span>
                   <Badge variant="emerald" size="sm">Enabled Globally</Badge>
                 </div>
-                <div className="flex items-center justify-between pb-2 border-b border-slate-700">
-                  <span className="font-semibold text-white">Online Fees Payment Gateway</span>
+                <div className="flex items-center justify-between pb-2 border-b border-slate-200">
+                  <span className="font-semibold text-slate-900">Online Fees Payment Gateway</span>
                   <Badge variant="emerald" size="sm">Enabled Globally</Badge>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="font-semibold text-white">AI Education Assistant</span>
+                  <span className="font-semibold text-slate-900">AI Education Assistant</span>
                   <Badge variant="emerald" size="sm">Active (Beta)</Badge>
                 </div>
               </div>
@@ -255,15 +255,15 @@ export const SuperAdminShell: React.FC<SuperAdminShellProps> = ({ onNavigate, ac
           {/* TAB: Audit */}
           {activeTab === 'audit' && (
             <div className="space-y-4 animate-fade-in">
-              <h3 className="text-lg font-bold text-white">Platform Security Audit Log</h3>
-              <div className="p-4 bg-slate-800/60 border border-slate-700 rounded-xl max-h-96 overflow-y-auto space-y-2 text-xs">
+              <h3 className="text-lg font-bold text-slate-900">Platform Security Audit Log</h3>
+              <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl max-h-96 overflow-y-auto space-y-2 text-xs">
                 {auditLogs.slice(0, 10).map((log) => (
-                  <div key={log.id} className="p-3 bg-slate-900 border border-slate-800 rounded-lg flex items-center justify-between">
+                  <div key={log.id} className="p-3 bg-white border border-slate-200 rounded-lg flex items-center justify-between">
                     <div>
-                      <p className="font-bold text-white">{log.action}</p>
-                      <p className="text-[11px] text-slate-400">{log.actorName} ({log.actorRole}) • {log.details}</p>
+                      <p className="font-bold text-slate-900">{log.action}</p>
+                      <p className="text-[11px] text-slate-500">{log.actorName} ({log.actorRole}) • {log.details}</p>
                     </div>
-                    <span className="text-[10px] text-slate-500 font-mono">{log.timestamp.slice(0, 16).replace('T', ' ')}</span>
+                    <span className="text-[10px] text-slate-400 font-mono">{log.timestamp.slice(0, 16).replace('T', ' ')}</span>
                   </div>
                 ))}
               </div>

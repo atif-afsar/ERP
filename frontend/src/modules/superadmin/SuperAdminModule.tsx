@@ -150,7 +150,7 @@ export const SuperAdminModule: React.FC = () => {
       </div>
 
       {/* Tenants Table */}
-      <div className="bg-white rounded-2xl border border-slate-200/90 overflow-hidden shadow-xs">
+      <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead className="bg-slate-50/90 border-b border-slate-200 text-slate-600 uppercase font-semibold text-[10px] tracking-wider">
@@ -232,7 +232,7 @@ export const SuperAdminModule: React.FC = () => {
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               placeholder="e.g. St. Xavier International School"
-              className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-sky-500"
+              className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:border-sky-500"
             />
           </div>
 
@@ -246,7 +246,7 @@ export const SuperAdminModule: React.FC = () => {
                 value={formData.code}
                 onChange={(e) => setFormData({ ...formData, code: e.target.value })}
                 placeholder="e.g. SXIS"
-                className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white uppercase font-mono"
+                className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-900 uppercase font-mono"
               />
             </div>
             <div>
@@ -254,7 +254,7 @@ export const SuperAdminModule: React.FC = () => {
               <select
                 value={formData.tenantType}
                 onChange={(e) => setFormData({ ...formData, tenantType: e.target.value as TenantType })}
-                className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white"
+                className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-900"
               >
                 <option value="SCHOOL">K-12 School Model</option>
                 <option value="COACHING">Coaching Institute Model</option>
@@ -267,7 +267,7 @@ export const SuperAdminModule: React.FC = () => {
             <select
               value={formData.planName}
               onChange={(e) => setFormData({ ...formData, planName: e.target.value })}
-              className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white"
+              className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-900"
             >
               <option value="Starter School Plan">Starter Plan (₹15,000/mo)</option>
               <option value="Pro School SaaS">Pro Plan (₹25,000/mo)</option>
@@ -275,7 +275,7 @@ export const SuperAdminModule: React.FC = () => {
             </select>
           </div>
 
-          <div className="pt-4 border-t border-slate-800 flex justify-end gap-2">
+          <div className="pt-4 border-t border-slate-200 flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={() => setIsAddModalOpen(false)}>
               Cancel
             </Button>

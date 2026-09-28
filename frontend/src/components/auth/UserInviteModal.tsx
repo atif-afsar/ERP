@@ -72,7 +72,7 @@ export const UserInviteModal: React.FC<UserInviteModalProps> = ({ isOpen, onClos
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="e.g. Dr. Kavita Deshmukh"
-                className="w-full px-3.5 py-2 bg-slate-950/70 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-sky-500/60 focus:ring-1 focus:ring-sky-500/60"
+                className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 placeholder-slate-500 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500"
                 required
               />
             </div>
@@ -86,7 +86,7 @@ export const UserInviteModal: React.FC<UserInviteModalProps> = ({ isOpen, onClos
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="e.g. kavita.deshmukh@school.edu.in"
-                  className="w-full pl-9 pr-3.5 py-2 bg-slate-950/70 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-sky-500/60 focus:ring-1 focus:ring-sky-500/60"
+                  className="w-full pl-9 pr-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 placeholder-slate-500 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500"
                   required
                 />
               </div>
@@ -98,7 +98,7 @@ export const UserInviteModal: React.FC<UserInviteModalProps> = ({ isOpen, onClos
                 <select
                   value={role}
                   onChange={(e) => setRole(e.target.value as UserRole)}
-                  className="w-full px-3 py-2 bg-slate-950/70 border border-slate-800 rounded-xl text-xs text-white outline-none focus:border-sky-500/60"
+                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 outline-none focus:border-sky-500"
                 >
                   <option value="TEACHER">Teacher / Faculty</option>
                   <option value="ACCOUNTANT">Accountant / Bursar</option>
@@ -114,7 +114,7 @@ export const UserInviteModal: React.FC<UserInviteModalProps> = ({ isOpen, onClos
                   <select
                     value={branchId}
                     onChange={(e) => setBranchId(e.target.value)}
-                    className="w-full px-3 py-2 bg-slate-950/70 border border-slate-800 rounded-xl text-xs text-white outline-none focus:border-sky-500/60"
+                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 outline-none focus:border-sky-500"
                   >
                     {branches.map((b) => (
                       <option key={b.id} value={b.id}>
@@ -137,25 +137,25 @@ export const UserInviteModal: React.FC<UserInviteModalProps> = ({ isOpen, onClos
           </form>
         ) : (
           <div className="space-y-4 text-center py-2">
-            <div className="w-12 h-12 rounded-2xl bg-sky-500/10 border border-sky-500/20 text-sky-400 flex items-center justify-center mx-auto">
+            <div className="w-12 h-12 rounded-2xl bg-sky-50 border border-sky-200 text-sky-600 flex items-center justify-center mx-auto">
               <ShieldCheck className="w-6 h-6" />
             </div>
 
             <div>
-              <h4 className="font-bold text-white text-base">Invitation Generated</h4>
-              <p className="text-xs text-slate-400 mt-0.5">
-                Token is valid for 7 days and grants <span className="text-sky-300 font-semibold">{createdInvite.role}</span> permissions.
+              <h4 className="font-bold text-slate-900 text-base">Invitation Generated</h4>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Token is valid for 7 days and grants <span className="text-sky-700 font-semibold">{createdInvite.role}</span> permissions.
               </p>
             </div>
 
-            <div className="p-3 bg-slate-950/80 rounded-2xl border border-slate-800 text-left space-y-2">
+            <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200 text-left space-y-2">
               <div className="flex justify-between items-center text-xs">
-                <span className="text-slate-400">Recipient:</span>
-                <span className="text-white font-semibold">{createdInvite.name} ({createdInvite.email})</span>
+                <span className="text-slate-500">Recipient:</span>
+                <span className="text-slate-900 font-semibold">{createdInvite.name} ({createdInvite.email})</span>
               </div>
               <div className="flex justify-between items-center text-xs">
-                <span className="text-slate-400">Token:</span>
-                <code className="text-amber-400 font-mono font-bold bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
+                <span className="text-slate-500">Token:</span>
+                <code className="text-amber-700 font-mono font-bold bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
                   {createdInvite.token}
                 </code>
               </div>
@@ -167,7 +167,7 @@ export const UserInviteModal: React.FC<UserInviteModalProps> = ({ isOpen, onClos
                 className="flex-1 justify-center"
                 size="sm"
                 onClick={handleCopyLink}
-                leftIcon={copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+                leftIcon={copied ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
               >
                 {copied ? 'Link Copied!' : 'Copy Invitation Link'}
               </Button>

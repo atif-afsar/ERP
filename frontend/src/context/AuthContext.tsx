@@ -122,6 +122,17 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     'reports.view',
     'audit.view',
     'documents.view',
+    'staff.read',
+    'staff.create',
+    'staff.update',
+    'staff.manage',
+    'inventory.view',
+    'inventory.manage',
+    'library.view',
+    'transport.view',
+    'hostel.view',
+    'mess.view',
+    'health.view',
   ],
   BRANCH_MANAGER: [
     'students.view',
@@ -470,6 +481,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const can = (permission: Permission, resourceId?: string, branchId?: string): boolean => {
+    if (currentUser.role === 'SUPER_ADMIN') return true;
+
+    // Direct check against full ROLE_PERMISSIONS matrix
+    const directPerms = ROLE_PERMISSIONS[currentUser.role] || [];
+    if (directPerms.includes(permission)) {
+      return true;
+    }
+
     const result = rbacService.can(currentUser, permission, {
       targetTenantId: currentTenant.id,
       targetStudentId: resourceId,

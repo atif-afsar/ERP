@@ -73,19 +73,19 @@ const ROUTE_PERMISSIONS: Record<string, Permission> = {
 };
 
 const SuspendedTenantView: React.FC<{ tenantName: string }> = ({ tenantName }) => (
-  <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 text-center">
-    <div className="w-16 h-16 rounded-3xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400 mb-6 shadow-2xl">
+  <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6 text-center">
+    <div className="w-16 h-16 rounded-3xl bg-rose-50 border border-rose-200 flex items-center justify-center text-rose-600 mb-6 shadow-sm">
       <AlertOctagon className="w-8 h-8" />
     </div>
-    <span className="px-3 py-1 rounded-full bg-rose-500/10 text-rose-400 text-xs font-semibold border border-rose-500/20 mb-3 font-mono">
+    <span className="px-3 py-1 rounded-full bg-rose-50 text-rose-800 text-xs font-semibold border border-rose-200 mb-3 font-mono">
       Tenant Status • Suspended
     </span>
-    <h2 className="text-2xl font-bold text-white mb-2">{tenantName} Account Suspended</h2>
-    <p className="text-slate-400 max-w-md text-sm mb-6 leading-relaxed">
+    <h2 className="text-2xl font-bold text-slate-900 mb-2">{tenantName} Account Suspended</h2>
+    <p className="text-slate-600 max-w-md text-sm mb-6 leading-relaxed">
       This institution's SaaS subscription is currently suspended or under billing review. Access to operational features has been temporarily disabled.
     </p>
-    <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 text-xs text-slate-300 max-w-sm">
-      Please contact EduNexus Platform Support at <span className="text-sky-400 font-semibold">billing@edunexus.io</span> to reactivate your instance.
+    <div className="p-4 rounded-2xl bg-white border border-slate-200 text-xs text-slate-700 max-w-sm shadow-sm">
+      Please contact EduNexus Platform Support at <span className="text-rose-600 font-semibold">billing@edunexus.io</span> to reactivate your instance.
     </div>
   </div>
 );
@@ -94,16 +94,16 @@ const NotFoundView: React.FC<{ attemptedRoute: string; onBackToDashboard: () => 
   attemptedRoute,
   onBackToDashboard,
 }) => (
-  <div className="flex flex-col items-center justify-center min-h-[60vh] text-center p-8 bg-slate-900/60 border border-slate-800 rounded-3xl backdrop-blur-xl animate-fade-in max-w-xl mx-auto my-8">
-    <div className="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 mb-6">
+  <div className="flex flex-col items-center justify-center min-h-[60vh] text-center p-8 bg-white border border-slate-200 rounded-3xl shadow-sm animate-fade-in max-w-xl mx-auto my-8">
+    <div className="w-16 h-16 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600 mb-6">
       <Compass className="w-8 h-8" />
     </div>
-    <span className="px-3 py-1 rounded-full bg-amber-500/10 text-amber-400 text-xs font-semibold border border-amber-500/20 mb-3 font-mono">
+    <span className="px-3 py-1 rounded-full bg-amber-50 text-amber-800 text-xs font-semibold border border-amber-200 mb-3 font-mono">
       HTTP 404 • Not Found
     </span>
-    <h2 className="text-2xl font-bold text-white mb-2">Page Not Found</h2>
-    <p className="text-slate-400 max-w-md text-sm mb-4">
-      The route <code className="text-amber-300 font-mono bg-slate-950 px-2 py-0.5 rounded border border-slate-800">#{attemptedRoute}</code> does not exist or has been moved.
+    <h2 className="text-2xl font-bold text-slate-900 mb-2">Page Not Found</h2>
+    <p className="text-slate-600 max-w-md text-sm mb-4">
+      The route <code className="text-amber-700 font-mono bg-slate-50 px-2 py-0.5 rounded border border-slate-200">#{attemptedRoute}</code> does not exist or has been moved.
     </p>
     <Button variant="primary" onClick={onBackToDashboard} leftIcon={<ArrowLeft className="w-4 h-4" />}>
       Return to Dashboard
@@ -153,9 +153,9 @@ const MainRouter: React.FC = () => {
   // Zero-Flicker Loading State
   if (authState === 'UNKNOWN') {
     return (
-      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-center p-4">
-        <Loader2 className="w-8 h-8 text-emerald-500 animate-spin mb-3" />
-        <p className="text-xs text-slate-400 font-mono">Initializing Authenticated Tenant Session...</p>
+      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center text-center p-4">
+        <Loader2 className="w-8 h-8 text-emerald-600 animate-spin mb-3" />
+        <p className="text-xs text-slate-500 font-mono">Initializing Authenticated Tenant Session...</p>
       </div>
     );
   }

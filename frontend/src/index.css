@@ -3,36 +3,104 @@
 @tailwind utilities;
 
 :root {
-  --color-primary: #16a34a;
-  --color-primary-hover: #15803d;
-  --color-primary-light: #dcfce7;
-  --color-primary-dark: #166534;
+  /* Brand Colors */
+  --color-primary: #059669;
+  --color-primary-hover: #047857;
+  --color-primary-light: #d1fae5;
+  --color-primary-dark: #065f46;
 
-  --color-background: #f8faf9;
+  /* Surface Colors - Light Enterprise Theme */
+  --color-background: #f8fafc;
   --color-surface: #ffffff;
-  --color-surface-muted: #f1f5f9;
+  --color-surface-alt: #f1f5f9;
+  --color-surface-hover: #f8fafc;
 
+  /* Text Colors - Proper Contrast on Light Backgrounds */
   --color-text-primary: #0f172a;
-  --color-text-secondary: #475569;
+  --color-text-secondary: #334159;
+  --color-text-tertiary: #64748b;
   --color-text-muted: #94a3b8;
+  --color-text-placeholder: #94a3b8;
 
+  /* Border Colors */
   --color-border: #e2e8f0;
+  --color-border-hover: #cbd5e1;
 
-  --color-success: #16a34a;
+  /* Semantic Colors */
+  --color-success: #059669;
+  --color-success-bg: #dcfce7;
+  --color-success-border: #6ee7b7;
   --color-warning: #d97706;
+  --color-warning-bg: #ffedd5;
+  --color-warning-border: #fcd34d;
   --color-danger: #dc2626;
+  --color-danger-bg: #fee2e2;
+  --color-danger-border: #fca5a5;
   --color-info: #2563eb;
+  --color-info-bg: #dbeafe;
+
+  /* Overlay Colors */
+  --color-overlay: rgba(15, 23, 42, 0.4);
+  --color-overlay-light: rgba(241, 245, 249, 0.6);
 }
 
 @layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
   body {
-    @apply bg-[#f8faf9] text-slate-900 font-sans selection:bg-emerald-500 selection:text-white antialiased;
-    background-color: #f8faf9;
+    @apply bg-[#f8fafc] text-slate-900 font-sans antialiased selection:bg-emerald-500 selection:text-white;
+    background-color: #f8fafc;
     color: #0f172a;
+    font-feature-settings: "liga" 1, "calt" 1;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Ensure all text has proper contrast */
+  main, section, article, aside, nav, header, footer {
+    color: #0f172a;
+    background-color: transparent;
+  }
+
+  /* Headings */
+  h1, h2, h3, h4, h5, h6 {
+    color: #0f172a;
+    font-weight: 700;
+    letter-spacing: -0.015em;
+  }
+
+  p {
+    color: #334159;
+    line-height: 1.6;
+  }
+
+  /* Links */
+  a {
+    color: #059669;
+    text-decoration: none;
+  }
+
+  a:hover {
+    color: #047857;
+  }
+
+  /* Ensure all inputs have proper contrast */
+  input, select, textarea, button {
+    font-family: inherit;
+    font-feature-settings: inherit;
+    color: #0f172a;
+  }
+
+  ::placeholder {
+    color: #94a3b8;
+    opacity: 1;
   }
 }
 
-/* Light Enterprise Scrollbars */
+/* Enterprise Scrollbars */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -51,7 +119,7 @@
   background: #94a3b8;
 }
 
-/* Clean White Card Utility Classes (Redesigned from Dark Glassmorphism) */
+/* Clean Card Utilities */
 .glass-panel {
   background: #ffffff;
   border: 1px solid #e2e8f0;
@@ -70,7 +138,7 @@
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.05);
 }
 
-/* Subtle pulse */
+/* Subtle pulse animation */
 @keyframes pulse-subtle {
   0%, 100% { opacity: 1; transform: scale(1); }
   50% { opacity: 0.9; transform: scale(0.99); }
@@ -78,6 +146,46 @@
 
 .animate-pulse-subtle {
   animation: pulse-subtle 2s infinite ease-in-out;
+}
+
+/* Fade in animation */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.15s ease-out forwards;
+}
+
+/* Scale up animation */
+@keyframes scale-up {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.animate-scale-up {
+  animation: scale-up 0.15s ease-out forwards;
+}
+
+/* Slide in from left */
+@keyframes slide-left {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+.animate-slide-left {
+  animation: slide-left 0.2s ease-out forwards;
+}
+
+/* Slide up */
+@keyframes slide-up {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.animate-slide-up {
+  animation: slide-up 0.2s ease-out forwards;
 }
 
 /* Hide scrollbar utility */
@@ -91,32 +199,171 @@
   scrollbar-width: none !important;
 }
 
-/* Light Enterprise Theme & Legibility Safeguards */
-main table thead[class*="bg-slate-9"] {
-  background-color: #f8fafc !important;
-  color: #64748b !important;
-  border-bottom: 1px solid #e2e8f0 !important;
+/* Typography utilities */
+.font-display {
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.02em;
 }
 
-main input[class*="bg-slate-9"],
-main select[class*="bg-slate-9"],
-main textarea[class*="bg-slate-9"] {
-  background-color: #ffffff !important;
-  color: #0f172a !important;
-  border-color: #e2e8f0 !important;
+.font-mono {
+  font-family: 'Fira Code', 'Courier New', monospace;
 }
 
-main input[class*="bg-slate-9"]::placeholder,
-main textarea[class*="bg-slate-9"]::placeholder {
-  color: #94a3b8 !important;
+.text-balance {
+  text-wrap: balance;
 }
 
-main [class*="border-slate-800"],
-main [class*="border-slate-700"] {
-  border-color: #e2e8f0 !important;
+/* Utility for text overflow */
+.text-clamp-1 {
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
-/* Print Optimization */
+.text-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Focus ring utility */
+.focus-visible-ring {
+  @apply focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500;
+}
+
+/*
+ * Unified Light Enterprise Theme Overrides
+ * Maps dark-slate utilities to light equivalents for consistent UI across all modules
+ */
+
+@layer utilities {
+  /* Background overrides using valid attribute selectors that match all opacity variants */
+  [class*="bg-slate-950"] { background-color: #ffffff !important; }
+  [class*="bg-slate-900"] { background-color: #f8fafc !important; }
+  [class*="bg-slate-800"] { background-color: #f8fafc !important; }
+  [class*="bg-slate-700"] { background-color: #f1f5f9 !important; }
+
+  /* Text overrides - dark theme specific text colors */
+  .text-slate-100 { color: #0f172a !important; }
+  .text-slate-200 { color: #1e293b !important; }
+  .text-slate-300 { color: #334159 !important; }
+  .text-slate-400 { color: #64748b !important; }
+  .text-emerald-300 { color: #059669 !important; }
+  .text-emerald-400 { color: #059669 !important; }
+  .text-amber-300 { color: #d97706 !important; }
+  .text-amber-400 { color: #d97706 !important; }
+  .text-sky-300 { color: #0284c7 !important; }
+  .text-sky-400 { color: #0284c7 !important; }
+
+  /* Override text-white to dark when element has a dark bg class (which is overridden to light) */
+  [class*="bg-slate-7"][class*="text-white"],
+  [class*="bg-slate-8"][class*="text-white"],
+  [class*="bg-slate-9"][class*="text-white"] {
+    color: #0f172a !important;
+  }
+  [class*="bg-slate-7"][class*="text-slate-100"],
+  [class*="bg-slate-8"][class*="text-slate-100"],
+  [class*="bg-slate-9"][class*="text-slate-100"] {
+    color: #0f172a !important;
+  }
+  [class*="bg-slate-7"][class*="text-slate-200"],
+  [class*="bg-slate-8"][class*="text-slate-200"],
+  [class*="bg-slate-9"][class*="text-slate-200"] {
+    color: #1e293b !important;
+  }
+  [class*="bg-slate-7"][class*="text-slate-300"],
+  [class*="bg-slate-8"][class*="text-slate-300"],
+  [class*="bg-slate-9"][class*="text-slate-300"] {
+    color: #334159 !important;
+  }
+  [class*="bg-slate-7"][class*="text-amber-300"],
+  [class*="bg-slate-8"][class*="text-amber-300"],
+  [class*="bg-slate-9"][class*="text-amber-300"] {
+    color: #d97706 !important;
+  }
+  [class*="bg-slate-7"][class*="text-amber-400"],
+  [class*="bg-slate-8"][class*="text-amber-400"],
+  [class*="bg-slate-9"][class*="text-amber-400"] {
+    color: #d97706 !important;
+  }
+  [class*="bg-slate-7"][class*="text-sky-300"],
+  [class*="bg-slate-8"][class*="text-sky-300"],
+  [class*="bg-slate-9"][class*="text-sky-300"] {
+    color: #0284c7 !important;
+  }
+  [class*="bg-slate-7"][class*="text-sky-400"],
+  [class*="bg-slate-8"][class*="text-sky-400"],
+  [class*="bg-slate-9"][class*="text-sky-400"] {
+    color: #0284c7 !important;
+  }
+
+  /* Border overrides - dark borders to light borders */
+  .border-slate-700 { border-color: #e2e8f0 !important; }
+  .border-slate-800 { border-color: #e2e8f0 !important; }
+  .border-slate-900 { border-color: #e2e8f0 !important; }
+  .border-slate-800\/[class*="\/"] { border-color: #e2e8f0 !important; }
+  [class*="border-slate-7"][class*="/"] { border-color: #e2e8f0 !important; }
+  [class*="border-slate-8"][class*="/"] { border-color: #e2e8f0 !important; }
+  [class*="border-amber-500"] { border-color: #f59e0b !important; }
+  [class*="border-sky-500"] { border-color: #0ea5e9 !important; }
+
+  /* Input form overrides - dark inputs with white text */
+  input[class*="bg-slate-9"],
+  select[class*="bg-slate-9"],
+  textarea[class*="bg-slate-9"],
+  input[class*="bg-slate-8"],
+  select[class*="bg-slate-8"],
+  textarea[class*="bg-slate-8"] {
+    background-color: #ffffff !important;
+    color: #0f172a !important;
+    border-color: #e2e8f0 !important;
+  }
+
+  /* Input text overrides */
+  input.text-white,
+  select.text-white,
+  textarea.text-white,
+  input.text-slate-100,
+  select.text-slate-100,
+  textarea.text-slate-100,
+  input.text-slate-200,
+  select.text-slate-200,
+  textarea.text-slate-200,
+  input.text-slate-300,
+  select.text-slate-300,
+  textarea.text-slate-300 {
+    color: #0f172a !important;
+  }
+
+  /* Placeholder overrides for dark inputs */
+  input[class*="bg-slate-9"]::placeholder,
+  textarea[class*="bg-slate-9"]::placeholder,
+  input[class*="bg-slate-8"]::placeholder,
+  textarea[class*="bg-slate-8"]::placeholder {
+    color: #94a3b8 !important;
+  }
+
+  /* Table header overrides */
+  thead[class*="bg-slate-8"],
+  thead[class*="bg-slate-9"] {
+    background-color: #f1f5f9 !important;
+    color: #64748b !important;
+    border-color: #e2e8f0 !important;
+  }
+
+  /* Ring overrides for dark theme elements */
+  .ring-amber-500\/30 {
+    --tw-ring-color: #f59e0b !important;
+  }
+  .ring-amber-500\/20 {
+    --tw-ring-color: #f59e0b !important;
+  }
+}
+
+/* Print optimization */
 @media print {
   body * {
     visibility: hidden;

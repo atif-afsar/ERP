@@ -45,19 +45,19 @@ export const SessionExpiredModal: React.FC<SessionExpiredModalProps> = ({
       maxWidth="sm"
     >
       <div className="text-center py-3 space-y-4">
-        <div className="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center mx-auto shadow-lg shadow-amber-500/5">
+        <div className="w-14 h-14 rounded-2xl bg-amber-50 border border-amber-200 text-amber-600 flex items-center justify-center mx-auto shadow-xs">
           <Clock className="w-7 h-7 animate-pulse" />
         </div>
 
         <div>
-          <h4 className="font-bold text-white text-base">Your Active Session Has Expired</h4>
-          <p className="text-xs text-slate-400 mt-1 max-w-xs mx-auto">
+          <h4 className="font-bold text-slate-900 text-base">Your Active Session Has Expired</h4>
+          <p className="text-xs text-slate-500 mt-1 max-w-xs mx-auto">
             To protect institutional data and tenant privacy, your session has timed out due to inactivity.
           </p>
         </div>
 
-        <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800 text-xs text-slate-300 font-mono">
-          Auto-redirecting to login in <span className="text-amber-400 font-bold">{countdown}s</span>
+        <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-500 font-mono">
+          Auto-redirecting to login in <span className="text-amber-600 font-bold">{countdown}s</span>
         </div>
 
         <div className="flex flex-col sm:flex-row gap-2 pt-2">

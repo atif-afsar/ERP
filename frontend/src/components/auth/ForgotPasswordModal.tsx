@@ -92,7 +92,7 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({ isOpen
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="e.g. principal@delhiinternationalschool.edu.in"
-                  className="w-full pl-9 pr-3.5 py-2 bg-slate-950/70 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-sky-500/60 focus:ring-1 focus:ring-sky-500/60"
+                  className="w-full pl-9 pr-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 placeholder-slate-500 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500"
                   required
                 />
               </div>
@@ -132,7 +132,7 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({ isOpen
                 onChange={(e) => setOtpCode(e.target.value)}
                 placeholder="e.g. 749201"
                 maxLength={6}
-                className="w-full px-3.5 py-2 bg-slate-950/70 border border-slate-800 rounded-xl text-center text-base tracking-widest font-mono text-sky-400 focus:outline-none focus:border-sky-500/60 focus:ring-1 focus:ring-sky-500/60"
+                className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-center text-base tracking-widest font-mono text-sky-600 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500"
                 required
               />
             </div>
@@ -144,7 +144,7 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({ isOpen
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 placeholder="••••••••••••"
-                className="w-full px-3.5 py-2 bg-slate-950/70 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-sky-500/60 focus:ring-1 focus:ring-sky-500/60"
+                className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 placeholder-slate-500 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500"
                 required
               />
             </div>
@@ -156,7 +156,7 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({ isOpen
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="••••••••••••"
-                className="w-full px-3.5 py-2 bg-slate-950/70 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-sky-500/60 focus:ring-1 focus:ring-sky-500/60"
+                className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 placeholder-slate-500 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500"
                 required
               />
             </div>
@@ -174,10 +174,10 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({ isOpen
 
         {step === 'done' && (
           <div className="text-center py-4 space-y-4">
-            <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto">
+            <div className="w-12 h-12 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-600 flex items-center justify-center mx-auto">
               <CheckCircle2 className="w-6 h-6" />
             </div>
-            <h4 className="font-bold text-white text-base">Password Updated Successfully</h4>
+            <h4 className="font-bold text-slate-900 text-base">Password Updated Successfully</h4>
             <p className="text-xs text-slate-400 max-w-sm mx-auto">
               All other active sessions have been securely invalidated. You may now log in with your updated credentials.
             </p>

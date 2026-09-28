@@ -853,7 +853,7 @@ export const StudentsModule: React.FC = () => {
 
       {/* STUDENT WORKSPACE DETAIL DRAWER (8-TAB COMPLETE CONSOLE) */}
       {selectedStudent && (
-        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex justify-end animate-fade-in">
+        <div className="fixed inset-0 z-50 bg-black/20 flex justify-end animate-fade-in">
           <div className="w-full max-w-4xl bg-white border-l border-slate-200 h-full flex flex-col shadow-2xl overflow-hidden animate-slide-left">
             
             {/* Header */}

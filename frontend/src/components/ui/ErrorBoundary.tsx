@@ -59,27 +59,27 @@ export class ErrorBoundary extends Component<Props, State> {
     if (this.state.hasError) {
       return (
         <div className="min-h-[400px] flex items-center justify-center p-6 animate-fade-in">
-          <div className="max-w-xl w-full p-8 rounded-3xl bg-slate-900/90 backdrop-blur-xl border border-rose-500/30 shadow-2xl text-center space-y-6">
-            
-            <div className="w-16 h-16 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-400 flex items-center justify-center mx-auto shadow-lg shadow-rose-500/5">
+          <div className="max-w-xl w-full p-8 rounded-3xl bg-white border border-rose-200 shadow-xs text-center space-y-6">
+
+            <div className="w-16 h-16 rounded-2xl bg-rose-50 border border-rose-200 text-rose-600 flex items-center justify-center mx-auto shadow-xs">
               <ShieldAlert className="w-8 h-8" />
             </div>
 
             <div>
-              <span className="px-3 py-1 rounded-full bg-rose-500/10 text-rose-300 text-xs font-semibold border border-rose-500/20 font-mono">
+              <span className="px-3 py-1 rounded-full bg-rose-50 text-rose-800 text-xs font-semibold border border-rose-200 font-mono">
                 Component Recovery Boundary
               </span>
-              <h3 className="text-xl font-bold text-white mt-3">
+              <h3 className="text-xl font-bold text-slate-900 mt-3">
                 {this.props.fallbackTitle || 'Something Went Wrong in This View'}
               </h3>
-              <p className="text-xs text-slate-400 mt-1 max-w-md mx-auto leading-relaxed">
+              <p className="text-xs text-slate-500 mt-1 max-w-md mx-auto leading-relaxed">
                 An isolated component error occurred. The remainder of the ERP system remains secure and operational.
               </p>
             </div>
 
-            <div className="p-3 bg-slate-950 rounded-xl border border-slate-800 text-left flex items-center justify-between font-mono text-xs text-slate-400">
+            <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-left flex items-center justify-between font-mono text-xs text-slate-500">
               <span>Request Reference:</span>
-              <span className="text-sky-400 font-semibold">{this.state.requestId}</span>
+              <span className="text-sky-700 font-semibold">{this.state.requestId}</span>
             </div>
 
             {/* Action Buttons */}
@@ -114,7 +114,7 @@ export class ErrorBoundary extends Component<Props, State> {
               </button>
 
               {this.state.showDetails && (
-                <div className="mt-3 p-3 bg-slate-950/90 rounded-xl border border-slate-800 text-left font-mono text-[10px] text-rose-300 max-h-40 overflow-y-auto">
+                <div className="mt-3 p-3 bg-slate-50 rounded-xl border border-slate-200 text-left font-mono text-[10px] text-rose-600 max-h-40 overflow-y-auto">
                   <p className="font-bold">{this.state.error?.toString()}</p>
                   <pre className="mt-2 text-slate-500 whitespace-pre-wrap">{this.state.errorInfo?.componentStack}</pre>
                 </div>

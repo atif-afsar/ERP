@@ -178,6 +178,8 @@ export const rbacService = {
       (permission === 'payments.record' && allowed.includes('fees.collect')) ||
       (permission === 'payments.refund' && allowed.includes('fees.refund')) ||
       (permission === 'exams.view' && allowed.includes('exams.read')) ||
+      (permission === 'reports.view' && allowed.includes('reports.read')) ||
+      (permission === 'settings.view' && allowed.includes('settings.manage')) ||
       (permission === 'settings.update' && allowed.includes('settings.manage'));
 
     if (!hasPerm) {

@@ -70,7 +70,7 @@ export const AppShell: React.FC<AppShellProps> = ({
         {/* Sidebar Overlay for Mobile */}
         {sidebarOpen && (
           <div
-            className="fixed inset-0 bg-slate-900/40 z-20 lg:hidden backdrop-blur-xs"
+            className="fixed inset-0 bg-black/20 z-20 lg:hidden"
             onClick={() => setSidebarOpen(false)}
           />
         )}
@@ -159,7 +159,7 @@ export const AppShell: React.FC<AppShellProps> = ({
       {mobileMoreOpen && (
         <div className="fixed inset-0 z-40 lg:hidden flex flex-col justify-end">
           <div
-            className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs"
+            className="fixed inset-0 bg-black/20"
             onClick={() => setMobileMoreOpen(false)}
           />
           <div className="relative bg-white border-t border-slate-200 rounded-t-2xl p-6 shadow-2xl z-50 animate-slide-up space-y-4 max-h-[80vh] overflow-y-auto">
