@@ -24,6 +24,8 @@ import communicationRoutes from './routes/communication.js';
 import auxiliaryRoutes from './routes/auxiliary.js';
 import auditRoutes from './routes/audit.js';
 import { config } from './config.js';
+import { requireAuth } from './middleware/auth.js';
+import { businessAccess } from './middleware/businessAccess.js';
 
 const app = express();
 const PORT = config.port;
@@ -34,34 +36,8 @@ app.use(helmet());
 // Production-ready CORS: Restricts to Vercel FRONTEND_URL in production while permitting local dev
 const corsOptions: cors.CorsOptions = {
   origin: (origin, callback) => {
-    // Allow non-browser requests (server-to-server, curl, health checks)
-    if (!origin) return callback(null, true);
-
-    // Development & testing mode allows localhost origins
-    if (!config.isProduction) return callback(null, true);
-
-    // Explicit wildcard if configured
-    if (config.corsOrigin === '*') return callback(null, true);
-
-    const allowedOrigins = [config.frontendUrl, config.corsOrigin].filter(Boolean) as string[];
-
-    const isAllowed = allowedOrigins.some((allowed) => {
-      if (allowed === origin) return true;
-      // Allow Vercel preview/production deployments if FRONTEND_URL is on vercel.app
-      if (
-        (config.frontendUrl.includes('vercel.app') || config.corsOrigin.includes('vercel.app')) &&
-        origin.endsWith('.vercel.app')
-      ) {
-        return true;
-      }
-      return false;
-    });
-
-    if (isAllowed) {
-      callback(null, true);
-    } else {
-      callback(new AppError(`Origin ${origin} not allowed by CORS policy.`, 403, 'CORS_FORBIDDEN'));
-    }
+    if (!origin || config.allowedOrigins.includes(origin)) return callback(null, true);
+    callback(new AppError('Origin not allowed.', 403, 'CORS_FORBIDDEN'));
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
@@ -102,6 +78,7 @@ app.get('/health', healthHandler);
 const apiRouter = express.Router();
 apiRouter.get('/health', healthHandler);
 apiRouter.use('/auth', authRoutes);
+apiRouter.use(requireAuth, businessAccess);
 apiRouter.use('/tenants', tenantsRoutes);
 apiRouter.use('/students', studentsRoutes);
 apiRouter.use('/staff', staffRoutes);

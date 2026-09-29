@@ -1,6 +1,7 @@
+import { asyncHandler } from '../middleware/asyncHandler.js';
 import { Router, Request, Response } from 'express';
 import { query, transaction } from '../db.js';
-import { optionalAuth } from '../middleware/auth.js';
+import { requireAuth } from '../middleware/auth.js';
 import { tenantContext } from '../middleware/tenantContext.js';
 import { AppError } from '../middleware/errorHandler.js';
 
@@ -26,7 +27,7 @@ function mapPaymentFromDb(p: any) {
 }
 
 // GET /api/v1/payments
-router.get('/', optionalAuth, tenantContext(true), async (req: Request, res: Response) => {
+router.get('/', requireAuth, tenantContext(true), asyncHandler(async (req: Request, res: Response) => {
   const tenantId = req.tenantId!;
   const studentId = req.query.studentId as string;
 
@@ -47,10 +48,10 @@ router.get('/', optionalAuth, tenantContext(true), async (req: Request, res: Res
     requestId: req.id,
     timestamp: new Date().toISOString(),
   });
-});
+}));
 
 // POST /api/v1/payments (Transactional with Idempotency Support)
-router.post('/', optionalAuth, tenantContext(true), async (req: Request, res: Response) => {
+router.post('/', requireAuth, tenantContext(true), asyncHandler(async (req: Request, res: Response) => {
   const tenantId = req.tenantId!;
   const b = req.body;
 
@@ -153,6 +154,6 @@ router.post('/', optionalAuth, tenantContext(true), async (req: Request, res: Re
     requestId: req.id,
     timestamp: new Date().toISOString(),
   });
-});
+}));
 
 export default router;

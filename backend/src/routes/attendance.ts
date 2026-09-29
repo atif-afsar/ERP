@@ -1,6 +1,7 @@
+import { asyncHandler } from '../middleware/asyncHandler.js';
 import { Router, Request, Response } from 'express';
 import { query, transaction } from '../db.js';
-import { optionalAuth } from '../middleware/auth.js';
+import { requireAuth } from '../middleware/auth.js';
 import { tenantContext } from '../middleware/tenantContext.js';
 import { AppError } from '../middleware/errorHandler.js';
 
@@ -19,7 +20,7 @@ function mapAttendanceFromDb(r: any) {
 }
 
 // GET /api/v1/attendance
-router.get('/', optionalAuth, tenantContext(true), async (req: Request, res: Response) => {
+router.get('/', requireAuth, tenantContext(true), asyncHandler(async (req: Request, res: Response) => {
   const tenantId = req.tenantId!;
   const date = req.query.date as string;
   const startDate = req.query.startDate as string;
@@ -62,10 +63,10 @@ router.get('/', optionalAuth, tenantContext(true), async (req: Request, res: Res
     requestId: req.id,
     timestamp: new Date().toISOString(),
   });
-});
+}));
 
 // POST /api/v1/attendance and /api/v1/attendance/bulk
-router.post(['/', '/bulk'], optionalAuth, tenantContext(true), async (req: Request, res: Response) => {
+router.post(['/', '/bulk'], requireAuth, tenantContext(true), asyncHandler(async (req: Request, res: Response) => {
   const tenantId = req.tenantId!;
   const body = req.body;
   const records = Array.isArray(body) ? body : body.records ? body.records : [body];
@@ -104,6 +105,6 @@ router.post(['/', '/bulk'], optionalAuth, tenantContext(true), async (req: Reque
     requestId: req.id,
     timestamp: new Date().toISOString(),
   });
-});
+}));
 
 export default router;

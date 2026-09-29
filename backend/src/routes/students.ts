@@ -1,6 +1,7 @@
+import { asyncHandler } from '../middleware/asyncHandler.js';
 import { Router, Request, Response } from 'express';
 import { query } from '../db.js';
-import { optionalAuth } from '../middleware/auth.js';
+import { requireAuth } from '../middleware/auth.js';
 import { tenantContext } from '../middleware/tenantContext.js';
 import { AppError } from '../middleware/errorHandler.js';
 
@@ -34,7 +35,7 @@ function mapStudentFromDb(s: any) {
 }
 
 // GET /api/v1/students
-router.get('/', optionalAuth, tenantContext(true), async (req: Request, res: Response) => {
+router.get('/', requireAuth, tenantContext(true), asyncHandler(async (req: Request, res: Response) => {
   const tenantId = req.tenantId!;
   const page = Math.max(1, parseInt(req.query.page as string, 10) || 1);
   const pageSize = Math.min(100, Math.max(1, parseInt(req.query.pageSize as string, 10) || 20));
@@ -87,10 +88,10 @@ router.get('/', optionalAuth, tenantContext(true), async (req: Request, res: Res
     requestId: req.id,
     timestamp: new Date().toISOString(),
   });
-});
+}));
 
 // GET /api/v1/students/:id
-router.get('/:id', optionalAuth, tenantContext(true), async (req: Request, res: Response) => {
+router.get('/:id', requireAuth, tenantContext(true), asyncHandler(async (req: Request, res: Response) => {
   const result = await query(
     'SELECT * FROM students WHERE id = $1 AND tenant_id = $2',
     [req.params.id, req.tenantId]
@@ -105,10 +106,10 @@ router.get('/:id', optionalAuth, tenantContext(true), async (req: Request, res: 
     requestId: req.id,
     timestamp: new Date().toISOString(),
   });
-});
+}));
 
 // POST /api/v1/students
-router.post('/', optionalAuth, tenantContext(true), async (req: Request, res: Response) => {
+router.post('/', requireAuth, tenantContext(true), asyncHandler(async (req: Request, res: Response) => {
   const tenantId = req.tenantId!;
   const b = req.body;
 
@@ -160,10 +161,10 @@ router.post('/', optionalAuth, tenantContext(true), async (req: Request, res: Re
     requestId: req.id,
     timestamp: new Date().toISOString(),
   });
-});
+}));
 
 // PATCH /api/v1/students/:id
-router.patch('/:id', optionalAuth, tenantContext(true), async (req: Request, res: Response) => {
+router.patch('/:id', requireAuth, tenantContext(true), asyncHandler(async (req: Request, res: Response) => {
   const { id } = req.params;
   const tenantId = req.tenantId!;
   const b = req.body;
@@ -216,10 +217,10 @@ router.patch('/:id', optionalAuth, tenantContext(true), async (req: Request, res
     requestId: req.id,
     timestamp: new Date().toISOString(),
   });
-});
+}));
 
 // DELETE /api/v1/students/:id
-router.delete('/:id', optionalAuth, tenantContext(true), async (req: Request, res: Response) => {
+router.delete('/:id', requireAuth, tenantContext(true), asyncHandler(async (req: Request, res: Response) => {
   const result = await query(
     "UPDATE students SET status = 'ARCHIVED', updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING id",
     [req.params.id, req.tenantId]
@@ -234,10 +235,10 @@ router.delete('/:id', optionalAuth, tenantContext(true), async (req: Request, re
     requestId: req.id,
     timestamp: new Date().toISOString(),
   });
-});
+}));
 
 // POST /api/v1/students/:id/archive
-router.post('/:id/archive', optionalAuth, tenantContext(true), async (req: Request, res: Response) => {
+router.post('/:id/archive', requireAuth, tenantContext(true), asyncHandler(async (req: Request, res: Response) => {
   const result = await query(
     "UPDATE students SET status = 'ARCHIVED', updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING *",
     [req.params.id, req.tenantId]
@@ -253,6 +254,6 @@ router.post('/:id/archive', optionalAuth, tenantContext(true), async (req: Reque
     requestId: req.id,
     timestamp: new Date().toISOString(),
   });
-});
+}));
 
 export default router;

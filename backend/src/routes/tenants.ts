@@ -1,12 +1,13 @@
+import { asyncHandler } from '../middleware/asyncHandler.js';
 import { Router, Request, Response } from 'express';
 import { query } from '../db.js';
-import { requireAuth, optionalAuth } from '../middleware/auth.js';
+import { requireAuth } from '../middleware/auth.js';
 import { AppError } from '../middleware/errorHandler.js';
 
 const router = Router();
 
 // GET /api/v1/tenants
-router.get('/', optionalAuth, async (req: Request, res: Response) => {
+router.get('/', requireAuth, asyncHandler(async (req: Request, res: Response) => {
   const isSuperAdmin = req.user?.isSuperAdmin;
   let sql = 'SELECT * FROM tenants';
   const params: any[] = [];
@@ -25,10 +26,11 @@ router.get('/', optionalAuth, async (req: Request, res: Response) => {
     requestId: req.id,
     timestamp: new Date().toISOString(),
   });
-});
+}));
 
 // GET /api/v1/tenants/:id
-router.get('/:id', optionalAuth, async (req: Request, res: Response) => {
+router.get('/:id', requireAuth, asyncHandler(async (req: Request, res: Response) => {
+  if (!req.user.isSuperAdmin && req.params.id !== req.user.tenantId) throw new AppError('Access denied.', 403, 'FORBIDDEN');
   const result = await query('SELECT * FROM tenants WHERE id = $1', [req.params.id]);
   if (result.rows.length === 0) {
     throw new AppError('Tenant not found', 404, 'NOT_FOUND');
@@ -39,10 +41,10 @@ router.get('/:id', optionalAuth, async (req: Request, res: Response) => {
     requestId: req.id,
     timestamp: new Date().toISOString(),
   });
-});
+}));
 
 // POST /api/v1/tenants
-router.post('/', requireAuth, async (req: Request, res: Response) => {
+router.post('/', requireAuth, asyncHandler(async (req: Request, res: Response) => {
   if (!req.user?.isSuperAdmin) {
     throw new AppError('Only Super Administrators can create institutions.', 403, 'FORBIDDEN');
   }
@@ -70,10 +72,10 @@ router.post('/', requireAuth, async (req: Request, res: Response) => {
     requestId: req.id,
     timestamp: new Date().toISOString(),
   });
-});
+}));
 
 // PATCH /api/v1/tenants/:id
-router.patch('/:id', requireAuth, async (req: Request, res: Response) => {
+router.patch('/:id', requireAuth, asyncHandler(async (req: Request, res: Response) => {
   const { id } = req.params;
 
   if (!req.user?.isSuperAdmin && req.user?.tenantId !== id) {
@@ -113,6 +115,6 @@ router.patch('/:id', requireAuth, async (req: Request, res: Response) => {
     requestId: req.id,
     timestamp: new Date().toISOString(),
   });
-});
+}));
 
 export default router;

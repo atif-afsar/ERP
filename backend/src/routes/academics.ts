@@ -1,13 +1,14 @@
+import { asyncHandler } from '../middleware/asyncHandler.js';
 import { Router, Request, Response } from 'express';
 import { query, transaction } from '../db.js';
-import { optionalAuth } from '../middleware/auth.js';
+import { requireAuth } from '../middleware/auth.js';
 import { tenantContext } from '../middleware/tenantContext.js';
 import { AppError } from '../middleware/errorHandler.js';
 
 const router = Router();
 
 // GET /api/v1/academics/classes
-router.get('/classes', optionalAuth, tenantContext(true), async (req: Request, res: Response) => {
+router.get('/classes', requireAuth, tenantContext(true), asyncHandler(async (req: Request, res: Response) => {
   const tenantId = req.tenantId!;
 
   const classesRes = await query(
@@ -47,10 +48,10 @@ router.get('/classes', optionalAuth, tenantContext(true), async (req: Request, r
     requestId: req.id,
     timestamp: new Date().toISOString(),
   });
-});
+}));
 
 // POST /api/v1/academics/classes
-router.post('/classes', optionalAuth, tenantContext(true), async (req: Request, res: Response) => {
+router.post('/classes', requireAuth, tenantContext(true), asyncHandler(async (req: Request, res: Response) => {
   const tenantId = req.tenantId!;
   const { id, name, numericGrade = 1, stream = 'General', sections = [] } = req.body;
 
@@ -69,9 +70,11 @@ router.post('/classes', optionalAuth, tenantContext(true), async (req: Request, 
            numeric_level = EXCLUDED.numeric_level,
            stream = EXCLUDED.stream,
            updated_at = NOW()
+         WHERE classes.tenant_id = EXCLUDED.tenant_id
          RETURNING *`,
         [classId, tenantId, name, numericGrade, stream]
       );
+      if (!updateRes.rows.length) throw new AppError('Class belongs to another institution.', 403, 'FORBIDDEN');
       classId = updateRes.rows[0].id;
     } else {
       const insertRes = await client.query(
@@ -94,9 +97,11 @@ router.post('/classes', optionalAuth, tenantContext(true), async (req: Request, 
              name = EXCLUDED.name,
              capacity = EXCLUDED.capacity,
              updated_at = NOW()
+           WHERE sections.tenant_id = EXCLUDED.tenant_id AND sections.class_id = EXCLUDED.class_id
            RETURNING *`,
           [sec.id, tenantId, classId, sec.name, sec.capacity || 40]
         );
+        if (!sRes.rows.length) throw new AppError('Section belongs to another class or institution.', 403, 'FORBIDDEN');
         savedSections.push(sRes.rows[0]);
       } else {
         const sRes = await client.query(
@@ -128,10 +133,10 @@ router.post('/classes', optionalAuth, tenantContext(true), async (req: Request, 
     requestId: req.id,
     timestamp: new Date().toISOString(),
   });
-});
+}));
 
 // DELETE /api/v1/academics/classes/:id
-router.delete('/classes/:id', optionalAuth, tenantContext(true), async (req: Request, res: Response) => {
+router.delete('/classes/:id', requireAuth, tenantContext(true), asyncHandler(async (req: Request, res: Response) => {
   const result = await query(
     'DELETE FROM classes WHERE id = $1 AND tenant_id = $2 RETURNING id',
     [req.params.id, req.tenantId]
@@ -146,10 +151,10 @@ router.delete('/classes/:id', optionalAuth, tenantContext(true), async (req: Req
     requestId: req.id,
     timestamp: new Date().toISOString(),
   });
-});
+}));
 
 // GET /api/v1/academics/subjects
-router.get('/subjects', optionalAuth, tenantContext(true), async (req: Request, res: Response) => {
+router.get('/subjects', requireAuth, tenantContext(true), asyncHandler(async (req: Request, res: Response) => {
   const result = await query(
     'SELECT * FROM subjects WHERE tenant_id = $1 ORDER BY name ASC',
     [req.tenantId]
@@ -160,6 +165,6 @@ router.get('/subjects', optionalAuth, tenantContext(true), async (req: Request, 
     requestId: req.id,
     timestamp: new Date().toISOString(),
   });
-});
+}));
 
 export default router;

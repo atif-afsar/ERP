@@ -1,263 +1,82 @@
 import { Router, Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
-import { query, transaction } from '../db.js';
+import { query } from '../db.js';
 import { AppError } from '../middleware/errorHandler.js';
 import { requireAuth } from '../middleware/auth.js';
+import { asyncHandler } from '../middleware/asyncHandler.js';
 import { validateBody } from '../middleware/validation.js';
-
 import { config } from '../config.js';
 
 const router = Router();
-const JWT_SECRET = config.jwtSecret;
-const JWT_EXPIRES_IN = config.jwtExpiresIn;
-
-const signInSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(1),
-});
-
-const signUpSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(6),
-  name: z.string().min(1),
-  role: z.string().optional().default('TEACHER'),
-  tenantId: z.string().optional(),
-});
-
-const changePasswordSchema = z.object({
-  oldPassword: z.string().min(1),
-  newPassword: z.string().min(6),
-});
-
-// Helper to sign JWT
-export function createToken(payload: { id: string; email: string; role: string; tenantId?: string; isSuperAdmin: boolean }) {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: (JWT_EXPIRES_IN || '7d') as any });
+const signInSchema = z.object({ email: z.string().email(), password: z.string().min(1), tenantId: z.string().uuid().optional() });
+const passwordSchema = z.object({ oldPassword: z.string().min(1), newPassword: z.string().min(8).max(72) });
+export function createToken(user: { id: string; email: string; role: string; tenantId: string; version: number }) {
+  return jwt.sign(user, config.jwtSecret, { algorithm: 'HS256', subject: user.id, jwtid: randomUUID(),
+    issuer: config.jwtIssuer, audience: config.jwtAudience, expiresIn: config.jwtExpiresIn as any });
 }
-
-// POST /api/v1/auth/signin
-router.post('/signin', validateBody(signInSchema), async (req: Request, res: Response) => {
-  const { email, password } = req.body;
-  const normalizedEmail = email.trim().toLowerCase();
-
-  const userRes = await query(
-    `SELECT u.id, u.email, u.password_hash, u.status,
-            p.display_name, p.first_name, p.last_name, p.phone, p.avatar_url,
-            m.tenant_id, r.key as role_key
-     FROM users u
-     LEFT JOIN profiles p ON p.id = u.id
-     LEFT JOIN memberships m ON m.user_id = u.id AND m.status = 'active'
-     LEFT JOIN roles r ON r.id = m.role_id
-     WHERE LOWER(u.email) = $1
-     LIMIT 1`,
-    [normalizedEmail]
-  );
-
-  if (userRes.rows.length === 0) {
+function profile(row: any) {
+  return { id: row.id, email: row.email, name: row.display_name || row.email,
+    role: row.role_key, tenantId: row.tenant_id, phone: row.phone || '', avatarUrl: row.avatar_url || '',
+    status: row.status, createdAt: row.created_at, branchIds: [], linkedStudentIds: [] };
+}
+// Bounded per-process throttling; use shared edge throttling for a multi-process deployment.
+const attempts = new Map<string, { count: number; until: number }>();
+router.post('/signin', validateBody(signInSchema), asyncHandler(async (req: Request, res: Response) => {
+  const email = req.body.email.trim().toLowerCase();
+  const key = (req.ip || '') + ':' + email;
+  const now = Date.now();
+  for (const [k, entry] of attempts) if (entry.until <= now) attempts.delete(k);
+  if (attempts.size >= 10000 && !attempts.has(key)) throw new AppError('Sign-in temporarily limited.', 429, 'RATE_LIMITED');
+  const entry = attempts.get(key) || { count: 0, until: now + 15 * 60 * 1000 };
+  if (entry.count >= 10) throw new AppError('Too many sign-in attempts. Try again later.', 429, 'RATE_LIMITED');
+  entry.count++; attempts.set(key, entry);
+  const result = await query(
+    `SELECT u.id, u.email, u.password_hash, u.status, u.auth_version, u.created_at,
+            p.display_name, p.phone, p.avatar_url
+     FROM users u LEFT JOIN profiles p ON p.id = u.id WHERE LOWER(u.email) = $1`, [email]);
+  const user = result.rows[0];
+  if (!user || !(await bcrypt.compare(req.body.password, user.password_hash)))
     throw new AppError('Invalid email or password.', 401, 'INVALID_CREDENTIALS');
-  }
-
-  const user = userRes.rows[0];
-
-  if (user.status !== 'ACTIVE') {
-    throw new AppError('Account is inactive or suspended. Contact administrator.', 403, 'ACCOUNT_INACTIVE');
-  }
-
-  const isValidPassword = await bcrypt.compare(password, user.password_hash);
-  if (!isValidPassword) {
-    throw new AppError('Invalid email or password.', 401, 'INVALID_CREDENTIALS');
-  }
-
-  const role = user.role_key || 'TEACHER';
-  const isSuperAdmin = role === 'SUPER_ADMIN';
-  const token = createToken({
-    id: user.id,
-    email: user.email,
-    role,
-    tenantId: user.tenant_id || undefined,
-    isSuperAdmin,
-  });
-
-  const profile = {
-    id: user.id,
-    email: user.email,
-    name: user.display_name || user.first_name || user.email.split('@')[0],
-    role,
-    tenantId: user.tenant_id || 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
-    phone: user.phone || '+91 98765 00000',
-    avatarUrl: user.avatar_url || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150',
-    status: user.status,
-  };
-
-  res.json({
-    data: {
-      user: profile,
-      token,
-      expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000,
-    },
-    requestId: req.id,
-    timestamp: new Date().toISOString(),
-  });
-});
-
-// POST /api/v1/auth/signup
-router.post('/signup', validateBody(signUpSchema), async (req: Request, res: Response) => {
-  const { email, password, name, role = 'TEACHER', tenantId } = req.body;
-  const normalizedEmail = email.trim().toLowerCase();
-
-  // Prevent role escalation: public signup cannot grant SUPER_ADMIN or TENANT_ADMIN
-  const safeRole = ['SUPER_ADMIN', 'TENANT_ADMIN'].includes(role) ? 'TEACHER' : role;
-
-  const existing = await query('SELECT id FROM users WHERE LOWER(email) = $1', [normalizedEmail]);
-  if (existing.rows.length > 0) {
-    throw new AppError('A user with this email already exists.', 409, 'USER_EXISTS');
-  }
-
-  const salt = await bcrypt.genSalt(10);
-  const passwordHash = await bcrypt.hash(password, salt);
-
-  const result = await transaction(async (client) => {
-    const userRes = await client.query(
-      `INSERT INTO users (email, password_hash, status)
-       VALUES ($1, $2, 'ACTIVE')
-       RETURNING id, email, status, created_at`,
-      [normalizedEmail, passwordHash]
-    );
-    const newUser = userRes.rows[0];
-
-    await client.query(
-      `INSERT INTO profiles (id, display_name)
-       VALUES ($1, $2)`,
-      [newUser.id, name]
-    );
-
-    let assignedTenantId = tenantId;
-    if (!assignedTenantId) {
-      const defaultTenant = await client.query('SELECT id FROM tenants LIMIT 1');
-      if (defaultTenant.rows.length > 0) {
-        assignedTenantId = defaultTenant.rows[0].id;
-      }
-    }
-
-    if (assignedTenantId) {
-      let roleRes = await client.query('SELECT id FROM roles WHERE key = $1 LIMIT 1', [safeRole]);
-      const roleId = roleRes.rows.length > 0 ? roleRes.rows[0].id : '33333333-3333-3333-3333-333333333333';
-
-      await client.query(
-        `INSERT INTO memberships (user_id, tenant_id, role_id, status)
-         VALUES ($1, $2, $3, 'active')
-         ON CONFLICT (user_id, tenant_id) DO NOTHING`,
-        [newUser.id, assignedTenantId, roleId]
-      );
-    }
-
-    return { newUser, assignedTenantId };
-  });
-
-  const isSuperAdmin = false;
-  const token = createToken({
-    id: result.newUser.id,
-    email: result.newUser.email,
-    role: safeRole,
-    tenantId: result.assignedTenantId,
-    isSuperAdmin,
-  });
-
-  res.status(201).json({
-    data: {
-      user: {
-        id: result.newUser.id,
-        email: result.newUser.email,
-        name,
-        role: safeRole,
-        tenantId: result.assignedTenantId,
-        status: result.newUser.status,
-      },
-      token,
-      expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000,
-    },
-    requestId: req.id,
-    timestamp: new Date().toISOString(),
-  });
-});
-
-// GET /api/v1/auth/me
-router.get('/me', requireAuth, async (req: Request, res: Response) => {
-  const userRes = await query(
-    `SELECT u.id, u.email, u.status,
-            p.display_name, p.first_name, p.last_name, p.phone, p.avatar_url,
-            m.tenant_id, r.key as role_key, t.name as tenant_name
-     FROM users u
-     LEFT JOIN profiles p ON p.id = u.id
-     LEFT JOIN memberships m ON m.user_id = u.id AND m.status = 'active'
-     LEFT JOIN roles r ON r.id = m.role_id
-     LEFT JOIN tenants t ON t.id = m.tenant_id
-     WHERE u.id = $1
-     LIMIT 1`,
-    [req.user.id]
-  );
-
-  if (userRes.rows.length === 0) {
-    throw new AppError('User profile not found.', 404, 'USER_NOT_FOUND');
-  }
-
-  const u = userRes.rows[0];
-  const role = req.user.role || u.role_key || 'SUPER_ADMIN';
-
-  res.json({
-    data: {
-      user: {
-        id: u.id,
-        email: u.email,
-        name: u.display_name || u.first_name || u.email.split('@')[0],
-        role,
-        tenantId: u.tenant_id || req.user.tenantId,
-        tenantName: u.tenant_name,
-        phone: u.phone,
-        avatarUrl: u.avatar_url,
-        status: u.status,
-        isSuperAdmin: req.user.isSuperAdmin,
-      },
-    },
-    requestId: req.id,
-    timestamp: new Date().toISOString(),
-  });
-});
-
-// POST /api/v1/auth/password
-router.post('/password', requireAuth, validateBody(changePasswordSchema), async (req: Request, res: Response) => {
-  const { oldPassword, newPassword } = req.body;
-
-  const userRes = await query('SELECT password_hash FROM users WHERE id = $1', [req.user.id]);
-  if (userRes.rows.length === 0) {
-    throw new AppError('User not found.', 404, 'USER_NOT_FOUND');
-  }
-
-  const match = await bcrypt.compare(oldPassword, userRes.rows[0].password_hash);
-  if (!match) {
+  if (user.status !== 'ACTIVE') throw new AppError('Account is inactive or suspended.', 403, 'ACCOUNT_INACTIVE');
+  const memberships = await query(
+    `SELECT m.tenant_id, r.key AS role_key, t.status AS tenant_status FROM memberships m
+     JOIN roles r ON r.id = m.role_id JOIN tenants t ON t.id = m.tenant_id
+     WHERE m.user_id = $1 AND m.status = 'active' AND (r.tenant_id IS NULL OR r.tenant_id = m.tenant_id)
+     ORDER BY m.joined_at, m.id`, [user.id]);
+  const choices = memberships.rows.filter(m => !req.body.tenantId || m.tenant_id === req.body.tenantId);
+  if (choices.length > 1) throw new AppError('Enter your institution ID to select a membership.', 409, 'TENANT_SELECTION_REQUIRED');
+  const membership = choices[0];
+  if (!membership) throw new AppError('No active institution membership.', 403, 'MEMBERSHIP_REQUIRED');
+  if (membership.role_key !== 'SUPER_ADMIN' && !['active', 'trial'].includes(membership.tenant_status))
+    throw new AppError('Institution access is suspended.', 403, 'TENANT_SUSPENDED');
+  const token = createToken({ id: user.id, email: user.email, role: membership.role_key,
+    tenantId: membership.tenant_id, version: user.auth_version });
+  attempts.delete(key);
+  res.json({ data: { token, user: profile({ ...user, ...membership }), expiresAt: (jwt.decode(token) as jwt.JwtPayload).exp! * 1000 },
+    requestId: req.id, timestamp: new Date().toISOString() });
+}));
+router.post('/signup', (_req, _res, next) => next(new AppError(
+  'Account provisioning requires an administrator. Public enrollment is not enabled.', 403, 'SIGNUP_DISABLED')));
+router.get('/me', requireAuth, asyncHandler(async (req, res) => {
+  const result = await query(
+    `SELECT u.id, u.email, u.status, u.created_at, p.display_name, p.phone, p.avatar_url
+     FROM users u LEFT JOIN profiles p ON p.id = u.id WHERE u.id = $1`, [req.user.id]);
+  res.json({ data: { user: profile({ ...result.rows[0], role_key: req.user.role, tenant_id: req.user.tenantId }),
+    expiresAt: req.user.exp * 1000 }, requestId: req.id, timestamp: new Date().toISOString() });
+}));
+router.post('/password', requireAuth, validateBody(passwordSchema), asyncHandler(async (req, res) => {
+  const result = await query('SELECT password_hash FROM users WHERE id = $1', [req.user.id]);
+  if (!await bcrypt.compare(req.body.oldPassword, result.rows[0].password_hash))
     throw new AppError('Current password is incorrect.', 400, 'INCORRECT_PASSWORD');
-  }
-
-  const salt = await bcrypt.genSalt(10);
-  const newHash = await bcrypt.hash(newPassword, salt);
-
-  await query('UPDATE users SET password_hash = $1, updated_at = NOW() WHERE id = $2', [newHash, req.user.id]);
-
-  res.json({
-    data: { success: true, message: 'Password updated successfully.' },
-    requestId: req.id,
-    timestamp: new Date().toISOString(),
-  });
-});
-
-// POST /api/v1/auth/signout
-router.post('/signout', (req: Request, res: Response) => {
-  res.json({
-    data: { success: true, message: 'Signed out successfully.' },
-    requestId: req.id,
-    timestamp: new Date().toISOString(),
-  });
-});
-
+  const hash = await bcrypt.hash(req.body.newPassword, 12);
+  await query('UPDATE users SET password_hash = $1, auth_version = auth_version + 1, updated_at = NOW() WHERE id = $2', [hash, req.user.id]);
+  res.json({ data: { success: true, message: 'Password changed. Sign in again.' }, requestId: req.id, timestamp: new Date().toISOString() });
+}));
+router.post('/signout', requireAuth, asyncHandler(async (req, res) => {
+  await query('UPDATE users SET auth_version = auth_version + 1 WHERE id = $1', [req.user.id]);
+  res.json({ data: { success: true }, requestId: req.id, timestamp: new Date().toISOString() });
+}));
 export default router;

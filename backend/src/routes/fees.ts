@@ -1,6 +1,7 @@
+import { asyncHandler } from '../middleware/asyncHandler.js';
 import { Router, Request, Response } from 'express';
 import { query } from '../db.js';
-import { optionalAuth } from '../middleware/auth.js';
+import { requireAuth } from '../middleware/auth.js';
 import { tenantContext } from '../middleware/tenantContext.js';
 import { AppError } from '../middleware/errorHandler.js';
 
@@ -23,7 +24,7 @@ function mapFeeAssignment(f: any) {
 }
 
 // GET /api/v1/fees/structures
-router.get('/structures', optionalAuth, tenantContext(true), async (req: Request, res: Response) => {
+router.get('/structures', requireAuth, tenantContext(true), asyncHandler(async (req: Request, res: Response) => {
   const result = await query(
     'SELECT * FROM fee_structures WHERE tenant_id = $1 ORDER BY created_at DESC',
     [req.tenantId]
@@ -45,10 +46,10 @@ router.get('/structures', optionalAuth, tenantContext(true), async (req: Request
     requestId: req.id,
     timestamp: new Date().toISOString(),
   });
-});
+}));
 
 // POST /api/v1/fees/structures
-router.post('/structures', optionalAuth, tenantContext(true), async (req: Request, res: Response) => {
+router.post('/structures', requireAuth, tenantContext(true), asyncHandler(async (req: Request, res: Response) => {
   const tenantId = req.tenantId!;
   const { name, classId, totalAmount, breakdown = [], dueDate } = req.body;
 
@@ -75,10 +76,10 @@ router.post('/structures', optionalAuth, tenantContext(true), async (req: Reques
     requestId: req.id,
     timestamp: new Date().toISOString(),
   });
-});
+}));
 
 // GET /api/v1/fees/assignments and /api/v1/fees/ledgers
-router.get(['/assignments', '/ledgers'], optionalAuth, tenantContext(true), async (req: Request, res: Response) => {
+router.get(['/assignments', '/ledgers'], requireAuth, tenantContext(true), asyncHandler(async (req: Request, res: Response) => {
   const tenantId = req.tenantId!;
   const studentId = req.query.studentId as string;
 
@@ -99,10 +100,10 @@ router.get(['/assignments', '/ledgers'], optionalAuth, tenantContext(true), asyn
     requestId: req.id,
     timestamp: new Date().toISOString(),
   });
-});
+}));
 
 // POST /api/v1/fees/assignments
-router.post('/assignments', optionalAuth, tenantContext(true), async (req: Request, res: Response) => {
+router.post('/assignments', requireAuth, tenantContext(true), asyncHandler(async (req: Request, res: Response) => {
   const tenantId = req.tenantId!;
   const { studentId, feeStructureId, totalAmount, dueDate } = req.body;
 
@@ -122,6 +123,6 @@ router.post('/assignments', optionalAuth, tenantContext(true), async (req: Reque
     requestId: req.id,
     timestamp: new Date().toISOString(),
   });
-});
+}));
 
 export default router;

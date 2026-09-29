@@ -1,12 +1,13 @@
+import { asyncHandler } from '../middleware/asyncHandler.js';
 import { Router, Request, Response } from 'express';
 import { query } from '../db.js';
-import { optionalAuth } from '../middleware/auth.js';
+import { requireAuth } from '../middleware/auth.js';
 import { tenantContext } from '../middleware/tenantContext.js';
 
 const router = Router();
 
 // GET /api/v1/audit/logs
-router.get('/logs', optionalAuth, tenantContext(true), async (req: Request, res: Response) => {
+router.get('/logs', requireAuth, tenantContext(true), asyncHandler(async (req: Request, res: Response) => {
   const result = await query(
     `SELECT a.*, u.email as user_email, p.display_name as user_name
      FROM audit_logs a
@@ -36,10 +37,10 @@ router.get('/logs', optionalAuth, tenantContext(true), async (req: Request, res:
     requestId: req.id,
     timestamp: new Date().toISOString(),
   });
-});
+}));
 
 // POST /api/v1/audit/logs
-router.post('/logs', optionalAuth, tenantContext(true), async (req: Request, res: Response) => {
+router.post('/logs', requireAuth, tenantContext(true), asyncHandler(async (req: Request, res: Response) => {
   const { action, module, entityId, details } = req.body;
   const ipAddress = (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || '127.0.0.1';
 
@@ -55,6 +56,6 @@ router.post('/logs', optionalAuth, tenantContext(true), async (req: Request, res
     requestId: req.id,
     timestamp: new Date().toISOString(),
   });
-});
+}));
 
 export default router;

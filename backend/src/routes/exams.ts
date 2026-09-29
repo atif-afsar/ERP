@@ -1,13 +1,14 @@
+import { asyncHandler } from '../middleware/asyncHandler.js';
 import { Router, Request, Response } from 'express';
 import { query } from '../db.js';
-import { optionalAuth } from '../middleware/auth.js';
+import { requireAuth } from '../middleware/auth.js';
 import { tenantContext } from '../middleware/tenantContext.js';
 import { AppError } from '../middleware/errorHandler.js';
 
 const router = Router();
 
 // GET /api/v1/exams
-router.get('/', optionalAuth, tenantContext(true), async (req: Request, res: Response) => {
+router.get('/', requireAuth, tenantContext(true), asyncHandler(async (req: Request, res: Response) => {
   const result = await query(
     'SELECT * FROM exams WHERE tenant_id = $1 ORDER BY start_date DESC',
     [req.tenantId]
@@ -30,10 +31,10 @@ router.get('/', optionalAuth, tenantContext(true), async (req: Request, res: Res
     requestId: req.id,
     timestamp: new Date().toISOString(),
   });
-});
+}));
 
 // POST /api/v1/exams
-router.post('/', optionalAuth, tenantContext(true), async (req: Request, res: Response) => {
+router.post('/', requireAuth, tenantContext(true), asyncHandler(async (req: Request, res: Response) => {
   const tenantId = req.tenantId!;
   const { name, academicSession, term, startDate, endDate, status = 'SCHEDULED' } = req.body;
 
@@ -62,10 +63,10 @@ router.post('/', optionalAuth, tenantContext(true), async (req: Request, res: Re
     requestId: req.id,
     timestamp: new Date().toISOString(),
   });
-});
+}));
 
 // GET /api/v1/exams/results
-router.get('/results', optionalAuth, tenantContext(true), async (req: Request, res: Response) => {
+router.get('/results', requireAuth, tenantContext(true), asyncHandler(async (req: Request, res: Response) => {
   const tenantId = req.tenantId!;
   const examId = req.query.examId as string;
   const studentId = req.query.studentId as string;
@@ -118,10 +119,10 @@ router.get('/results', optionalAuth, tenantContext(true), async (req: Request, r
     requestId: req.id,
     timestamp: new Date().toISOString(),
   });
-});
+}));
 
 // POST /api/v1/exams/results
-router.post('/results', optionalAuth, tenantContext(true), async (req: Request, res: Response) => {
+router.post('/results', requireAuth, tenantContext(true), asyncHandler(async (req: Request, res: Response) => {
   const tenantId = req.tenantId!;
   const { examId, studentId, subjectMarks = [], totalMarks, obtainedMarks, percentage, grade = 'A' } = req.body;
 
@@ -152,10 +153,10 @@ router.post('/results', optionalAuth, tenantContext(true), async (req: Request, 
     requestId: req.id,
     timestamp: new Date().toISOString(),
   });
-});
+}));
 
 // POST /api/v1/exams/:examId/publish
-router.post('/:examId/publish', optionalAuth, tenantContext(true), async (req: Request, res: Response) => {
+router.post('/:examId/publish', requireAuth, tenantContext(true), asyncHandler(async (req: Request, res: Response) => {
   const tenantId = req.tenantId!;
   const { examId } = req.params;
 
@@ -174,6 +175,6 @@ router.post('/:examId/publish', optionalAuth, tenantContext(true), async (req: R
     requestId: req.id,
     timestamp: new Date().toISOString(),
   });
-});
+}));
 
 export default router;

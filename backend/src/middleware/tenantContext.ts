@@ -1,59 +1,27 @@
 import { Request, Response, NextFunction } from 'express';
+import { z } from 'zod';
 import { AppError } from './errorHandler.js';
 import { query } from '../db.js';
 
 export function tenantContext(requireTenant = true) {
-  return async (req: Request, res: Response, next: NextFunction) => {
+  return async (req: Request, _res: Response, next: NextFunction) => {
     try {
-      const requestedTenantId =
-        (req.headers['x-tenant-id'] as string) ||
-        (req.query.tenantId as string) ||
-        (req.body && req.body.tenantId);
-
-      if (!req.user) {
-        if (requireTenant && !requestedTenantId) {
-          throw new AppError('Tenant ID is required.', 400, 'TENANT_REQUIRED');
-        }
-        req.tenantId = requestedTenantId;
-        return next();
+      if (!req.user) throw new AppError('Authentication required.', 401, 'UNAUTHENTICATED');
+      const supplied = [req.headers['x-tenant-id'], req.query.tenantId, req.body?.tenantId].filter(v => v !== undefined);
+      if (supplied.some(v => typeof v !== 'string' || !z.string().uuid().safeParse(v).success))
+        throw new AppError('A valid tenant UUID is required.', 422, 'INVALID_TENANT');
+      if (new Set(supplied).size > 1) throw new AppError('Tenant selectors disagree.', 400, 'TENANT_MISMATCH');
+      const tenantId = (supplied[0] as string) || req.user.tenantId;
+      if (!tenantId && requireTenant) throw new AppError('Tenant context is required.', 400, 'TENANT_REQUIRED');
+      // A JWT represents one active membership. A different membership requires sign-in selection.
+      if (!req.user.isSuperAdmin && tenantId !== req.user.tenantId)
+        throw new AppError('Access to another institution is forbidden.', 403, 'CROSS_TENANT_ACCESS_DENIED');
+      if (req.user.isSuperAdmin && tenantId && tenantId !== req.user.tenantId) {
+        const result = await query('SELECT id FROM tenants WHERE id = $1', [tenantId]);
+        if (!result.rows.length) throw new AppError('Institution not found.', 404, 'NOT_FOUND');
       }
-
-      // If Super Admin, allow client to specify any tenant or use default
-      if (req.user.isSuperAdmin) {
-        req.tenantId = requestedTenantId || req.user.tenantId || 'a1b2c3d4-e5f6-7890-abcd-ef1234567890';
-        return next();
-      }
-
-      // Normal authenticated user
-      const userTenantId = req.user.tenantId;
-
-      if (requestedTenantId && userTenantId && requestedTenantId !== userTenantId) {
-        // Double check membership table if user belongs to multiple tenants
-        const membershipCheck = await query(
-          'SELECT id FROM memberships WHERE user_id = $1 AND tenant_id = $2 AND status = $3',
-          [req.user.id, requestedTenantId, 'active']
-        );
-
-        if (membershipCheck.rows.length === 0) {
-          throw new AppError(
-            'Access denied: You do not have permission to access data for this tenant.',
-            403,
-            'CROSS_TENANT_ACCESS_DENIED'
-          );
-        }
-
-        req.tenantId = requestedTenantId;
-      } else {
-        req.tenantId = userTenantId || requestedTenantId;
-      }
-
-      if (requireTenant && !req.tenantId) {
-        throw new AppError('Tenant context could not be determined.', 400, 'TENANT_REQUIRED');
-      }
-
+      req.tenantId = tenantId;
       next();
-    } catch (err) {
-      next(err);
-    }
+    } catch (error) { next(error); }
   };
 }

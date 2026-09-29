@@ -1,13 +1,14 @@
+import { asyncHandler } from '../middleware/asyncHandler.js';
 import { Router, Request, Response } from 'express';
 import { query } from '../db.js';
-import { optionalAuth } from '../middleware/auth.js';
+import { requireAuth } from '../middleware/auth.js';
 import { tenantContext } from '../middleware/tenantContext.js';
 import { AppError } from '../middleware/errorHandler.js';
 
 const router = Router();
 
 // GET /api/v1/finance/expenses
-router.get('/expenses', optionalAuth, tenantContext(true), async (req: Request, res: Response) => {
+router.get('/expenses', requireAuth, tenantContext(true), asyncHandler(async (req: Request, res: Response) => {
   const result = await query(
     'SELECT * FROM expenses WHERE tenant_id = $1 ORDER BY date DESC, created_at DESC',
     [req.tenantId]
@@ -31,10 +32,10 @@ router.get('/expenses', optionalAuth, tenantContext(true), async (req: Request, 
     requestId: req.id,
     timestamp: new Date().toISOString(),
   });
-});
+}));
 
 // POST /api/v1/finance/expenses
-router.post('/expenses', optionalAuth, tenantContext(true), async (req: Request, res: Response) => {
+router.post('/expenses', requireAuth, tenantContext(true), asyncHandler(async (req: Request, res: Response) => {
   const tenantId = req.tenantId!;
   const { title, category, amount, date, voucherNo } = req.body;
 
@@ -66,10 +67,10 @@ router.post('/expenses', optionalAuth, tenantContext(true), async (req: Request,
     requestId: req.id,
     timestamp: new Date().toISOString(),
   });
-});
+}));
 
 // GET /api/v1/finance/payroll
-router.get('/payroll', optionalAuth, tenantContext(true), async (req: Request, res: Response) => {
+router.get('/payroll', requireAuth, tenantContext(true), asyncHandler(async (req: Request, res: Response) => {
   const result = await query(
     `SELECT p.*, s.name as staff_name, s.employee_id, s.designation
      FROM payroll_records p
@@ -100,6 +101,6 @@ router.get('/payroll', optionalAuth, tenantContext(true), async (req: Request, r
     requestId: req.id,
     timestamp: new Date().toISOString(),
   });
-});
+}));
 
 export default router;

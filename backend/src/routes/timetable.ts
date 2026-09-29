@@ -1,12 +1,13 @@
+import { asyncHandler } from '../middleware/asyncHandler.js';
 import { Router, Request, Response } from 'express';
 import { query } from '../db.js';
-import { optionalAuth } from '../middleware/auth.js';
+import { requireAuth } from '../middleware/auth.js';
 import { tenantContext } from '../middleware/tenantContext.js';
 
 const router = Router();
 
 // GET /api/v1/timetable
-router.get('/', optionalAuth, tenantContext(true), async (req: Request, res: Response) => {
+router.get('/', requireAuth, tenantContext(true), asyncHandler(async (req: Request, res: Response) => {
   const result = await query(
     `SELECT t.*, c.name as class_name, s.name as section_name, sub.name as subject_name
      FROM timetable_entries t
@@ -40,10 +41,10 @@ router.get('/', optionalAuth, tenantContext(true), async (req: Request, res: Res
     requestId: req.id,
     timestamp: new Date().toISOString(),
   });
-});
+}));
 
 // POST /api/v1/timetable
-router.post('/', optionalAuth, tenantContext(true), async (req: Request, res: Response) => {
+router.post('/', requireAuth, tenantContext(true), asyncHandler(async (req: Request, res: Response) => {
   const tenantId = req.tenantId!;
   const { classId, sectionId, subjectId, teacherId, dayOfWeek, startTime, endTime, room } = req.body;
 
@@ -59,6 +60,6 @@ router.post('/', optionalAuth, tenantContext(true), async (req: Request, res: Re
     requestId: req.id,
     timestamp: new Date().toISOString(),
   });
-});
+}));
 
 export default router;

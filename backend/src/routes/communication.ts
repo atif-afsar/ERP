@@ -1,16 +1,17 @@
+import { asyncHandler } from '../middleware/asyncHandler.js';
 import { Router, Request, Response } from 'express';
 import { query } from '../db.js';
-import { optionalAuth } from '../middleware/auth.js';
+import { requireAuth } from '../middleware/auth.js';
 import { tenantContext } from '../middleware/tenantContext.js';
 import { AppError } from '../middleware/errorHandler.js';
 
 const router = Router();
 
 // GET /api/v1/communication/announcements
-router.get('/announcements', optionalAuth, tenantContext(true), async (req: Request, res: Response) => {
+router.get('/announcements', requireAuth, tenantContext(true), asyncHandler(async (req: Request, res: Response) => {
   const result = await query(
-    'SELECT * FROM announcements WHERE tenant_id = $1 ORDER BY created_at DESC',
-    [req.tenantId]
+    "SELECT * FROM announcements WHERE tenant_id = $1 AND (target_role = 'ALL' OR target_role = $2 OR $3 = true) ORDER BY created_at DESC",
+    [req.tenantId, req.user.role, req.user.isSuperAdmin || req.user.role === 'TENANT_ADMIN']
   );
 
   const mapped = result.rows.map((a) => ({
@@ -28,10 +29,10 @@ router.get('/announcements', optionalAuth, tenantContext(true), async (req: Requ
     requestId: req.id,
     timestamp: new Date().toISOString(),
   });
-});
+}));
 
 // POST /api/v1/communication/announcements
-router.post('/announcements', optionalAuth, tenantContext(true), async (req: Request, res: Response) => {
+router.post('/announcements', requireAuth, tenantContext(true), asyncHandler(async (req: Request, res: Response) => {
   const tenantId = req.tenantId!;
   const { title, content, targetRole = 'ALL' } = req.body;
 
@@ -51,10 +52,10 @@ router.post('/announcements', optionalAuth, tenantContext(true), async (req: Req
     requestId: req.id,
     timestamp: new Date().toISOString(),
   });
-});
+}));
 
 // GET /api/v1/communication/notifications
-router.get('/notifications', optionalAuth, tenantContext(true), async (req: Request, res: Response) => {
+router.get('/notifications', requireAuth, tenantContext(true), asyncHandler(async (req: Request, res: Response) => {
   let sql = 'SELECT * FROM notifications WHERE tenant_id = $1';
   const params: any[] = [req.tenantId];
 
@@ -78,6 +79,6 @@ router.get('/notifications', optionalAuth, tenantContext(true), async (req: Requ
     requestId: req.id,
     timestamp: new Date().toISOString(),
   });
-});
+}));
 
 export default router;
