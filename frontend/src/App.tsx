@@ -29,6 +29,9 @@ import { CommunicationModule } from './modules/communication/CommunicationModule
 import { CrmModule } from './modules/crm/CrmModule';
 import { ReportsModule } from './modules/reports/ReportsModule';
 import { SuperAdminModule } from './modules/superadmin/SuperAdminModule';
+import { TenantManagementModule } from './modules/superadmin/TenantManagementModule';
+import { OrganizationModule } from './modules/organization/OrganizationModule';
+import { OwnerOnboardingView } from './components/auth/OwnerOnboardingView';
 import { SettingsModule } from './modules/settings/SettingsModule';
 import { ApiExplorerModule } from './modules/apiExplorer/ApiExplorerModule';
 import { SchemaExplorerModule } from './modules/schemaExplorer/SchemaExplorerModule';
@@ -41,8 +44,7 @@ import { SuperAdminShell } from './modules/superadmin/SuperAdminShell';
 const READ_ONLY_MODULES = new Set([
   'dashboard', 'students', 'staff', 'academics', 'attendance', 'fees', 'finance', 'inventory', 'library',
   'transport', 'hostel', 'mess', 'health', 'exams', 'results', 'timetable', 'homework',
-  'communication', 'crm', 'reports', 'settings', 'roles-matrix', 'superadmin-tenants',
-  'superadmin-plans', 'superadmin-features',
+  'communication', 'crm', 'reports', 'settings', 'roles-matrix', 'superadmin-plans', 'superadmin-features',
 ]);
 
 const ReadOnlyModule: React.FC<{ children: React.ReactNode }> = ({ children }) => (
@@ -78,6 +80,7 @@ const ROUTE_PERMISSIONS: Record<string, Permission> = {
   crm: 'students.create',
   reports: 'reports.view',
   settings: 'settings.view',
+  organization: 'users.view',
   'api-docs': 'settings.view',
   schema: 'settings.view',
   'roles-matrix': 'roles.manage',
@@ -291,8 +294,11 @@ const MainRouter: React.FC = () => {
       case 'superadmin-features':
         return <SettingsModule />;
       case 'superadmin-tenants':
+        return <TenantManagementModule />;
       case 'superadmin-plans':
         return <SuperAdminModule />;
+      case 'organization':
+        return <OrganizationModule />;
       default:
         return (
           <NotFoundView
@@ -311,6 +317,7 @@ const MainRouter: React.FC = () => {
 
     // 2. SELF-ONBOARDING WIZARD (Docs 63 & 65)
     if (routeState.path === 'signup' || routeState.path === 'onboarding') {
+      if (routeState.path === 'onboarding') return <OwnerOnboardingView initialToken={routeState.query.token} onComplete={() => navigateTo('login')} />;
       return <LoginView onLoginSuccess={() => navigateTo('app/dashboard')} />;
     }
 

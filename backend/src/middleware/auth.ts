@@ -8,7 +8,7 @@ import { query } from '../db.js';
 export const roles = ['SUPER_ADMIN', 'TENANT_ADMIN', 'TEACHER', 'ACCOUNTANT', 'STAFF', 'PARENT', 'STUDENT'] as const;
 const claimsSchema = z.object({
   sub: z.string().uuid(), id: z.string().uuid(), email: z.string().email(),
-  role: z.enum(roles), tenantId: z.string().uuid(), version: z.number().int().nonnegative(),
+  role: z.string().regex(/^[A-Z][A-Z0-9_]{1,49}$/), tenantId: z.string().uuid(), version: z.number().int().nonnegative(),
   exp: z.number(), iat: z.number(), jti: z.string().uuid(),
 });
 export function verifyAccessToken(token: string) {

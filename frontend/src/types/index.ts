@@ -29,7 +29,12 @@ export type Role = UserRole;
 export type PermissionScope = 'GLOBAL' | 'TENANT' | 'BRANCH' | 'ASSIGNED' | 'SELF';
 
 export type Permission =
+  | 'organization.view'
+  | 'organization.update'
+  | 'audit.view'
+  | 'roles.view'
   | 'users.manage'
+  | 'users.view'
   | 'users.read'
   | 'users.invite'
   | 'roles.manage'
@@ -312,6 +317,7 @@ export interface UserProfile {
   assignedGroupIds?: string[];  // For Teacher role (Class/Batch IDs)
   studentId?: string;          // For Student role
   memberships?: TenantMembership[]; // Multi-tenant memberships
+  permissions?: string[];           // Authoritative backend role permissions
   createdAt: string;
 }
 

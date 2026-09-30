@@ -231,6 +231,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeNav, onNavigate, isOpen,
       section: 'ADMINISTRATION',
     },
     {
+      id: 'organization',
+      label: 'Users & Access',
+      icon: Shield,
+      show: currentUser.role === 'TENANT_ADMIN' || !!currentUser.permissions?.includes('users.view'),
+      section: 'ADMINISTRATION',
+    },
+    {
       id: 'settings',
       label: 'Institution Settings',
       icon: Settings,

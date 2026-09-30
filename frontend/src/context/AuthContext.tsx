@@ -440,6 +440,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const can = (permission: Permission, resourceId?: string, branchId?: string): boolean => {
     if (currentUser.role === 'SUPER_ADMIN') return true;
+    if (currentUser.permissions?.includes(permission)) return true;
 
     // Direct check against full ROLE_PERMISSIONS matrix
     const directPerms = ROLE_PERMISSIONS[currentUser.role] || [];

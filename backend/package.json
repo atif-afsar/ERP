@@ -12,7 +12,8 @@
     "db:plan": "node migrate.mjs plan",
     "db:status": "node migrate.mjs status",
     "db:migrate": "node migrate.mjs up",
-    "db:baseline": "node migrate.mjs baseline"
+    "db:baseline": "node migrate.mjs baseline",
+    "db:verify": "node verify-db.mjs"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

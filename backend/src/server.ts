@@ -23,6 +23,7 @@ import timetableRoutes from './routes/timetable.js';
 import communicationRoutes from './routes/communication.js';
 import auxiliaryRoutes from './routes/auxiliary.js';
 import auditRoutes from './routes/audit.js';
+import organizationRoutes from './routes/organization.js';
 import { config } from './config.js';
 import { requireAuth } from './middleware/auth.js';
 import { businessAccess } from './middleware/businessAccess.js';
@@ -92,6 +93,7 @@ apiRouter.use('/homework', homeworkRoutes);
 apiRouter.use('/timetable', timetableRoutes);
 apiRouter.use('/communication', communicationRoutes);
 apiRouter.use('/audit', auditRoutes);
+apiRouter.use('/organization', organizationRoutes);
 apiRouter.use('/', auxiliaryRoutes);
 
 app.use('/api/v1', apiRouter);
