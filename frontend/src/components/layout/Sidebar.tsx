@@ -108,7 +108,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeNav, onNavigate, isOpen,
       id: 'students',
       label: isTeacher ? `My ${getLabel('studentPlural')}` : getLabel('studentPlural'),
       icon: Users,
-      show: !isStudent && !isParent,
+      show: (!isStudent && !isParent) || !!currentUser.permissions?.includes('student_lifecycle.view'),
       section: 'ACADEMICS',
     },
     {

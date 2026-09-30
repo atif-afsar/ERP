@@ -10,7 +10,7 @@ import { errorHandler, AppError } from './middleware/errorHandler.js';
 // Route imports
 import authRoutes from './routes/auth.js';
 import tenantsRoutes from './routes/tenants.js';
-import studentsRoutes from './routes/students.js';
+import studentsRoutes from './routes/studentLifecycle.js';
 import staffRoutes from './routes/staff.js';
 import academicsRoutes from './routes/academics.js';
 import attendanceRoutes from './routes/attendance.js';

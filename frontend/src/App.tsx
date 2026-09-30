@@ -11,7 +11,7 @@ import { SessionExpiredModal } from './components/auth/SessionExpiredModal';
 
 // Modules
 import { DashboardModule } from './modules/dashboard/DashboardModule';
-import { StudentsModule } from './modules/students/StudentsModule';
+import { StudentLifecycleModule } from './modules/students/StudentLifecycleModule';
 import { AcademicsModule } from './modules/academics/AcademicsModule';
 import { AttendanceModule } from './modules/attendance/AttendanceModule';
 import { FeesModule } from './modules/fees/FeesModule';
@@ -43,7 +43,7 @@ import { LandingPage } from './modules/public/LandingPage';
 import { SuperAdminShell } from './modules/superadmin/SuperAdminShell';
 
 const READ_ONLY_MODULES = new Set([
-  'dashboard', 'students', 'staff', 'academics', 'attendance', 'fees', 'finance', 'inventory', 'library',
+  'dashboard', 'staff', 'academics', 'attendance', 'fees', 'finance', 'inventory', 'library',
   'transport', 'hostel', 'mess', 'health', 'exams', 'results', 'timetable', 'homework',
   'communication', 'crm', 'reports', 'settings', 'roles-matrix', 'superadmin-plans', 'superadmin-features',
 ]);
@@ -58,7 +58,7 @@ const ReadOnlyModule: React.FC<{ children: React.ReactNode }> = ({ children }) =
 );
 
 const ROUTE_PERMISSIONS: Record<string, Permission> = {
-  students: 'students.view',
+  students: 'student_lifecycle.view',
   'students/new': 'students.create',
   staff: 'staff.read',
   academics: 'students.view',
@@ -222,7 +222,7 @@ const MainRouter: React.FC = () => {
           />
         );
       case 'students':
-        return <StudentsModule />;
+        return <StudentLifecycleModule />;
       case 'staff':
         return <StaffModule />;
       case 'academics':
