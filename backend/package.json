@@ -8,7 +8,11 @@
     "build": "tsc",
     "start": "node dist/server.js",
     "dev": "tsx watch src/server.ts",
-    "test": "node --test tests/*.test.mjs"
+    "test": "node --import tsx --test tests/*.test.mjs",
+    "db:plan": "node migrate.mjs plan",
+    "db:status": "node migrate.mjs status",
+    "db:migrate": "node migrate.mjs up",
+    "db:baseline": "node migrate.mjs baseline"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

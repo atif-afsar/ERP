@@ -16,6 +16,7 @@ interface TenantContextType {
   isCoaching: boolean;
   toggleFeature: (feature: keyof TenantFeatureFlags) => void;
   createNewTenant: (newTenant: TenantConfig) => void;
+  activateAuthenticatedTenant: (tenantId: string) => void;
 }
 
 const TenantContext = createContext<TenantContextType | undefined>(undefined);
@@ -87,6 +88,16 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     setCurrentTenantId(newTenant.id);
   };
 
+  const activateAuthenticatedTenant = (tenantId: string) => {
+    if (!tenantId) return;
+    setAllTenants((existing) => {
+      if (existing.some((tenant) => tenant.id === tenantId)) return existing;
+      const template = existing[0];
+      return template ? [...existing, { ...template, id: tenantId, name: 'Authenticated institution' }] : existing;
+    });
+    setCurrentTenantId(tenantId);
+  };
+
   const getLabel = (key: keyof TenantLabels): string => {
     if (currentTenant?.labels && currentTenant.labels[key]) {
       return currentTenant.labels[key];
@@ -134,6 +145,7 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         isCoaching,
         toggleFeature,
         createNewTenant,
+        activateAuthenticatedTenant,
       }}
     >
       {children}

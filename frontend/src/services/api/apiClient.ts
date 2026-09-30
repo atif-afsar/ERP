@@ -8,32 +8,14 @@ export interface RequestConfig extends IdempotentRequestOptions {
   timeoutMs?: number;
 }
 
-// In-memory / storage backed Idempotency cache
-const IDEMPOTENCY_CACHE_KEY = 'edunexus_idempotency_keys';
+const idempotencyCache = new Map<string, any>();
 
 function checkIdempotency(key: string): any | null {
-  try {
-    const cached = localStorage.getItem(IDEMPOTENCY_CACHE_KEY);
-    if (!cached) return null;
-    const map = JSON.parse(cached);
-    return map[key] || null;
-  } catch {
-    return null;
-  }
+  return idempotencyCache.get(key) || null;
 }
 
 function saveIdempotency(key: string, response: any): void {
-  try {
-    const cached = localStorage.getItem(IDEMPOTENCY_CACHE_KEY);
-    const map = cached ? JSON.parse(cached) : {};
-    map[key] = {
-      response,
-      savedAt: new Date().toISOString(),
-    };
-    localStorage.setItem(IDEMPOTENCY_CACHE_KEY, JSON.stringify(map));
-  } catch (err) {
-    console.error('Failed to save idempotency response', err);
-  }
+  idempotencyCache.set(key, { response, savedAt: new Date().toISOString() });
 }
 
 class ApiClient {
@@ -113,7 +95,7 @@ class ApiClient {
       headers['Authorization'] = `Bearer ${token}`;
     }
 
-    const tenantId = config.tenantId || (typeof localStorage !== 'undefined' ? localStorage.getItem('edunexus_active_tenant_id') : null);
+    const tenantId = config.tenantId;
     if (tenantId && !headers['X-Tenant-ID']) {
       headers['X-Tenant-ID'] = tenantId;
     }

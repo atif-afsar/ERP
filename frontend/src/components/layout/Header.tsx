@@ -5,10 +5,7 @@ import {
   Bell, 
   Building, 
   LogOut, 
-  UserCheck, 
   Sparkles, 
-  RotateCcw,
-  ChevronDown,
   Building2,
   ShieldCheck,
   GraduationCap,
@@ -18,7 +15,6 @@ import {
 import { useTenant } from '../../context/TenantContext';
 import { useAuth } from '../../context/AuthContext';
 import { storage } from '../../services/storageService';
-import { UserRole } from '../../types';
 
 interface HeaderProps {
   onToggleSidebar: () => void;
@@ -28,31 +24,19 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({ onToggleSidebar, onOpenAi, onNavigate }) => {
   const { currentTenant, allTenants, switchTenant, isSchool, getLabel, branches, currentBranch, switchBranch } = useTenant();
-  const { currentUser, switchRole, isParent, activeStudentId, setActiveStudentId, logout } = useAuth();
+  const { currentUser, isParent, activeStudentId, setActiveStudentId, logout } = useAuth();
   
   const [showNotifications, setShowNotifications] = useState(false);
-  const [notifications, setNotifications] = useState(() => storage.getNotifications(currentUser.id));
+  const [notifications] = useState(() => storage.getNotifications(currentUser.id));
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearchResults, setShowSearchResults] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
-  const [showRoleMenu, setShowRoleMenu] = useState(false);
 
   const students = storage.getStudents(currentTenant.id);
   const staff = storage.getStaff(currentTenant.id);
 
   const unreadCount = notifications.filter((n) => !n.isRead).length;
 
-  const handleMarkRead = (id: string) => {
-    storage.markNotificationRead(id);
-    setNotifications(storage.getNotifications(currentUser.id));
-  };
-
-  const handleResetData = () => {
-    if (confirm('Reset all demo data (students, attendance, fee ledgers, exam results) to default clean state?')) {
-      storage.resetAll();
-      window.location.reload();
-    }
-  };
 
   const matchingStudents = searchQuery.trim()
     ? students.filter(
@@ -69,28 +53,6 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar, onOpenAi, onNav
           st.subjects.some((sub) => sub.toLowerCase().includes(searchQuery.toLowerCase()))
       ).slice(0, 2)
     : [];
-
-  const roleLabels: Record<UserRole, string> = {
-    SUPER_ADMIN: 'Super Admin',
-    TENANT_ADMIN: isSchool ? 'Principal' : 'Director',
-    BRANCH_MANAGER: 'Branch Manager',
-    TEACHER: isSchool ? 'Teacher' : 'Faculty',
-    ACCOUNTANT: 'Accountant',
-    RECEPTIONIST: 'Receptionist',
-    STAFF: 'Staff',
-    PARENT: 'Parent',
-    STUDENT: isSchool ? 'Student' : 'Learner',
-  };
-
-  const availableRoles: UserRole[] = [
-    'SUPER_ADMIN',
-    'TENANT_ADMIN',
-    'TEACHER',
-    'ACCOUNTANT',
-    'STAFF',
-    'PARENT',
-    'STUDENT',
-  ];
 
   return (
     <header className="h-16 border-b border-slate-200 bg-white px-4 sm:px-6 flex items-center justify-between gap-3 sticky top-0 z-20 shadow-2xs">
@@ -227,44 +189,6 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar, onOpenAi, onNav
 
       {/* Right: Role Dropdown + AI + Notifications + Profile */}
       <div className="flex items-center gap-2.5">
-        {/* 16. Current Role Dropdown (Section 16 Specification) */}
-        <div className="relative hidden sm:block">
-          <button
-            onClick={() => setShowRoleMenu(!showRoleMenu)}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg text-xs font-semibold text-slate-800 transition-colors"
-          >
-            <UserCheck className="w-3.5 h-3.5 text-emerald-600" />
-            <span className="text-slate-500 font-normal">Role:</span>
-            <span>{roleLabels[currentUser.role]}</span>
-            <ChevronDown className="w-3 h-3 text-slate-400" />
-          </button>
-
-          {showRoleMenu && (
-            <div className="absolute right-0 mt-2 w-48 rounded-xl bg-white border border-slate-200 shadow-xl p-1.5 z-50 animate-scale-up">
-              <div className="px-2.5 py-1.5 text-[10px] font-semibold text-slate-400 uppercase tracking-wider border-b border-slate-100 mb-1">
-                Switch Authorized Role
-              </div>
-              {availableRoles.map((r) => (
-                <button
-                  key={r}
-                  onClick={() => {
-                    switchRole(r);
-                    setShowRoleMenu(false);
-                  }}
-                  className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-md text-xs transition-colors ${
-                    currentUser.role === r
-                      ? 'bg-emerald-50 text-emerald-800 font-semibold'
-                      : 'text-slate-700 hover:bg-slate-50'
-                  }`}
-                >
-                  <span>{roleLabels[r]}</span>
-                  {currentUser.role === r && <span className="text-[10px] text-emerald-600 font-bold">Active</span>}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-
         {/* AI Assistant Button */}
         <button
           onClick={onOpenAi}
@@ -273,15 +197,6 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar, onOpenAi, onNav
         >
           <Sparkles className="w-3.5 h-3.5" />
           <span className="hidden md:inline">AI Assistant</span>
-        </button>
-
-        {/* Reset Demo Data Button */}
-        <button
-          onClick={handleResetData}
-          className="p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg border border-slate-200 transition-colors"
-          title="Reset demo data"
-        >
-          <RotateCcw className="w-3.5 h-3.5" />
         </button>
 
         {/* Notifications Bell */}
@@ -303,15 +218,7 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar, onOpenAi, onNav
                 <h4 className="text-xs font-semibold text-slate-900 uppercase tracking-wider">
                   Notifications ({unreadCount} new)
                 </h4>
-                <button
-                  onClick={() => {
-                    notifications.forEach((n) => storage.markNotificationRead(n.id));
-                    setNotifications(storage.getNotifications(currentUser.id));
-                  }}
-                  className="text-[11px] text-emerald-700 hover:underline font-medium"
-                >
-                  Mark all as read
-                </button>
+                <span className="text-[10px] text-amber-700">Read-only</span>
               </div>
 
               <div className="mt-3 space-y-2 max-h-72 overflow-y-auto">
@@ -322,7 +229,6 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar, onOpenAi, onNav
                     <div
                       key={n.id}
                       onClick={() => {
-                        handleMarkRead(n.id);
                         if (n.linkUrl) onNavigate(n.linkUrl.replace('/', ''));
                         setShowNotifications(false);
                       }}

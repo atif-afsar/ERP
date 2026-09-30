@@ -162,9 +162,8 @@ class StorageService {
     removeItem: (k: string) => void;
     clear: () => void;
   } {
-    if (typeof window !== 'undefined' && typeof window.localStorage !== 'undefined') {
-      return window.localStorage;
-    }
+    // Business records remain process-local until their backend APIs exist.
+    // Existing browser keys are deliberately left untouched for later migration.
     return {
       getItem: (k: string) => this.memoryFallback.get(k) || null,
       setItem: (k: string, v: string) => {

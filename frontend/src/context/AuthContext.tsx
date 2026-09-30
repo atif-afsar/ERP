@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { UserProfile, UserRole, Permission, AuthState, UserInvitation, AuditLog } from '../types';
-import { storage } from '../services/storageService';
 import { useTenant } from './TenantContext';
 import { authService, rbacService } from '../services/auth';
 
@@ -250,19 +249,18 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { currentTenant } = useTenant();
-  const [allUsers, setAllUsers] = useState<UserProfile[]>(() => storage.getUsers());
+  const { currentTenant, activateAuthenticatedTenant } = useTenant();
+  const anonymousUser: UserProfile = {
+    id: '', tenantId: '', email: '', name: 'Signed out', phone: '', role: 'STUDENT',
+    avatarUrl: '', status: 'INACTIVE', createdAt: '', branchIds: [],
+  };
+  const [allUsers, setAllUsers] = useState<UserProfile[]>([]);
 
   // Auth State Machine
   const [authState, setAuthState] = useState<AuthState>('UNKNOWN');
 
   // Find active user
-  const [currentUserId, setCurrentUserId] = useState<string>(() => {
-    const saved = localStorage.getItem('edunexus_active_user_id');
-    if (saved) return saved;
-    const tenantUser = allUsers.find((u) => u.tenantId === currentTenant?.id && u.role === 'TENANT_ADMIN');
-    return tenantUser?.id || allUsers[0]?.id || 'user-school-admin';
-  });
+  const [currentUserId, setCurrentUserId] = useState('');
 
   // Session state initialization (Zero Flicker & Live Session Restoration)
   useEffect(() => {
@@ -272,7 +270,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (!isMounted) return;
 
       if (res.data?.user) {
-        setAllUsers(storage.getUsers());
+        activateAuthenticatedTenant(res.data.user.tenantId);
+        setAllUsers([res.data.user]);
         setCurrentUserId(res.data.user.id);
         if (currentTenant.status === 'suspended') {
           setAuthState('TENANT_SUSPENDED');
@@ -280,32 +279,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setAuthState('AUTHENTICATED');
         }
       } else {
-        const sessionActive = localStorage.getItem('edunexus_auth_session') !== 'false';
-        if (sessionActive) {
-          if (currentTenant.status === 'suspended') {
-            setAuthState('TENANT_SUSPENDED');
-          } else {
-            setAuthState('AUTHENTICATED');
-          }
-        } else {
-          setAuthState('UNAUTHENTICATED');
-        }
+        setAllUsers([]);
+        setCurrentUserId('');
+        setAuthState('UNAUTHENTICATED');
       }
     };
 
     initSession();
 
     const unsubscribe = authService.onAuthStateChanged((_event, session) => {
-      if (session?.user) {
-        authService.getUserProfile(session.user.id, session.user.email || '').then((p) => {
-          if (isMounted) {
-            setAllUsers(storage.getUsers());
-            setCurrentUserId(p.id);
-            setAuthState('AUTHENTICATED');
-          }
-        });
-      } else if (_event === 'SIGNED_OUT') {
+      if (_event === 'SIGNED_OUT') {
         if (isMounted) {
+          setAllUsers([]);
+          setCurrentUserId('');
           setAuthState('UNAUTHENTICATED');
         }
       }
@@ -317,20 +303,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, [currentTenant.status]);
 
-  // When tenant changes, ensure user matches tenant if not SuperAdmin
-  useEffect(() => {
-    const user = allUsers.find((u) => u.id === currentUserId);
-    if (user && user.role !== 'SUPER_ADMIN' && user.tenantId !== currentTenant.id) {
-      const matchingUser = allUsers.find((u) => u.tenantId === currentTenant.id && u.role === 'TENANT_ADMIN') 
-        || allUsers.find((u) => u.tenantId === currentTenant.id)
-        || allUsers[0];
-      if (matchingUser) {
-        setCurrentUserId(matchingUser.id);
-      }
-    }
-  }, [currentTenant.id]);
-
-  const currentUser = allUsers.find((u) => u.id === currentUserId) || allUsers[0];
+  const currentUser = allUsers.find((u) => u.id === currentUserId) || anonymousUser;
 
   // Active child for parent portal
   const [activeStudentId, setActiveStudentId] = useState<string | null>(() => {
@@ -363,22 +336,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       status,
       ipAddress: '103.21.124.89 (New Delhi, India)',
     };
-    storage.saveAuditLog(log);
+    // Server-side audit events will replace this console record when the audit API is migrated.
+    console.info('[Security event]', log.action, log.status);
   };
 
   const switchUser = (userId: string) => {
-    const user = allUsers.find((u) => u.id === userId);
-    if (user) {
-      setCurrentUserId(userId);
-      localStorage.setItem('edunexus_active_user_id', userId);
-      setAuthState('AUTHENTICATED');
-      localStorage.setItem('edunexus_auth_session', 'true');
-    }
+    console.warn(`Local user switching is disabled (${userId}).`);
   };
 
   const login = (userId: string) => {
-    switchUser(userId);
-    logSecurityEvent('LOGIN_SUCCESS', `User signed in successfully via 1-click preset.`);
+    console.warn(`Preset login is disabled (${userId}).`);
   };
 
   const loginWithCredentials = async (email: string, password = ''): Promise<LoginResult> => {
@@ -392,8 +359,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     if (res.data?.user) {
-      setAllUsers(storage.getUsers());
-      switchUser(res.data.user.id);
+      activateAuthenticatedTenant(res.data.user.tenantId);
+      setAllUsers([res.data.user]);
+      setCurrentUserId(res.data.user.id);
+      setAuthState('AUTHENTICATED');
       logSecurityEvent('LOGIN_SUCCESS', `User ${res.data.user.name} (${res.data.user.email}) authenticated.`);
       return { success: true };
     }
@@ -405,29 +374,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     logSecurityEvent('LOGOUT', `User ${currentUser.name} logged out.`);
     await authService.signOut();
     setAuthState('UNAUTHENTICATED');
-    localStorage.setItem('edunexus_auth_session', 'false');
-    localStorage.removeItem('edunexus_active_user_id');
+    setAllUsers([]);
+    setCurrentUserId('');
   };
 
   const logoutAllDevices = () => {
-    storage.revokeAllSessions(currentUser.id);
-    logSecurityEvent('LOGOUT_ALL_DEVICES', `Revoked all active sessions for ${currentUser.email}.`);
+    logSecurityEvent('LOGOUT_ALL_DEVICES', `Revoked the current token version for ${currentUser.email}.`);
     logout();
   };
 
   const expireSessionSimulator = () => {
     setAuthState('SESSION_EXPIRED');
-    localStorage.setItem('edunexus_auth_session', 'false');
+    authService.signOut();
     logSecurityEvent('SESSION_EXPIRED', `Session expired for ${currentUser.email}.`, 'FAILED');
   };
 
   const forgotPassword = (email: string) => {
     const trimmed = email.trim().toLowerCase();
-    logSecurityEvent('PASSWORD_RESET_REQUEST', `Password reset token requested for ${trimmed}`);
-    // Anti-enumeration generic response
+    logSecurityEvent('PASSWORD_RESET_UNAVAILABLE', `Password reset attempted for ${trimmed}`, 'DENIED');
     return {
-      success: true,
-      message: 'If an account matches those details, instructions and a verification code have been dispatched.',
+      success: false,
+      message: 'Password reset is not enabled. Contact an institution administrator.',
     };
   };
 
@@ -458,21 +425,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       invitedBy: currentUser.name,
       createdAt: new Date().toISOString(),
     };
-    storage.saveInvitation(newInvitation);
-    logSecurityEvent('USER_INVITED', `Invited ${name} (${email}) as ${role}`);
-    return { success: true, invitation: newInvitation };
+    logSecurityEvent('USER_INVITE_UNAVAILABLE', `Invite blocked until the invitation API is available for ${email}`, 'DENIED');
+    return { success: false, invitation: undefined };
   };
 
   const switchRole = (role: UserRole) => {
-    if (role === 'SUPER_ADMIN') {
-      const su = allUsers.find((u) => u.role === 'SUPER_ADMIN');
-      if (su) switchUser(su.id);
-      return;
-    }
-    const matched = allUsers.find((u) => u.tenantId === currentTenant.id && u.role === role);
-    if (matched) {
-      switchUser(matched.id);
-    }
+    console.warn(`Local role switching is disabled (${role}).`);
   };
 
   const hasRole = (roles: UserRole[]): boolean => {

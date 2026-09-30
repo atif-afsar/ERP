@@ -22,7 +22,9 @@ export function errorHandler(
 ): void {
   const statusCode = err.statusCode || (err.status ? Number(err.status) : 500);
   const code = err.code || 'INTERNAL_SERVER_ERROR';
-  const message = err.message || 'An unexpected internal error occurred.';
+  const message = statusCode >= 500 && process.env.NODE_ENV === 'production'
+    ? 'An unexpected internal error occurred.'
+    : (err.message || 'An unexpected internal error occurred.');
   const requestId = req.id || 'req_unknown';
 
   if (statusCode >= 500) {
@@ -33,7 +35,7 @@ export function errorHandler(
     error: {
       code,
       message,
-      details: err.details || null,
+      details: statusCode >= 500 ? null : (err.details || null),
       requestId,
     },
     requestId,

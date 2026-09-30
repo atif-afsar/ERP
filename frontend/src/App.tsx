@@ -36,8 +36,23 @@ import { RolesMatrixModule } from './modules/rolesMatrix/RolesMatrixModule';
 import { StaffModule } from './modules/staff/StaffModule';
 import { GlobalAiAssistantBot } from './components/ai/GlobalAiAssistantBot';
 import { LandingPage } from './modules/public/LandingPage';
-import { OnboardingWizard } from './modules/onboarding/OnboardingWizard';
 import { SuperAdminShell } from './modules/superadmin/SuperAdminShell';
+
+const READ_ONLY_MODULES = new Set([
+  'dashboard', 'students', 'staff', 'academics', 'attendance', 'fees', 'finance', 'inventory', 'library',
+  'transport', 'hostel', 'mess', 'health', 'exams', 'results', 'timetable', 'homework',
+  'communication', 'crm', 'reports', 'settings', 'roles-matrix', 'superadmin-tenants',
+  'superadmin-plans', 'superadmin-features',
+]);
+
+const ReadOnlyModule: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <div className="space-y-3">
+    <div role="status" className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-900">
+      Read-only during backend migration. Existing browser records have been preserved but are no longer used.
+    </div>
+    <div className="pointer-events-none select-text" aria-readonly="true">{children}</div>
+  </div>
+);
 
 const ROUTE_PERMISSIONS: Record<string, Permission> = {
   students: 'students.view',
@@ -112,8 +127,8 @@ const NotFoundView: React.FC<{ attemptedRoute: string; onBackToDashboard: () => 
 );
 
 const MainRouter: React.FC = () => {
-  const { authState, isAuthenticated, isSuperAdmin, can, login, currentUser } = useAuth();
-  const { currentTenant, isFeatureEnabled, switchTenant } = useTenant();
+  const { authState, isAuthenticated, isSuperAdmin, can } = useAuth();
+  const { currentTenant, isFeatureEnabled } = useTenant();
   const [isAiModalOpen, setIsAiModalOpen] = useState(false);
 
   // Helper to get normalized route from window hash
@@ -296,15 +311,7 @@ const MainRouter: React.FC = () => {
 
     // 2. SELF-ONBOARDING WIZARD (Docs 63 & 65)
     if (routeState.path === 'signup' || routeState.path === 'onboarding') {
-      return (
-        <OnboardingWizard
-          onComplete={(newTenant) => {
-            switchTenant(newTenant.id);
-            navigateTo('app/dashboard');
-          }}
-          onCancel={() => navigateTo('')}
-        />
-      );
+      return <LoginView onLoginSuccess={() => navigateTo('app/dashboard')} />;
     }
 
     // 3. AUTHENTICATION & LOGIN (Doc 63)
@@ -326,7 +333,7 @@ const MainRouter: React.FC = () => {
           {/* Session Expired Modal if triggered */}
           <SessionExpiredModal
             isOpen={authState === 'SESSION_EXPIRED'}
-            onRenewSession={() => login(currentUser.id)}
+            onRenewSession={() => navigateTo('login')}
             onRedirectToLogin={() => navigateTo('login')}
           />
         </>
@@ -364,7 +371,7 @@ const MainRouter: React.FC = () => {
         onNavigate={(nav) => navigateTo(nav)}
         onOpenAi={() => setIsAiModalOpen(true)}
       >
-        {renderModule()}
+        {READ_ONLY_MODULES.has(currentNav) ? <ReadOnlyModule>{renderModule()}</ReadOnlyModule> : renderModule()}
       </AppShell>
     );
   };

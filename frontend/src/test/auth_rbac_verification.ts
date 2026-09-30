@@ -99,7 +99,7 @@ export async function runAuthRbacVerificationSuite(): Promise<{
   };
 
   // 1. User can sign in
-  const loginRes = await authService.signIn('principal@delhiinternationalschool.edu.in');
+  const loginRes = await authService.signIn('principal@delhiinternationalschool.edu.in', 'test-password');
   const t1Passed = !loginRes.error && loginRes.data?.user?.email === 'principal@delhiinternationalschool.edu.in';
   results.push({
     testName: '1. User can sign in',

@@ -9,9 +9,6 @@ import {
 } from './ragTypes';
 import { DEFAULT_CAMPUS_DOCUMENTS } from './defaultCampusDocs';
 
-const STORAGE_KEY = 'edunexus_rag_custom_documents';
-const EMBEDDINGS_CACHE_KEY = 'edunexus_rag_embeddings_cache';
-
 // Active Gemini API key from environment
 const RAW_GEMINI_KEY = (import.meta as any).env?.VITE_GEMINI_API_KEY || '';
 // Check if the key looks like a valid Google AI Studio key (starts with AIzaSy)
@@ -201,17 +198,7 @@ async function fetchGeminiEmbedding(text: string): Promise<number[] | null> {
  * Initializes the RAG Knowledge Store by indexing default and custom documents
  */
 export function initializeRagStore(): void {
-  let customDocs: KnowledgeDocument[] = [];
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      customDocs = JSON.parse(stored);
-    }
-  } catch (e) {
-    console.warn('Failed to parse custom RAG docs from localStorage', e);
-  }
-
-  activeDocuments = [...DEFAULT_CAMPUS_DOCUMENTS, ...customDocs];
+  activeDocuments = [...DEFAULT_CAMPUS_DOCUMENTS];
   allIndexedChunks = [];
 
   activeDocuments.forEach(doc => {
@@ -492,13 +479,6 @@ export function ingestCustomDocument(input: IngestDocumentInput): KnowledgeDocum
   activeDocuments.push(newDoc);
   allIndexedChunks.push(...chunks);
 
-  try {
-    const customDocs = activeDocuments.filter(d => d.isCustom);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(customDocs));
-  } catch (e) {
-    console.warn('Could not save custom document to localStorage', e);
-  }
-
   return newDoc;
 }
 
@@ -518,13 +498,6 @@ export function getAllRagDocuments(): KnowledgeDocument[] {
 export function deleteCustomDocument(id: string): boolean {
   activeDocuments = activeDocuments.filter(d => d.id !== id);
   allIndexedChunks = allIndexedChunks.filter(c => c.documentId !== id);
-
-  try {
-    const customDocs = activeDocuments.filter(d => d.isCustom);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(customDocs));
-  } catch (e) {
-    console.warn('Could not update localStorage', e);
-  }
 
   return true;
 }

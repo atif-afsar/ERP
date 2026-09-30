@@ -15,11 +15,17 @@ dotenv.config();
 const { Pool } = pg;
 const connectionString = process.env.DATABASE_URL || 'postgresql://postgres:postgres@127.0.0.1:5432/edunexus_erp';
 
-const email = (process.argv[2] || process.env.ADMIN_EMAIL || 'superadmin@edunexus.io').trim().toLowerCase();
-const password = process.argv[3] || process.env.ADMIN_PASSWORD || 'Admin@123';
+const email = (process.argv[2] || process.env.ADMIN_EMAIL || '').trim().toLowerCase();
+const password = process.argv[3] || process.env.ADMIN_PASSWORD || '';
 const displayName = process.argv[4] || process.env.ADMIN_NAME || 'Platform Super Administrator';
 
 async function main() {
+  if (!email || !/^\S+@\S+\.\S+$/.test(email)) {
+    throw new Error('Provide a valid admin email as argument 1 or ADMIN_EMAIL.');
+  }
+  if (password.length < 12 || !/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/\d/.test(password)) {
+    throw new Error('Provide a password of at least 12 characters containing upper-case, lower-case, and numeric characters.');
+  }
   console.log('--- EduNexus VPS Administrator Provisioning ---');
   console.log(`Target Email: ${email}`);
 
@@ -94,7 +100,6 @@ async function main() {
     console.log('Successfully provisioned administrator account!');
     console.log(`User ID:  ${userId}`);
     console.log(`Email:    ${email}`);
-    console.log(`Password: ${password}`);
     console.log(`Role:     SUPER_ADMIN`);
     console.log('------------------------------------------------');
   } catch (err) {
