@@ -38,13 +38,14 @@ import { ApiExplorerModule } from './modules/apiExplorer/ApiExplorerModule';
 import { SchemaExplorerModule } from './modules/schemaExplorer/SchemaExplorerModule';
 import { RolesMatrixModule } from './modules/rolesMatrix/RolesMatrixModule';
 import { StaffModule } from './modules/staff/StaffModule';
+import { AcademicOperationsModule } from './modules/academicOperations/AcademicOperationsModule';
 import { GlobalAiAssistantBot } from './components/ai/GlobalAiAssistantBot';
 import { LandingPage } from './modules/public/LandingPage';
 import { SuperAdminShell } from './modules/superadmin/SuperAdminShell';
 
 const READ_ONLY_MODULES = new Set([
-  'dashboard', 'staff', 'academics', 'attendance', 'fees', 'finance', 'inventory', 'library',
-  'transport', 'hostel', 'mess', 'health', 'exams', 'results', 'timetable', 'homework',
+  'dashboard', 'academics', 'fees', 'finance', 'inventory', 'library',
+  'transport', 'hostel', 'mess', 'health', 'exams', 'results', 'homework',
   'communication', 'crm', 'reports', 'settings', 'roles-matrix', 'superadmin-plans', 'superadmin-features',
 ]);
 
@@ -60,7 +61,7 @@ const ReadOnlyModule: React.FC<{ children: React.ReactNode }> = ({ children }) =
 const ROUTE_PERMISSIONS: Record<string, Permission> = {
   students: 'student_lifecycle.view',
   'students/new': 'students.create',
-  staff: 'staff.read',
+  staff: 'staff.view',
   academics: 'students.view',
   attendance: 'attendance.view',
   'attendance/mark': 'attendance.mark',
@@ -224,12 +225,12 @@ const MainRouter: React.FC = () => {
       case 'students':
         return <StudentLifecycleModule />;
       case 'staff':
-        return <StaffModule />;
+        return <AcademicOperationsModule initialTab="staff" />;
       case 'academics':
         return <AcademicsModule />;
       case 'attendance':
         return isFeatureEnabled('attendance') ? (
-          <AttendanceModule />
+          <AcademicOperationsModule initialTab="attendance" />
         ) : (
           <UnauthorizedCard permission="attendance.view" onBackToDashboard={() => navigateTo('dashboard')} />
         );
@@ -262,7 +263,7 @@ const MainRouter: React.FC = () => {
         );
       case 'timetable':
         return isFeatureEnabled('timetable') ? (
-          <TimetableModule />
+          <AcademicOperationsModule initialTab="timetable" />
         ) : (
           <UnauthorizedCard permission="timetable.view" onBackToDashboard={() => navigateTo('dashboard')} />
         );
