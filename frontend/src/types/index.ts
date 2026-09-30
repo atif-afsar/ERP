@@ -29,6 +29,8 @@ export type Role = UserRole;
 export type PermissionScope = 'GLOBAL' | 'TENANT' | 'BRANCH' | 'ASSIGNED' | 'SELF';
 
 export type Permission =
+  | 'master_data.view'
+  | 'master_data.manage'
   | 'organization.view'
   | 'organization.update'
   | 'audit.view'

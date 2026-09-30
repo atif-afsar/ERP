@@ -24,6 +24,7 @@ import communicationRoutes from './routes/communication.js';
 import auxiliaryRoutes from './routes/auxiliary.js';
 import auditRoutes from './routes/audit.js';
 import organizationRoutes from './routes/organization.js';
+import masterDataRoutes from './routes/masterData.js';
 import { config } from './config.js';
 import { requireAuth } from './middleware/auth.js';
 import { businessAccess } from './middleware/businessAccess.js';
@@ -94,6 +95,7 @@ apiRouter.use('/timetable', timetableRoutes);
 apiRouter.use('/communication', communicationRoutes);
 apiRouter.use('/audit', auditRoutes);
 apiRouter.use('/organization', organizationRoutes);
+apiRouter.use('/master-data', masterDataRoutes);
 apiRouter.use('/', auxiliaryRoutes);
 
 app.use('/api/v1', apiRouter);

@@ -31,6 +31,7 @@ import { ReportsModule } from './modules/reports/ReportsModule';
 import { SuperAdminModule } from './modules/superadmin/SuperAdminModule';
 import { TenantManagementModule } from './modules/superadmin/TenantManagementModule';
 import { OrganizationModule } from './modules/organization/OrganizationModule';
+import { SchoolMasterDataModule } from './modules/masterData/SchoolMasterDataModule';
 import { OwnerOnboardingView } from './components/auth/OwnerOnboardingView';
 import { SettingsModule } from './modules/settings/SettingsModule';
 import { ApiExplorerModule } from './modules/apiExplorer/ApiExplorerModule';
@@ -81,6 +82,7 @@ const ROUTE_PERMISSIONS: Record<string, Permission> = {
   reports: 'reports.view',
   settings: 'settings.view',
   organization: 'users.view',
+  'master-data': 'master_data.view',
   'api-docs': 'settings.view',
   schema: 'settings.view',
   'roles-matrix': 'roles.manage',
@@ -299,6 +301,8 @@ const MainRouter: React.FC = () => {
         return <SuperAdminModule />;
       case 'organization':
         return <OrganizationModule />;
+      case 'master-data':
+        return <SchoolMasterDataModule />;
       default:
         return (
           <NotFoundView
