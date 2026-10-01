@@ -23,6 +23,7 @@ import { HostelModule } from './modules/hostel/HostelModule';
 import { MessModule } from './modules/mess/MessModule';
 import { HealthModule } from './modules/health/HealthModule';
 import { ExamsModule } from './modules/exams/ExamsModule';
+import { ExaminationAssessmentModule } from './modules/examinations/ExaminationAssessmentModule';
 import { TimetableModule } from './modules/timetable/TimetableModule';
 import { HomeworkModule } from './modules/homework/HomeworkModule';
 import { CommunicationModule } from './modules/communication/CommunicationModule';
@@ -45,7 +46,7 @@ import { SuperAdminShell } from './modules/superadmin/SuperAdminShell';
 
 const READ_ONLY_MODULES = new Set([
   'dashboard', 'academics', 'fees', 'finance', 'inventory', 'library',
-  'transport', 'hostel', 'mess', 'health', 'exams', 'results', 'homework',
+  'transport', 'hostel', 'mess', 'health', 'homework',
   'communication', 'crm', 'reports', 'settings', 'roles-matrix', 'superadmin-plans', 'superadmin-features',
 ]);
 
@@ -74,8 +75,8 @@ const ROUTE_PERMISSIONS: Record<string, Permission> = {
   mess: 'mess.view',
   health: 'health.view',
   'fees/new': 'fees.create',
-  exams: 'exams.view',
-  results: 'exams.view',
+  exams: 'examinations.view',
+  results: 'exam_marks.view',
   timetable: 'timetable.view',
   homework: 'homework.view',
   communication: 'communication.send',
@@ -257,7 +258,7 @@ const MainRouter: React.FC = () => {
       case 'exams':
       case 'results':
         return isFeatureEnabled('exams') ? (
-          <ExamsModule defaultTab={currentNav === 'results' ? 'report_cards' : undefined} />
+          <ExaminationAssessmentModule initialTab={currentNav === 'results' ? 'results' : 'exams'} />
         ) : (
           <UnauthorizedCard permission="exams.view" onBackToDashboard={() => navigateTo('dashboard')} />
         );

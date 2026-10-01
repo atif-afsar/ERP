@@ -17,7 +17,7 @@ import attendanceRoutes from './routes/attendanceOperations.js';
 import feesRoutes from './routes/fees.js';
 import paymentsRoutes from './routes/payments.js';
 import financeRoutes from './routes/finance.js';
-import examsRoutes from './routes/exams.js';
+import examsRoutes from './routes/examinationOperations.js';
 import homeworkRoutes from './routes/homework.js';
 import timetableRoutes from './routes/timetableOperations.js';
 import communicationRoutes from './routes/communication.js';
