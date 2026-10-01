@@ -156,6 +156,8 @@ export type Permission =
   | 'settings.update'
   | 'settings.manage'
   | 'tenants.manage'
+  | 'parent_accounts.view'
+  | 'parent_accounts.invite'
   | 'subscriptions.manage';
 
 export interface CustomRoleDefinition {

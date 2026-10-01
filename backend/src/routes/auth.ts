@@ -51,6 +51,12 @@ router.post('/onboarding/accept', validateBody(onboardingSchema), asyncHandler(a
         [user.id, invitation.staff_id, invitation.tenant_id]);
       if (!linked.rowCount) throw new AppError('The teacher account link is no longer available.', 409, 'STAFF_LINK_UNAVAILABLE');
     }
+    if (invitation.parent_id) {
+      const linked = await client.query(
+        `UPDATE parents SET user_id=$1,updated_at=NOW() WHERE id=$2 AND tenant_id=$3 AND user_id IS NULL RETURNING id`,
+        [user.id, invitation.parent_id, invitation.tenant_id]);
+      if (!linked.rowCount) throw new AppError('The parent account link is no longer available.', 409, 'PARENT_LINK_UNAVAILABLE');
+    }
     await client.query(`UPDATE user_invitations SET status='accepted',accepted_at=NOW() WHERE id=$1`, [invitation.id]);
     await writeAudit({ tenantId: invitation.tenant_id, userId: user.id, action: 'OWNER_ONBOARDING_COMPLETED', module: 'users',
       entityId: user.id, details: { invitationId: invitation.id, role: invitation.role_key }, request: req }, client);
