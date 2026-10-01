@@ -34,7 +34,7 @@ const write: Record<string, string[]> = {
 export function businessAccess(req: Request, res: Response, next: NextFunction) {
   const module = req.path.split('/').filter(Boolean)[0];
   // These modules enforce database-backed permissions at the route level.
-  if (['organization','audit','master-data','students','staff','attendance','timetable','exams'].includes(module)) return next();
+  if (['organization','audit','master-data','students','staff','attendance','timetable','exams','fees'].includes(module)) return next();
   const allowed = (['GET','HEAD'].includes(req.method) ? read : write)[module];
   if (!allowed) return next(new AppError('Endpoint not found.', 404, 'NOT_FOUND'));
   requireRole(...allowed)(req, res, next);

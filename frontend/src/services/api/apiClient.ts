@@ -159,6 +159,16 @@ class ApiClient {
     }
   }
 
+  async requestBlob(endpoint: string, tenantId?: string): Promise<Blob> {
+    const headers: Record<string, string> = {};
+    const token = this.getAuthToken();
+    if (token) headers.Authorization = `Bearer ${token}`;
+    if (tenantId) headers['X-Tenant-ID'] = tenantId;
+    const res = await fetch(this.resolveUrl(endpoint), { headers });
+    if (!res.ok) throw new Error(`File request failed with status ${res.status}`);
+    return res.blob();
+  }
+
   /**
    * Resilient execute method: attempts live VPS request, falling back to local handler if offline/unreachable
    */

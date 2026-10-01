@@ -4,7 +4,7 @@ import pg from 'pg';
 dotenv.config();
 if (!process.env.DATABASE_URL) throw new Error('DATABASE_URL is required.');
 const client = new pg.Client({ connectionString: process.env.DATABASE_URL, connectionTimeoutMillis: 5000 });
-const requiredTables = ['tenants','users','profiles','roles','permissions','role_permissions','memberships','user_invitations','audit_logs','branches','academic_years','classes','sections','subjects','teacher_subject_assignments','teacher_profiles','staff','timetable_entries','attendance_records','students','parents','parent_students','enrollments','student_documents','exams','exam_subjects','exam_marks','grade_scales','grade_bands','schema_migrations'];
+const requiredTables = ['tenants','users','profiles','roles','permissions','role_permissions','memberships','user_invitations','audit_logs','branches','academic_years','classes','sections','subjects','teacher_subject_assignments','teacher_profiles','staff','timetable_entries','attendance_records','students','parents','parent_students','enrollments','student_documents','exams','exam_subjects','exam_marks','grade_scales','grade_bands','fee_structures','fee_structure_items','fee_assignments','fee_installments','school_payment_settings','payment_proofs','payments','fee_receipt_sequences','schema_migrations'];
 try {
   await client.connect();
   const server = await client.query('SELECT current_database() AS database, current_user AS user, version() AS version');

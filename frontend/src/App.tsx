@@ -15,6 +15,7 @@ import { StudentLifecycleModule } from './modules/students/StudentLifecycleModul
 import { AcademicsModule } from './modules/academics/AcademicsModule';
 import { AttendanceModule } from './modules/attendance/AttendanceModule';
 import { FeesModule } from './modules/fees/FeesModule';
+import { FeeManagementModule } from './modules/fees/FeeManagementModule';
 import { FinanceModule } from './modules/finance/FinanceModule';
 import { InventoryModule } from './modules/inventory/InventoryModule';
 import { LibraryModule } from './modules/library/LibraryModule';
@@ -45,7 +46,7 @@ import { LandingPage } from './modules/public/LandingPage';
 import { SuperAdminShell } from './modules/superadmin/SuperAdminShell';
 
 const READ_ONLY_MODULES = new Set([
-  'dashboard', 'academics', 'fees', 'finance', 'inventory', 'library',
+  'dashboard', 'academics', 'finance', 'inventory', 'library',
   'transport', 'hostel', 'mess', 'health', 'homework',
   'communication', 'crm', 'reports', 'settings', 'roles-matrix', 'superadmin-plans', 'superadmin-features',
 ]);
@@ -66,7 +67,7 @@ const ROUTE_PERMISSIONS: Record<string, Permission> = {
   academics: 'students.view',
   attendance: 'attendance.view',
   'attendance/mark': 'attendance.mark',
-  fees: 'fees.view',
+  fees: 'fee_management.view',
   finance: 'fees.view',
   inventory: 'fees.view',
   library: 'library.view',
@@ -237,7 +238,7 @@ const MainRouter: React.FC = () => {
         );
       case 'fees':
         return isFeatureEnabled('fees') ? (
-          <FeesModule />
+          <FeeManagementModule />
         ) : (
           <UnauthorizedCard permission="fees.view" onBackToDashboard={() => navigateTo('dashboard')} />
         );

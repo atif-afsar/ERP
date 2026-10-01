@@ -1,0 +1,1 @@
+import{Router}from'express';import{AppError}from'../middleware/errorHandler.js';const router=Router();router.all('*',(_req,_res,next)=>next(new AppError('Direct payment recording is disabled. Use the fee payment-proof verification workflow.',410,'MANUAL_VERIFICATION_REQUIRED')));export default router;
