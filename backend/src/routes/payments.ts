@@ -149,6 +149,37 @@ router.post('/', requireAuth, tenantContext(true), asyncHandler(async (req: Requ
     return paymentRow;
   });
 
+  // 4. Post Journal Entry (Phase 9)
+  try {
+    const { postJournalEntry } = await import('../services/financeService.js');
+    const { query: dbq } = await import('../db.js');
+    
+    // Fallback or setup accounts if needed
+    const incAcc = await dbq(`SELECT id FROM finance_accounts WHERE tenant_id = $1 AND code = 'INC-FEE'`, [tenantId]);
+    const cashAccCfg = await dbq(`SELECT ledger_account_id FROM finance_cash_bank_accounts WHERE tenant_id = $1 LIMIT 1`, [tenantId]);
+    
+    if ((incAcc.rowCount ?? 0) > 0 && (cashAccCfg.rowCount ?? 0) > 0) {
+      const incomeAccountId = incAcc.rows[0].id;
+      const assetAccountId = cashAccCfg.rows[0].ledger_account_id;
+      
+      await postJournalEntry({
+        tenantId,
+        transactionDate: new Date(savedPayment.paid_at),
+        description: `Student Fee Collection: ${receiptNo}`,
+        sourceType: 'STUDENT_FEE_PAYMENT',
+        sourceId: savedPayment.id,
+        userId: req.user?.id,
+        lines: [
+          { accountId: assetAccountId, debit: Number(amount) },
+          { accountId: incomeAccountId, credit: Number(amount) }
+        ]
+      });
+    }
+  } catch (err) {
+    console.error('Failed to post fee to finance ledger', err);
+    // Non-fatal for the operational fee payment since it can be reconciled later
+  }
+
   res.status(201).json({
     data: mapPaymentFromDb(savedPayment),
     requestId: req.id,
