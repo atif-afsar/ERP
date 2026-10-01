@@ -251,6 +251,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeNav, onNavigate, isOpen,
       show: currentUser.role === 'TENANT_ADMIN' || currentUser.role === 'SUPER_ADMIN',
       section: 'ADMINISTRATION',
     },
+    {
+      id: 'saas-billing',
+      label: 'SaaS Subscription',
+      icon: CreditCard,
+      show: currentUser.role === 'TENANT_ADMIN' || currentUser.role === 'SUPER_ADMIN',
+      section: 'ADMINISTRATION',
+    },
   ];
 
   return (

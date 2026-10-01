@@ -34,7 +34,13 @@ router.get('/subscription', async (req, res) => {
     [tenantId]
   );
 
-  res.json({ subscription: subRes.rowCount && subRes.rowCount > 0 ? subRes.rows[0] : null });
+  const { getTenantSubscriptionState } = await import('../services/subscriptionEntitlementService.js');
+  const entitlement = await getTenantSubscriptionState(tenantId);
+
+  res.json({ 
+    subscription: subRes.rowCount && subRes.rowCount > 0 ? subRes.rows[0] : null,
+    entitlement
+  });
 });
 
 router.post('/subscription', async (req, res) => {
@@ -62,6 +68,7 @@ router.post('/subscription', async (req, res) => {
   res.json({
     subscriptionId: subRes.rows[0].id,
     razorpaySubscriptionId: subRes.rows[0].razorpay_subscription_id,
+    razorpayKeyId: process.env.RAZORPAY_KEY_ID || 'rzp_test_123',
     status: subRes.rows[0].status
   });
 });

@@ -31,6 +31,7 @@ import { CommunicationModule } from './modules/communication/CommunicationModule
 import { CrmModule } from './modules/crm/CrmModule';
 import { ReportsModule } from './modules/reports/ReportsModule';
 import { SuperAdminModule } from './modules/superadmin/SuperAdminModule';
+import { SuperAdminSaaSModule } from './modules/superadmin/SuperAdminSaaSModule';
 import { TenantManagementModule } from './modules/superadmin/TenantManagementModule';
 import { OrganizationModule } from './modules/organization/OrganizationModule';
 import { SchoolMasterDataModule } from './modules/masterData/SchoolMasterDataModule';
@@ -41,6 +42,7 @@ import { SchemaExplorerModule } from './modules/schemaExplorer/SchemaExplorerMod
 import { RolesMatrixModule } from './modules/rolesMatrix/RolesMatrixModule';
 import { StaffModule } from './modules/staff/StaffModule';
 import { AcademicOperationsModule } from './modules/academicOperations/AcademicOperationsModule';
+import { SaaSBillingModule } from './modules/saasBilling/SaaSBillingModule';
 import { GlobalAiAssistantBot } from './components/ai/GlobalAiAssistantBot';
 import { LandingPage } from './modules/public/LandingPage';
 import { SuperAdminShell } from './modules/superadmin/SuperAdminShell';
@@ -93,6 +95,7 @@ const ROUTE_PERMISSIONS: Record<string, Permission> = {
   'superadmin-tenants': 'tenants.manage',
   'superadmin-plans': 'subscriptions.manage',
   'superadmin-features': 'settings.view',
+  'saas-billing': 'settings.view',
 };
 
 const SuspendedTenantView: React.FC<{ tenantName: string }> = ({ tenantName }) => (
@@ -301,9 +304,11 @@ const MainRouter: React.FC = () => {
       case 'superadmin-tenants':
         return <TenantManagementModule />;
       case 'superadmin-plans':
-        return <SuperAdminModule />;
+        return <SuperAdminSaaSModule />;
       case 'organization':
         return <OrganizationModule />;
+      case 'saas-billing':
+        return <SaaSBillingModule />;
       case 'master-data':
         return <SchoolMasterDataModule />;
       default:
