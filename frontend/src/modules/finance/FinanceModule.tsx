@@ -1,1147 +1,162 @@
-import React, { useState, useMemo } from 'react';
-import {
-  DollarSign,
-  TrendingUp,
-  TrendingDown,
-  Building,
-  CreditCard,
-  Plus,
-  Search,
-  Filter,
-  CheckCircle2,
-  AlertCircle,
-  FileText,
-  PieChart,
-  ArrowRightLeft,
-  Coins,
-  ShieldCheck,
-  Printer,
-  Calendar,
-  Layers,
-  ArrowUpRight,
-  ArrowDownRight,
-  Send,
-  X,
-  Download,
-} from 'lucide-react';
-import { useTenant } from '../../context/TenantContext';
+import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { storage } from '../../services/storageService';
-import {
-  Expense,
-  ExpenseCategory,
-  Vendor,
-  VendorBill,
-  BankAccount,
-  PettyCashTransaction,
-  AccountTransfer,
-  DepartmentBudget,
-  ExpenseStatus,
-} from '../../types';
-import { Button } from '../../components/ui/Button';
-import { Badge } from '../../components/ui/Badge';
-import { Modal } from '../../components/ui/Modal';
-import { Tabs } from '../../components/ui/Tabs';
+import { Briefcase } from 'lucide-react';
 
-export const FinanceModule: React.FC = () => {
-  const { currentTenant, isSchool, isCoaching } = useTenant();
-  const { currentUser, can } = useAuth();
-
-  // Primary State
-  const [expenses, setExpenses] = useState<Expense[]>(() => storage.getExpenses(currentTenant.id));
-  const [categories, setCategories] = useState<ExpenseCategory[]>(() =>
-    storage.getExpenseCategories(currentTenant.id)
-  );
-  const [vendors, setVendors] = useState<Vendor[]>(() => storage.getVendors(currentTenant.id));
-  const [bills, setBills] = useState<VendorBill[]>(() => storage.getVendorBills(currentTenant.id));
-  const [bankAccounts, setBankAccounts] = useState<BankAccount[]>(() =>
-    storage.getBankAccounts(currentTenant.id)
-  );
-  const [pettyCash, setPettyCash] = useState<PettyCashTransaction[]>(() =>
-    storage.getPettyCash(currentTenant.id)
-  );
-  const [budgets, setBudgets] = useState<DepartmentBudget[]>(() =>
-    storage.getDepartmentBudgets(currentTenant.id)
-  );
-  const feeLedgers = useMemo(() => storage.getFeeLedgers(currentTenant.id), [currentTenant.id]);
-
-  // Tab Navigation
-  const [activeTab, setActiveTab] = useState<
-    'expenses' | 'vendors' | 'cash_bank' | 'budgets' | 'statements'
-  >('expenses');
-
-  // Search & Filters
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>('ALL');
-
-  // Modals
-  const [isAddExpenseModalOpen, setIsAddExpenseModalOpen] = useState(false);
-  const [isAddVendorModalOpen, setIsAddVendorModalOpen] = useState(false);
-  const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
-  const [isPettyCashModalOpen, setIsPettyCashModalOpen] = useState(false);
-  const [selectedBillForPay, setSelectedBillForPay] = useState<VendorBill | null>(null);
-  const [toastMsg, setToastMsg] = useState<string | null>(null);
-
-  // New Expense Form
-  const [expenseForm, setExpenseForm] = useState({
-    description: '',
-    categoryId: categories[0]?.id || '',
-    amount: 12000,
-    vendorName: '',
-    paymentMethod: 'BANK_TRANSFER' as const,
-    paidFromAccountId: bankAccounts[0]?.id || '',
-  });
-
-  // Transfer Form
-  const [transferForm, setTransferForm] = useState({
-    fromAccountId: bankAccounts[0]?.id || '',
-    toAccountId: bankAccounts[1]?.id || '',
-    amount: 50000,
-    reference: `TR-${Date.now().toString().slice(-6)}`,
-    notes: 'Internal inter-account treasury balancing',
-  });
-
-  // Petty Cash Form
-  const [pettyForm, setPettyForm] = useState({
-    amount: 650,
-    category: 'Postage & Hospitality',
-    description: 'Meeting refreshments and parcel dispatch',
-  });
-
-  // Vendor Form
-  const [vendorForm, setVendorForm] = useState({
-    name: '',
-    contactPerson: '',
-    phone: '',
-    email: '',
-    category: 'Campus Supplies',
-    paymentTerms: 'Net 30 Days',
-  });
-
-  const showToast = (msg: string) => {
-    setToastMsg(msg);
-    setTimeout(() => setToastMsg(null), 3500);
+export function FinanceModule() {
+  const token = localStorage.getItem('token');
+  
+  const [activeTab, setActiveTab] = useState<'LEDGER' | 'JOURNALS' | 'EXPENSES'>('LEDGER');
+  
+  const [ledger, setLedger] = useState<any[]>([]);
+  const [journals, setJournals] = useState<any[]>([]);
+  const [expenses, setExpenses] = useState<any[]>([]);
+  
+  const fetchApi = async (url: string) => {
+    const r = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+    return r.json();
   };
-
-  // Aggregated Financial Metrics
-  const totalFeeRevenueRealized = useMemo(
-    () => feeLedgers.reduce((acc, l) => acc + l.paidAmount, 0),
-    [feeLedgers]
-  );
-  const totalExpensesPaid = useMemo(
-    () =>
-      expenses
-        .filter((e) => e.status === 'PAID')
-        .reduce((acc, e) => acc + e.totalAmount, 0),
-    [expenses]
-  );
-  const totalExpensesPending = useMemo(
-    () =>
-      expenses
-        .filter((e) => e.status === 'PENDING_APPROVAL' || e.status === 'APPROVED')
-        .reduce((acc, e) => acc + e.totalAmount, 0),
-    [expenses]
-  );
-  const netOperatingSurplus = totalFeeRevenueRealized - totalExpensesPaid;
-  const totalLiquidCashBank = useMemo(
-    () => bankAccounts.reduce((acc, a) => acc + a.balance, 0),
-    [bankAccounts]
-  );
-  const pettyCashBalance = pettyCash[0]?.balanceAfter || 15000;
-
-  // 1. Create Expense (Document 54 Section 5-8)
-  const handleCreateExpense = (e: React.FormEvent) => {
-    e.preventDefault();
-    const cat = categories.find((c) => c.id === expenseForm.categoryId) || categories[0];
-    const voucherNo = `VCH-${new Date().toISOString().slice(0, 7)}-${Math.floor(100 + Math.random() * 900)}`;
-
-    const newExp: Expense = {
-      id: `exp-${Date.now()}`,
-      tenantId: currentTenant.id,
-      categoryId: cat.id,
-      categoryName: cat.name,
-      vendorName: expenseForm.vendorName || 'Direct Vendor',
-      amount: Number(expenseForm.amount),
-      totalAmount: Number(expenseForm.amount),
-      date: new Date().toISOString().split('T')[0],
-      description: expenseForm.description,
-      paymentMethod: expenseForm.paymentMethod,
-      status: 'PENDING_APPROVAL',
-      voucherNo,
-      createdBy: `${currentUser.name} (${currentUser.role})`,
-      createdAt: new Date().toISOString(),
-    };
-
-    storage.saveExpense(newExp);
-    setExpenses(storage.getExpenses(currentTenant.id));
-    setIsAddExpenseModalOpen(false);
-
-    storage.saveAuditLog({
-      id: `audit_${Date.now()}`,
-      tenantId: currentTenant.id,
-      actorId: currentUser.id,
-      actorName: currentUser.name,
-      actorRole: currentUser.role,
-      action: 'EXPENSE_RECORDED',
-      category: 'FINANCE',
-      entityType: 'EXPENSE',
-      entityId: newExp.id,
-      details: `Submitted new expense voucher ${voucherNo} for ₹${newExp.totalAmount.toLocaleString()} (${cat.name}).`,
-      timestamp: new Date().toISOString(),
-      status: 'SUCCESS',
-    });
-
-    showToast(`Expense voucher ${voucherNo} created and submitted for approval.`);
-  };
-
-  // 2. Approve Expense (Document 54 Section 9)
-  const handleApproveExpense = (expenseId: string) => {
-    const approver = `${currentUser.name} (${currentUser.role})`;
-    storage.approveExpense(expenseId, approver);
-    setExpenses(storage.getExpenses(currentTenant.id));
-    showToast(`Expense voucher approved for disbursement.`);
-  };
-
-  // 3. Pay Expense (Document 54 Section 9)
-  const handlePayExpense = (exp: Expense) => {
-    const ref = `TXN-UTR-${Math.floor(1000000 + Math.random() * 9000000)}`;
-    storage.payExpense(exp.id, exp.paymentMethod, ref);
-    setExpenses(storage.getExpenses(currentTenant.id));
-    setBankAccounts(storage.getBankAccounts(currentTenant.id));
-    setPettyCash(storage.getPettyCash(currentTenant.id));
-
-    storage.saveAuditLog({
-      id: `audit_${Date.now()}`,
-      tenantId: currentTenant.id,
-      actorId: currentUser.id,
-      actorName: currentUser.name,
-      actorRole: currentUser.role,
-      action: 'EXPENSE_DISBURSED',
-      category: 'FINANCE',
-      entityType: 'EXPENSE',
-      entityId: exp.id,
-      details: `Disbursed ₹${exp.totalAmount.toLocaleString()} for voucher ${exp.voucherNo} via ${exp.paymentMethod}. Ref: ${ref}.`,
-      timestamp: new Date().toISOString(),
-      status: 'SUCCESS',
-    });
-
-    showToast(`Disbursed ₹${exp.totalAmount.toLocaleString()} via ${exp.paymentMethod}. Ref: ${ref}.`);
-  };
-
-  // 4. Record Inter-Account Transfer (Document 54 Section 26 & 27)
-  const handleExecuteTransfer = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (transferForm.fromAccountId === transferForm.toAccountId) {
-      alert('Source and destination accounts must be different.');
-      return;
-    }
-
-    const fromAcc = bankAccounts.find((a) => a.id === transferForm.fromAccountId);
-    const toAcc = bankAccounts.find((a) => a.id === transferForm.toAccountId);
-    if (!fromAcc || !toAcc) return;
-
-    if (fromAcc.balance < transferForm.amount) {
-      alert('Insufficient balance in source bank account.');
-      return;
-    }
-
-    const transfer: AccountTransfer = {
-      id: `tr-${Date.now()}`,
-      tenantId: currentTenant.id,
-      fromAccountId: fromAcc.id,
-      fromAccountName: fromAcc.accountName,
-      toAccountId: toAcc.id,
-      toAccountName: toAcc.accountName,
-      amount: Number(transferForm.amount),
-      transferDate: new Date().toISOString().split('T')[0],
-      reference: transferForm.reference,
-      transferredBy: currentUser.name,
-      notes: transferForm.notes,
-    };
-
-    storage.recordAccountTransfer(transfer);
-    setBankAccounts(storage.getBankAccounts(currentTenant.id));
-    setIsTransferModalOpen(false);
-
-    storage.saveAuditLog({
-      id: `audit_${Date.now()}`,
-      tenantId: currentTenant.id,
-      actorId: currentUser.id,
-      actorName: currentUser.name,
-      actorRole: currentUser.role,
-      action: 'TREASURY_TRANSFER',
-      category: 'FINANCE',
-      entityType: 'BANK_ACCOUNT',
-      entityId: fromAcc.id,
-      details: `Transferred ₹${transfer.amount.toLocaleString()} from ${fromAcc.accountName} to ${toAcc.accountName}. Ref: ${transfer.reference}.`,
-      timestamp: new Date().toISOString(),
-      status: 'SUCCESS',
-    });
-
-    showToast(`Transferred ₹${transfer.amount.toLocaleString()} between institutional accounts.`);
-  };
-
-  // 5. Petty Cash Disbursement (Document 54 Section 28)
-  const handlePettyCashDisburse = (e: React.FormEvent) => {
-    e.preventDefault();
-    const lastBal = pettyCash[0]?.balanceAfter || 15000;
-    const item: PettyCashTransaction = {
-      id: `pc-${Date.now()}`,
-      tenantId: currentTenant.id,
-      type: 'DISBURSEMENT',
-      amount: Number(pettyForm.amount),
-      category: pettyForm.category,
-      description: pettyForm.description,
-      voucherNo: `PC-${new Date().toISOString().slice(0, 7)}-${Math.floor(100 + Math.random() * 900)}`,
-      custodian: currentUser.name,
-      date: new Date().toISOString().split('T')[0],
-      balanceAfter: Math.max(0, lastBal - Number(pettyForm.amount)),
-    };
-
-    storage.recordPettyCash(item);
-    setPettyCash(storage.getPettyCash(currentTenant.id));
-    setIsPettyCashModalOpen(false);
-    showToast(`Petty cash voucher ${item.voucherNo} recorded (-₹${item.amount}).`);
-  };
-
-  // 6. Create Vendor (Document 54 Section 21)
-  const handleCreateVendor = (e: React.FormEvent) => {
-    e.preventDefault();
-    const newVen: Vendor = {
-      id: `ven-${Date.now()}`,
-      tenantId: currentTenant.id,
-      name: vendorForm.name,
-      contactPerson: vendorForm.contactPerson,
-      phone: vendorForm.phone,
-      email: vendorForm.email,
-      address: 'Industrial Area, Central Campus',
-      category: vendorForm.category,
-      paymentTerms: vendorForm.paymentTerms,
-    };
-
-    storage.saveVendor(newVen);
-    setVendors(storage.getVendors(currentTenant.id));
-    setIsAddVendorModalOpen(false);
-    showToast(`Vendor '${newVen.name}' added to supplier registry.`);
-  };
-
-  // Filtered Expenses
-  const filteredExpenses = useMemo(() => {
-    return expenses.filter((exp) => {
-      const matchSearch =
-        exp.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        exp.voucherNo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (exp.vendorName && exp.vendorName.toLowerCase().includes(searchTerm.toLowerCase()));
-      const matchCat =
-        selectedCategoryFilter === 'ALL' || exp.categoryId === selectedCategoryFilter;
-      return matchSearch && matchCat;
-    });
-  }, [expenses, searchTerm, selectedCategoryFilter]);
-
-  const renderExpenseBadge = (st: ExpenseStatus) => {
-    switch (st) {
-      case 'DRAFT':
-        return <Badge variant="slate">Draft</Badge>;
-      case 'PENDING_APPROVAL':
-        return <Badge variant="amber">Pending Approval</Badge>;
-      case 'APPROVED':
-        return <Badge variant="blue">Approved</Badge>;
-      case 'PAID':
-        return <Badge variant="emerald">Paid & Settled</Badge>;
-      case 'REJECTED':
-        return <Badge variant="rose">Rejected</Badge>;
+  
+  const loadLedger = async () => {
+    try {
+      const res = await fetchApi('/api/v1/finance/reports/ledger');
+      setLedger(res.data);
+    } catch (e) {
+      console.error(e);
     }
   };
+
+  const loadJournals = async () => {
+    try {
+      const res = await fetchApi('/api/v1/finance/journals');
+      setJournals(res.data);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const loadExpenses = async () => {
+    try {
+      const res = await fetchApi('/api/v1/finance/expenses');
+      setExpenses(res.data);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'LEDGER') loadLedger();
+    if (activeTab === 'JOURNALS') loadJournals();
+    if (activeTab === 'EXPENSES') loadExpenses();
+  }, [activeTab]);
 
   return (
-    <div className="space-y-6 animate-fade-in print:p-0">
-      {/* Flash Toast */}
-      {toastMsg && (
-        <div className="no-print p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 flex items-center justify-between text-xs font-semibold shadow-lg shadow-emerald-950/20 animate-slide-down">
-          <div className="flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-            <span>{toastMsg}</span>
-          </div>
-          <button onClick={() => setToastMsg(null)} className="text-emerald-400 hover:text-white">
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-      )}
-
-      {/* Header Banner */}
-      <div className="no-print p-5 sm:p-6 rounded-2xl bg-white border border-slate-200/90 shadow-xs relative overflow-hidden">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-10">
-          <div>
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-xl bg-purple-50 border border-purple-200 text-purple-700 shadow-2xs">
-                <Building className="w-5 h-5" />
-              </div>
-              <div>
-                <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
-                  Expenses, Finance & Accounting
-                  <Badge variant="purple" size="sm" dot>
-                    Active Fiscal Ledger
-                  </Badge>
-                </h1>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Institutional operational expenses, vendor bills payable, cash & bank treasury, and real-time P&L statements.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2.5">
-            <Button
-              variant="outline"
-              size="sm"
-              leftIcon={<ArrowRightLeft className="w-4 h-4 text-slate-600" />}
-              onClick={() => setIsTransferModalOpen(true)}
-            >
-              Account Transfer
-            </Button>
-            <Button
-              variant="primary"
-              size="sm"
-              leftIcon={<Plus className="w-4 h-4" />}
-              onClick={() => setIsAddExpenseModalOpen(true)}
-              className="bg-purple-600 hover:bg-purple-500 shadow-xs"
-            >
-              Record Expense
-            </Button>
-          </div>
-        </div>
-
-        {/* Tabs Navigation */}
-        <div className="mt-5 pt-4 border-t border-slate-100">
-          <Tabs
-            activeTab={activeTab}
-            onChange={(tab: any) => setActiveTab(tab)}
-            tabs={[
-              { id: 'expenses', label: 'Expenses Register', count: expenses.length },
-              { id: 'vendors', label: 'Vendors & Payables', count: bills.length },
-              { id: 'cash_bank', label: 'Cash & Bank Treasury', count: bankAccounts.length },
-              { id: 'budgets', label: 'Department Budgets', count: budgets.length },
-              { id: 'statements', label: 'P&L Financial Statements' },
-            ]}
-          />
+    <div className="p-6 max-w-7xl mx-auto">
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+            <Briefcase className="w-6 h-6 text-indigo-600" />
+            School Finance & Accounting
+          </h1>
+          <p className="text-gray-500">Double-entry accounting, ledger, and financials.</p>
         </div>
       </div>
 
-      {/* Financial Health KPI Overview */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs space-y-1">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">
-              Realized Fee Revenue
-            </span>
-            <span className="w-2 h-2 rounded-full bg-emerald-500" />
-          </div>
-          <h3 className="text-2xl font-bold text-slate-900 tabular-nums">
-            ₹{totalFeeRevenueRealized.toLocaleString('en-IN')}
-          </h3>
-          <p className="text-[11px] text-emerald-700 font-medium">Total student fee collections</p>
-        </div>
-
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs space-y-1">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">
-              Operating Expenses Paid
-            </span>
-            <span className="w-2 h-2 rounded-full bg-rose-500" />
-          </div>
-          <h3 className="text-2xl font-bold text-slate-900 tabular-nums">
-            ₹{totalExpensesPaid.toLocaleString('en-IN')}
-          </h3>
-          <p className="text-[11px] text-slate-500">₹{totalExpensesPending.toLocaleString('en-IN')} pending approvals</p>
-        </div>
-
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs space-y-1">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">
-              Net Operating Surplus
-            </span>
-            <span className={`w-2 h-2 rounded-full ${netOperatingSurplus >= 0 ? 'bg-emerald-500' : 'bg-rose-500'}`} />
-          </div>
-          <h3 className={`text-2xl font-bold tabular-nums ${netOperatingSurplus >= 0 ? 'text-emerald-700' : 'text-rose-600'}`}>
-            ₹{netOperatingSurplus.toLocaleString('en-IN')}
-          </h3>
-          <p className="text-[11px] text-slate-500">Revenue minus expenses</p>
-        </div>
-
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs space-y-1">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">
-              Total Liquid Treasury
-            </span>
-            <span className="w-2 h-2 rounded-full bg-purple-500" />
-          </div>
-          <h3 className="text-2xl font-bold text-slate-900 tabular-nums">
-            ₹{totalLiquidCashBank.toLocaleString('en-IN')}
-          </h3>
-          <p className="text-[11px] text-slate-500">Bank accounts + ₹{pettyCashBalance.toLocaleString('en-IN')} petty cash</p>
-        </div>
+      <div className="flex gap-4 border-b border-gray-200 mb-6">
+        <button onClick={() => setActiveTab('LEDGER')} className={`pb-2 px-2 font-medium ${activeTab === 'LEDGER' ? 'text-indigo-600 border-b-2 border-indigo-600' : 'text-gray-500'}`}>General Ledger</button>
+        <button onClick={() => setActiveTab('JOURNALS')} className={`pb-2 px-2 font-medium ${activeTab === 'JOURNALS' ? 'text-indigo-600 border-b-2 border-indigo-600' : 'text-gray-500'}`}>Journals</button>
+        <button onClick={() => setActiveTab('EXPENSES')} className={`pb-2 px-2 font-medium ${activeTab === 'EXPENSES' ? 'text-indigo-600 border-b-2 border-indigo-600' : 'text-gray-500'}`}>Expenses</button>
       </div>
 
-      {/* ------------------------------------------------------------- */}
-      {/* TAB 1: EXPENSES REGISTER */}
-      {/* ------------------------------------------------------------- */}
-      {activeTab === 'expenses' && (
-        <div className="space-y-6">
-          <div className="p-4 rounded-2xl bg-white border border-slate-200/90 shadow-xs flex flex-wrap items-center justify-between gap-4">
-            <div className="relative max-w-sm flex-1">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-              <input
-                type="text"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search by voucher, description or vendor..."
-                className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-purple-500 focus:bg-white transition-colors"
-              />
-            </div>
-
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold text-slate-500">Category:</span>
-              <select
-                value={selectedCategoryFilter}
-                onChange={(e) => setSelectedCategoryFilter(e.target.value)}
-                className="px-3 py-1.5 rounded-xl text-xs bg-slate-50 border border-slate-200 text-slate-800 focus:outline-none focus:bg-white"
-              >
-                <option value="ALL">All Expense Categories</option>
-                {categories.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          {/* Expenses Ledger */}
-          <div className="p-5 sm:p-6 rounded-2xl bg-white border border-slate-200/90 shadow-xs overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs text-slate-700">
-                <thead className="bg-slate-50/90 text-slate-600 uppercase tracking-wider text-[10px] font-semibold border-b border-slate-200">
-                  <tr>
-                    <th className="py-3 px-4">Voucher No</th>
-                    <th className="py-3 px-4">Date</th>
-                    <th className="py-3 px-4">Category</th>
-                    <th className="py-3 px-4">Description & Vendor</th>
-                    <th className="py-3 px-4">Payment Method</th>
-                    <th className="py-3 px-4 text-center">Amount (₹)</th>
-                    <th className="py-3 px-4 text-center">Status</th>
-                    <th className="py-3 px-4 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {filteredExpenses.map((exp) => (
-                    <tr key={exp.id} className="hover:bg-slate-50/60 transition-colors">
-                      <td className="py-3 px-4 font-mono font-bold text-purple-700">{exp.voucherNo}</td>
-                      <td className="py-3 px-4 font-mono text-slate-500">{exp.date}</td>
-                      <td className="py-3 px-4">
-                        <span className="px-2 py-0.5 rounded-md bg-purple-50 text-purple-700 text-[10px] font-semibold border border-purple-200">
-                          {exp.categoryName}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4">
-                        <span className="font-semibold text-slate-900 block">{exp.description}</span>
-                        <span className="text-[11px] text-slate-500">{exp.vendorName || 'General Supplier'}</span>
-                      </td>
-                      <td className="py-3 px-4 font-mono text-[11px] text-slate-600">{exp.paymentMethod}</td>
-                      <td className="py-3 px-4 text-center font-bold text-slate-900 tabular-nums">
-                        ₹{exp.totalAmount.toLocaleString('en-IN')}
-                      </td>
-                      <td className="py-3 px-4 text-center">{renderExpenseBadge(exp.status)}</td>
-                      <td className="py-3 px-4 text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          {exp.status === 'PENDING_APPROVAL' && can('expenses.approve') && (
-                            <Button
-                              variant="primary"
-                              size="sm"
-                              onClick={() => handleApproveExpense(exp.id)}
-                              className="bg-amber-600 hover:bg-amber-500 text-xs py-1"
-                            >
-                              Approve
-                            </Button>
-                          )}
-                          {exp.status === 'APPROVED' && (
-                            <Button
-                              variant="primary"
-                              size="sm"
-                              onClick={() => handlePayExpense(exp)}
-                              className="bg-emerald-600 hover:bg-emerald-500 text-xs py-1"
-                            >
-                              Disburse
-                            </Button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ------------------------------------------------------------- */}
-      {/* TAB 2: VENDORS & PAYABLES */}
-      {/* ------------------------------------------------------------- */}
-      {activeTab === 'vendors' && (
-        <div className="space-y-6">
-          <div className="flex justify-between items-center">
-            <div>
-              <h3 className="text-sm font-bold text-slate-900">Suppliers & Vendor Bills Payable</h3>
-              <p className="text-xs text-slate-500">
-                Track supplier invoices, credit terms, and pending accounts payable.
-              </p>
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              leftIcon={<Plus className="w-4 h-4" />}
-              onClick={() => setIsAddVendorModalOpen(true)}
-            >
-              Add New Vendor
-            </Button>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            {vendors.map((v) => {
-              const vendorBills = bills.filter((b) => b.vendorId === v.id);
-              const totalDue = vendorBills.reduce((acc, b) => acc + b.dueAmount, 0);
-
-              return (
-                <div key={v.id} className="p-5 rounded-2xl bg-white border border-slate-200/90 shadow-xs space-y-3">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h4 className="font-bold text-slate-900 text-sm">{v.name}</h4>
-                      <p className="text-xs text-slate-500">Contact: {v.contactPerson}</p>
-                    </div>
-                    <Badge variant="purple">{v.category}</Badge>
-                  </div>
-
-                  <div className="space-y-1 text-xs text-slate-600">
-                    <p>Phone: <span className="font-mono text-slate-500">{v.phone}</span></p>
-                    <p>GSTIN: <span className="font-mono text-slate-500">{v.gstin || 'Unregistered'}</span></p>
-                    <p>Credit Terms: <span className="font-semibold text-slate-800">{v.paymentTerms}</span></p>
-                  </div>
-
-                  <div className="pt-3 border-t border-slate-100 flex justify-between items-center text-xs">
-                    <span className="text-slate-500">Pending Payables:</span>
-                    <span className="font-bold text-rose-600 tabular-nums">₹{totalDue.toLocaleString('en-IN')}</span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Bills Ledger */}
-          <div className="p-5 sm:p-6 rounded-2xl bg-white border border-slate-200/90 shadow-xs overflow-hidden">
-            <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-4">
-              Pending & Settled Vendor Invoices
-            </h4>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs text-slate-700">
-                <thead className="bg-slate-50/90 text-slate-600 uppercase tracking-wider text-[10px] font-semibold border-b border-slate-200">
-                  <tr>
-                    <th className="py-3 px-4">Bill No</th>
-                    <th className="py-3 px-4">Vendor</th>
-                    <th className="py-3 px-4">Due Date</th>
-                    <th className="py-3 px-4">Category</th>
-                    <th className="py-3 px-4 text-center">Bill Amount</th>
-                    <th className="py-3 px-4 text-center">Balance Due</th>
-                    <th className="py-3 px-4 text-center">Status</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {bills.map((b) => (
-                    <tr key={b.id} className="hover:bg-slate-50/60 transition-colors">
-                      <td className="py-3 px-4 font-mono font-bold text-slate-900">{b.billNo}</td>
-                      <td className="py-3 px-4 font-semibold text-slate-900">{b.vendorName}</td>
-                      <td className="py-3 px-4 font-mono text-slate-500">{b.dueDate}</td>
-                      <td className="py-3 px-4 text-slate-600">{b.category}</td>
-                      <td className="py-3 px-4 text-center font-bold text-slate-900 tabular-nums">₹{b.amount.toLocaleString('en-IN')}</td>
-                      <td className="py-3 px-4 text-center font-bold text-rose-600 tabular-nums">
-                        ₹{b.dueAmount.toLocaleString('en-IN')}
-                      </td>
-                      <td className="py-3 px-4 text-center">
-                        <Badge variant={b.status === 'PAID' ? 'emerald' : b.status === 'PARTIAL' ? 'amber' : 'rose'}>
-                          {b.status}
-                        </Badge>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ------------------------------------------------------------- */}
-      {/* TAB 3: CASH & BANK TREASURY */}
-      {/* ------------------------------------------------------------- */}
-      {activeTab === 'cash_bank' && (
-        <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            {bankAccounts.map((acc) => (
-              <div key={acc.id} className="p-5 sm:p-6 rounded-2xl bg-white border border-slate-200/90 shadow-xs space-y-4">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h4 className="font-bold text-slate-900 text-sm">{acc.accountName}</h4>
-                    <p className="text-xs text-slate-500">{acc.bankName} • {acc.branch}</p>
-                  </div>
-                  {acc.isPrimary && <Badge variant="purple">Primary</Badge>}
-                </div>
-
-                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
-                  <span className="text-[10px] uppercase font-semibold text-slate-500">Account Number</span>
-                  <p className="font-mono text-xs text-slate-800">{acc.accountNo} (IFSC: {acc.ifsc})</p>
-                </div>
-
-                <div className="pt-2 flex justify-between items-center text-xs">
-                  <span className="text-slate-500 font-semibold">Available Liquidity:</span>
-                  <span className="font-bold text-xl text-emerald-700 tabular-nums">
-                    ₹{acc.balance.toLocaleString('en-IN')}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Petty Cash Register */}
-          <div className="p-5 sm:p-6 rounded-2xl bg-white border border-slate-200/90 shadow-xs space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div>
-                <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                  <Coins className="w-4 h-4 text-amber-500" />
-                  Petty Cash Float & Imprest Vouchers
-                </h3>
-                <p className="text-xs text-slate-500">
-                  Daily small-value disbursements and top-up replenishments maintained by the accounting custodian.
-                </p>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <span className="px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-200 text-xs font-bold text-amber-800 tabular-nums">
-                  Current Float: ₹{pettyCashBalance.toLocaleString('en-IN')}
-                </span>
-                <Button
-                  variant="primary"
-                  size="sm"
-                  leftIcon={<Plus className="w-4 h-4" />}
-                  onClick={() => setIsPettyCashModalOpen(true)}
-                  className="bg-amber-600 hover:bg-amber-500 text-xs"
-                >
-                  Record Disbursement
-                </Button>
-              </div>
-            </div>
-
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs text-slate-700">
-                <thead className="bg-slate-50/90 text-slate-600 uppercase tracking-wider text-[10px] font-semibold border-b border-slate-200">
-                  <tr>
-                    <th className="py-3 px-4">Voucher No</th>
-                    <th className="py-3 px-4">Date</th>
-                    <th className="py-3 px-4">Category</th>
-                    <th className="py-3 px-4">Disbursement Purpose</th>
-                    <th className="py-3 px-4">Custodian</th>
-                    <th className="py-3 px-4 text-center">Amount (₹)</th>
-                    <th className="py-3 px-4 text-right">Balance After</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {pettyCash.map((p) => (
-                    <tr key={p.id} className="hover:bg-slate-50/60 transition-colors">
-                      <td className="py-3 px-4 font-mono font-bold text-amber-700">{p.voucherNo}</td>
-                      <td className="py-3 px-4 font-mono text-slate-500">{p.date}</td>
-                      <td className="py-3 px-4 text-slate-600">{p.category}</td>
-                      <td className="py-3 px-4 font-semibold text-slate-900">{p.description}</td>
-                      <td className="py-3 px-4 text-slate-500">{p.custodian}</td>
-                      <td className="py-3 px-4 text-center font-bold text-rose-600 tabular-nums">-₹{p.amount}</td>
-                      <td className="py-3 px-4 text-right font-bold text-slate-900 tabular-nums">
-                        ₹{p.balanceAfter.toLocaleString('en-IN')}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ------------------------------------------------------------- */}
-      {/* TAB 4: DEPARTMENT BUDGETS */}
-      {/* ------------------------------------------------------------- */}
-      {activeTab === 'budgets' && (
-        <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            {budgets.map((b) => {
-              const utilPct = Math.round((b.utilizedAmount / b.allocatedAmount) * 100);
-              const isWarning = utilPct >= b.alertThresholdPct;
-
-              return (
-                <div key={b.id} className="p-5 sm:p-6 rounded-2xl bg-white border border-slate-200/90 shadow-xs space-y-4">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h4 className="font-bold text-slate-900 text-sm">{b.department}</h4>
-                      <p className="text-xs text-slate-500 font-mono">Academic Year: {b.academicYear}</p>
-                    </div>
-                    {isWarning ? (
-                      <Badge variant="rose">Threshold Alert: {utilPct}%</Badge>
-                    ) : (
-                      <Badge variant="emerald">{utilPct}% Utilized</Badge>
-                    )}
-                  </div>
-
-                  {/* Progress Bar */}
-                  <div className="space-y-1.5">
-                    <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden border border-slate-200">
-                      <div
-                        className={`h-full rounded-full transition-all ${
-                          isWarning ? 'bg-amber-500' : 'bg-emerald-500'
-                        }`}
-                        style={{ width: `${Math.min(100, utilPct)}%` }}
-                      />
-                    </div>
-                    <div className="flex justify-between text-[11px] text-slate-500 font-mono">
-                      <span>Utilized: ₹{b.utilizedAmount.toLocaleString('en-IN')}</span>
-                      <span>Cap: ₹{b.allocatedAmount.toLocaleString('en-IN')}</span>
-                    </div>
-                  </div>
-
-                  <div className="pt-2 border-t border-slate-100 flex justify-between items-center text-xs">
-                    <span className="text-slate-500 font-semibold">Remaining Headroom:</span>
-                    <span className="font-bold text-emerald-700 tabular-nums">
-                      ₹{Math.max(0, b.allocatedAmount - b.utilizedAmount).toLocaleString('en-IN')}
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* ------------------------------------------------------------- */}
-      {/* TAB 5: FINANCIAL STATEMENTS */}
-      {/* ------------------------------------------------------------- */}
-      {activeTab === 'statements' && (
-        <div className="space-y-6">
-          <div className="print-container p-6 sm:p-8 rounded-2xl bg-white border border-slate-200/90 shadow-xs space-y-6">
-            <div className="flex justify-between items-start border-b border-slate-200 pb-5">
-              <div>
-                <span className="text-[10px] font-bold uppercase tracking-widest text-purple-700 font-mono">
-                  Financial Statement
-                </span>
-                <h2 className="text-xl font-bold text-slate-900">Profit & Loss (Income vs Expense)</h2>
-                <p className="text-xs text-slate-500">
-                  Real-time operating statement for session {currentTenant.academicYear}
-                </p>
-              </div>
-              <div className="no-print">
-                <Button variant="outline" size="sm" leftIcon={<Printer className="w-4 h-4" />} onClick={() => window.print()}>
-                  Print Statement
-                </Button>
-              </div>
-            </div>
-
-            {/* Income Section */}
-            <div className="space-y-2">
-              <h4 className="text-xs font-bold text-emerald-700 uppercase tracking-wider">A. Realized Incomes</h4>
-              <div className="space-y-1.5 text-xs text-slate-700">
-                <div className="flex justify-between py-1 border-b border-slate-100">
-                  <span>Student Tuition & Course Fee Collections:</span>
-                  <span className="font-bold text-slate-900 tabular-nums">₹{totalFeeRevenueRealized.toLocaleString('en-IN')}</span>
-                </div>
-                <div className="flex justify-between py-1 border-b border-slate-100">
-                  <span>Ancillary Income (Prospectus, Exam Kit & Facility):</span>
-                  <span className="font-bold text-slate-900 tabular-nums">₹45,000</span>
-                </div>
-                <div className="flex justify-between py-1.5 font-bold text-emerald-700">
-                  <span>Total Realized Income:</span>
-                  <span className="tabular-nums">₹{(totalFeeRevenueRealized + 45000).toLocaleString('en-IN')}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Expenses Section */}
-            <div className="space-y-2 pt-2">
-              <h4 className="text-xs font-bold text-rose-700 uppercase tracking-wider">B. Operating Expenses</h4>
-              <div className="space-y-1.5 text-xs text-slate-700">
-                {categories.map((cat) => {
-                  const catSpent = expenses
-                    .filter((e) => e.categoryId === cat.id && e.status === 'PAID')
-                    .reduce((a, b) => a + b.totalAmount, 0);
-
-                  return (
-                    <div key={cat.id} className="flex justify-between py-1 border-b border-slate-100">
-                      <span>{cat.name}:</span>
-                      <span className="font-medium text-slate-800 tabular-nums">₹{catSpent.toLocaleString('en-IN')}</span>
-                    </div>
-                  );
-                })}
-                <div className="flex justify-between py-1.5 font-bold text-rose-700">
-                  <span>Total Operating Expenses:</span>
-                  <span className="tabular-nums">₹{totalExpensesPaid.toLocaleString('en-IN')}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Net Surplus Bar */}
-            <div className="pt-4 border-t-2 border-slate-200 flex justify-between items-center text-sm font-bold">
-              <span className="text-slate-900 uppercase tracking-wider">Net Operating Surplus / (Deficit):</span>
-              <span className={`text-lg tabular-nums ${netOperatingSurplus >= 0 ? 'text-emerald-700' : 'text-rose-600'}`}>
-                ₹{(netOperatingSurplus + 45000).toLocaleString('en-IN')}
-              </span>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ------------------------------------------------------------- */}
-      {/* MODAL: ADD EXPENSE */}
-      {/* ------------------------------------------------------------- */}
-      <Modal isOpen={isAddExpenseModalOpen} onClose={() => setIsAddExpenseModalOpen(false)} title="Record Operational Expense">
-        <form onSubmit={handleCreateExpense} className="space-y-4 text-xs">
-          <div>
-            <label className="block font-semibold text-slate-700 mb-1">Expense Description</label>
-            <input
-              type="text"
-              required
-              placeholder="e.g. Physics Optical Equipment Replenishment"
-              value={expenseForm.description}
-              onChange={(e) => setExpenseForm({ ...expenseForm, description: e.target.value })}
-              className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-purple-500"
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block font-semibold text-slate-700 mb-1">Category</label>
-              <select
-                value={expenseForm.categoryId}
-                onChange={(e) => setExpenseForm({ ...expenseForm, categoryId: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 focus:outline-none focus:border-purple-500"
-              >
-                {categories.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block font-semibold text-slate-700 mb-1">Total Amount (₹)</label>
-              <input
-                type="number"
-                required
-                min={100}
-                value={expenseForm.amount}
-                onChange={(e) => setExpenseForm({ ...expenseForm, amount: Number(e.target.value) })}
-                className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 font-semibold focus:outline-none focus:border-purple-500"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block font-semibold text-slate-700 mb-1">Vendor / Payee</label>
-              <input
-                type="text"
-                placeholder="e.g. National Stationery Press"
-                value={expenseForm.vendorName}
-                onChange={(e) => setExpenseForm({ ...expenseForm, vendorName: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-purple-500"
-              />
-            </div>
-            <div>
-              <label className="block font-semibold text-slate-700 mb-1">Disbursement Method</label>
-              <select
-                value={expenseForm.paymentMethod}
-                onChange={(e: any) => setExpenseForm({ ...expenseForm, paymentMethod: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 focus:outline-none focus:border-purple-500"
-              >
-                <option value="BANK_TRANSFER">Direct Bank Transfer (NEFT/RTGS)</option>
-                <option value="CHEQUE">Bank Cheque</option>
-                <option value="PETTY_CASH">Petty Cash Fund</option>
-                <option value="CASH">Direct Cash</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="pt-3 border-t border-slate-100 flex justify-end gap-2">
-            <Button variant="ghost" size="sm" onClick={() => setIsAddExpenseModalOpen(false)}>
-              Cancel
-            </Button>
-            <Button variant="primary" size="sm" type="submit" className="bg-purple-600 hover:bg-purple-500">
-              Submit Expense
-            </Button>
-          </div>
-        </form>
-      </Modal>
-
-      {/* ------------------------------------------------------------- */}
-      {/* MODAL: INTER-ACCOUNT TRANSFER */}
-      {/* ------------------------------------------------------------- */}
-      <Modal isOpen={isTransferModalOpen} onClose={() => setIsTransferModalOpen(false)} title="Inter-Account Treasury Transfer">
-        <form onSubmit={handleExecuteTransfer} className="space-y-4 text-xs">
-          <div>
-            <label className="block font-semibold text-slate-700 mb-1">Source Account (Debit)</label>
-            <select
-              value={transferForm.fromAccountId}
-              onChange={(e) => setTransferForm({ ...transferForm, fromAccountId: e.target.value })}
-              className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 focus:outline-none focus:border-purple-500"
-            >
-              {bankAccounts.map((a) => (
-                <option key={a.id} value={a.id}>
-                  {a.accountName} (Bal: ₹{a.balance.toLocaleString('en-IN')})
-                </option>
+      {activeTab === 'LEDGER' && (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+          <table className="w-full text-left border-collapse">
+            <thead className="bg-gray-50 text-gray-600 text-sm">
+              <tr>
+                <th className="p-4 border-b">Code</th>
+                <th className="p-4 border-b">Account Name</th>
+                <th className="p-4 border-b">Type</th>
+                <th className="p-4 border-b text-right">Debit</th>
+                <th className="p-4 border-b text-right">Credit</th>
+                <th className="p-4 border-b text-right">Balance</th>
+              </tr>
+            </thead>
+            <tbody>
+              {ledger.map((row: any) => (
+                <tr key={row.id} className="border-b last:border-0 hover:bg-gray-50">
+                  <td className="p-4 font-mono text-sm">{row.code}</td>
+                  <td className="p-4 font-medium">{row.name}</td>
+                  <td className="p-4 text-xs text-gray-500">{row.account_type}</td>
+                  <td className="p-4 text-right">₹{row.total_debit.toLocaleString()}</td>
+                  <td className="p-4 text-right">₹{row.total_credit.toLocaleString()}</td>
+                  <td className={`p-4 text-right font-bold ${row.balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>₹{row.balance.toLocaleString()}</td>
+                </tr>
               ))}
-            </select>
-          </div>
+            </tbody>
+          </table>
+        </div>
+      )}
 
-          <div>
-            <label className="block font-semibold text-slate-700 mb-1">Destination Account (Credit)</label>
-            <select
-              value={transferForm.toAccountId}
-              onChange={(e) => setTransferForm({ ...transferForm, toAccountId: e.target.value })}
-              className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 focus:outline-none focus:border-purple-500"
-            >
-              {bankAccounts.map((a) => (
-                <option key={a.id} value={a.id}>
-                  {a.accountName} (Bal: ₹{a.balance.toLocaleString('en-IN')})
-                </option>
+      {activeTab === 'JOURNALS' && (
+        <div className="space-y-4">
+          {journals.map((j: any) => (
+            <div key={j.id} className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+              <div className="flex justify-between border-b pb-2 mb-2">
+                <div>
+                  <span className="font-mono text-sm font-bold text-gray-700">{j.entry_number}</span>
+                  <span className="ml-3 text-xs bg-indigo-100 text-indigo-700 px-2 py-1 rounded">{j.source_type}</span>
+                </div>
+                <div className="text-gray-500 text-sm">{new Date(j.transaction_date).toLocaleDateString()}</div>
+              </div>
+              <p className="text-sm text-gray-600 mb-2">{j.description}</p>
+              <table className="w-full text-sm mt-2">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-3 py-1 text-left font-medium text-gray-500">Account ID</th>
+                    <th className="px-3 py-1 text-right font-medium text-gray-500">Debit</th>
+                    <th className="px-3 py-1 text-right font-medium text-gray-500">Credit</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {j.lines.map((l: any, i: number) => (
+                    <tr key={i} className="border-t">
+                      <td className="px-3 py-2 font-mono text-xs">{l.account_id.substring(0, 8)}...</td>
+                      <td className="px-3 py-2 text-right">{l.debit > 0 ? `₹${Number(l.debit).toLocaleString()}` : '-'}</td>
+                      <td className="px-3 py-2 text-right">{l.credit > 0 ? `₹${Number(l.credit).toLocaleString()}` : '-'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {activeTab === 'EXPENSES' && (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+          <table className="w-full text-left border-collapse">
+            <thead className="bg-gray-50 text-gray-600 text-sm">
+              <tr>
+                <th className="p-4 border-b">Date</th>
+                <th className="p-4 border-b">Voucher No</th>
+                <th className="p-4 border-b">Title</th>
+                <th className="p-4 border-b text-right">Amount</th>
+                <th className="p-4 border-b">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {expenses.map((row: any) => (
+                <tr key={row.id} className="border-b last:border-0 hover:bg-gray-50">
+                  <td className="p-4 text-sm">{new Date(row.date).toLocaleDateString()}</td>
+                  <td className="p-4 font-mono text-xs">{row.voucher_no}</td>
+                  <td className="p-4 font-medium">{row.title}</td>
+                  <td className="p-4 text-right">₹{Number(row.amount).toLocaleString()}</td>
+                  <td className="p-4 text-xs"><span className="bg-green-100 text-green-700 px-2 py-1 rounded">{row.status}</span></td>
+                </tr>
               ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block font-semibold text-slate-700 mb-1">Transfer Amount (₹)</label>
-            <input
-              type="number"
-              required
-              min={1000}
-              value={transferForm.amount}
-              onChange={(e) => setTransferForm({ ...transferForm, amount: Number(e.target.value) })}
-              className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 font-semibold focus:outline-none focus:border-purple-500"
-            />
-          </div>
-
-          <div className="pt-3 border-t border-slate-100 flex justify-end gap-2">
-            <Button variant="ghost" size="sm" onClick={() => setIsTransferModalOpen(false)}>
-              Cancel
-            </Button>
-            <Button variant="primary" size="sm" type="submit">
-              Confirm Transfer
-            </Button>
-          </div>
-        </form>
-      </Modal>
-
-      {/* ------------------------------------------------------------- */}
-      {/* MODAL: PETTY CASH DISBURSEMENT */}
-      {/* ------------------------------------------------------------- */}
-      <Modal isOpen={isPettyCashModalOpen} onClose={() => setIsPettyCashModalOpen(false)} title="Record Petty Cash Disbursement">
-        <form onSubmit={handlePettyCashDisburse} className="space-y-4 text-xs">
-          <div>
-            <label className="block font-semibold text-slate-700 mb-1">Amount (₹)</label>
-            <input
-              type="number"
-              required
-              min={50}
-              max={pettyCashBalance}
-              value={pettyForm.amount}
-              onChange={(e) => setPettyForm({ ...pettyForm, amount: Number(e.target.value) })}
-              className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 font-semibold focus:outline-none focus:border-amber-500"
-            />
-          </div>
-
-          <div>
-            <label className="block font-semibold text-slate-700 mb-1">Category</label>
-            <input
-              type="text"
-              required
-              value={pettyForm.category}
-              onChange={(e) => setPettyForm({ ...pettyForm, category: e.target.value })}
-              className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 focus:outline-none focus:border-amber-500"
-            />
-          </div>
-
-          <div>
-            <label className="block font-semibold text-slate-700 mb-1">Purpose / Expense Details</label>
-            <input
-              type="text"
-              required
-              value={pettyForm.description}
-              onChange={(e) => setPettyForm({ ...pettyForm, description: e.target.value })}
-              className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 focus:outline-none focus:border-amber-500"
-            />
-          </div>
-
-          <div className="pt-3 border-t border-slate-100 flex justify-end gap-2">
-            <Button variant="ghost" size="sm" onClick={() => setIsPettyCashModalOpen(false)}>
-              Cancel
-            </Button>
-            <Button variant="primary" size="sm" type="submit" className="bg-amber-600 hover:bg-amber-500">
-              Disburse from Float
-            </Button>
-          </div>
-        </form>
-      </Modal>
-
-      {/* ------------------------------------------------------------- */}
-      {/* MODAL: ADD VENDOR */}
-      {/* ------------------------------------------------------------- */}
-      <Modal isOpen={isAddVendorModalOpen} onClose={() => setIsAddVendorModalOpen(false)} title="Register Supplier / Vendor">
-        <form onSubmit={handleCreateVendor} className="space-y-4 text-xs">
-          <div>
-            <label className="block font-semibold text-slate-700 mb-1">Company / Vendor Name</label>
-            <input
-              type="text"
-              required
-              value={vendorForm.name}
-              onChange={(e) => setVendorForm({ ...vendorForm, name: e.target.value })}
-              className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 focus:outline-none focus:border-purple-500"
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block font-semibold text-slate-700 mb-1">Contact Person</label>
-              <input
-                type="text"
-                required
-                value={vendorForm.contactPerson}
-                onChange={(e) => setVendorForm({ ...vendorForm, contactPerson: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 focus:outline-none focus:border-purple-500"
-              />
-            </div>
-            <div>
-              <label className="block font-semibold text-slate-700 mb-1">Phone Number</label>
-              <input
-                type="text"
-                required
-                value={vendorForm.phone}
-                onChange={(e) => setVendorForm({ ...vendorForm, phone: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-900 focus:outline-none focus:border-purple-500"
-              />
-            </div>
-          </div>
-
-          <div className="pt-3 border-t border-slate-100 flex justify-end gap-2">
-            <Button variant="ghost" size="sm" onClick={() => setIsAddVendorModalOpen(false)}>
-              Cancel
-            </Button>
-            <Button variant="primary" size="sm" type="submit">
-              Save Vendor
-            </Button>
-          </div>
-        </form>
-      </Modal>
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
-};
+}
