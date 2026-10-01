@@ -13,6 +13,9 @@ const schema = z.object({
   FRONTEND_URL: z.string().url(),
   CORS_ORIGIN: z.string().default(''),
   LOG_LEVEL: z.string().default('info'),
+  RAZORPAY_KEY_ID: z.string().default('rzp_test_mock'),
+  RAZORPAY_KEY_SECRET: z.string().default('rzp_secret_mock'),
+  RAZORPAY_WEBHOOK_SECRET: z.string().default('rzp_webhook_mock'),
 });
 const parsed = schema.safeParse(process.env);
 if (!parsed.success) {
@@ -32,6 +35,9 @@ export const config = {
   jwtIssuer: env.JWT_ISSUER, jwtAudience: env.JWT_AUDIENCE,
   frontendUrl: new URL(env.FRONTEND_URL).origin, corsOrigin: env.CORS_ORIGIN, allowedOrigins: origins,
   logLevel: env.LOG_LEVEL,
+  razorpayKeyId: env.RAZORPAY_KEY_ID,
+  razorpayKeySecret: env.RAZORPAY_KEY_SECRET,
+  razorpayWebhookSecret: env.RAZORPAY_WEBHOOK_SECRET,
 };
 export type AppConfig = typeof config;
 export default config;

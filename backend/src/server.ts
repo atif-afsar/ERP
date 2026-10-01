@@ -25,9 +25,12 @@ import auxiliaryRoutes from './routes/auxiliary.js';
 import auditRoutes from './routes/audit.js';
 import organizationRoutes from './routes/organization.js';
 import masterDataRoutes from './routes/masterData.js';
+import billingRoutes from './routes/billing.js';
+import adminBillingRoutes from './routes/adminBilling.js';
 import { config } from './config.js';
 import { requireAuth } from './middleware/auth.js';
 import { businessAccess } from './middleware/businessAccess.js';
+import { enforceSubscription } from './middleware/enforceSubscription.js';
 
 const app = express();
 const PORT = config.port;
@@ -47,7 +50,14 @@ const corsOptions: cors.CorsOptions = {
 };
 
 app.use(cors(corsOptions));
-app.use(express.json({ limit: '10mb' }));
+app.use(express.json({ 
+  limit: '10mb',
+  verify: (req: any, res, buf) => {
+    if (req.originalUrl.includes('/webhooks/razorpay')) {
+      req.rawBody = buf;
+    }
+  }
+}));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(requestIdMiddleware);
 
@@ -80,7 +90,17 @@ app.get('/health', healthHandler);
 const apiRouter = express.Router();
 apiRouter.get('/health', healthHandler);
 apiRouter.use('/auth', authRoutes);
+
+// SaaS Billing Routes
+apiRouter.use('/billing', billingRoutes);
+apiRouter.use('/admin/billing', adminBillingRoutes);
+
 apiRouter.use(requireAuth, businessAccess);
+
+if (config.nodeEnv !== 'test') {
+  apiRouter.use(enforceSubscription);
+}
+
 apiRouter.use('/tenants', tenantsRoutes);
 apiRouter.use('/students', studentsRoutes);
 apiRouter.use('/staff', staffRoutes);
