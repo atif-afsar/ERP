@@ -13,7 +13,9 @@
     "db:status": "node migrate.mjs status",
     "db:migrate": "node migrate.mjs up",
     "db:baseline": "node migrate.mjs baseline",
-    "db:verify": "node verify-db.mjs"
+    "db:verify": "node verify-db.mjs",
+    "worker:notifications": "tsx watch src/worker.ts",
+    "worker:notifications:start": "node dist/worker.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

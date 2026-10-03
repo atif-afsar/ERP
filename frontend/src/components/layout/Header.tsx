@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { 
   Menu, 
   Search, 
@@ -15,6 +15,7 @@ import {
 import { useTenant } from '../../context/TenantContext';
 import { useAuth } from '../../context/AuthContext';
 import { storage } from '../../services/storageService';
+import { notificationService, type AppNotification } from '../../services/notificationService';
 
 interface HeaderProps {
   onToggleSidebar: () => void;
@@ -27,7 +28,8 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar, onOpenAi, onNav
   const { currentUser, isParent, activeStudentId, setActiveStudentId, logout } = useAuth();
   
   const [showNotifications, setShowNotifications] = useState(false);
-  const [notifications] = useState(() => storage.getNotifications(currentUser.id));
+  const [notifications, setNotifications] = useState<AppNotification[]>([]);
+  const [feeReminderEmail, setFeeReminderEmail] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearchResults, setShowSearchResults] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -35,7 +37,10 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar, onOpenAi, onNav
   const students = storage.getStudents(currentTenant.id);
   const staff = storage.getStaff(currentTenant.id);
 
-  const unreadCount = notifications.filter((n) => !n.isRead).length;
+  const unreadCount = notifications.filter((n) => !n.readAt).length;
+  useEffect(()=>{let active=true;Promise.all([notificationService.list(currentTenant.id),notificationService.preferences(currentTenant.id)]).then(([items,prefs])=>{if(!active)return;setNotifications(items);const saved=prefs.data.preferences.find((x:any)=>x.event_type==='FEE_DUE_REMINDER'&&x.channel==='EMAIL');setFeeReminderEmail(saved?saved.is_enabled:true);}).catch(()=>{if(active)setNotifications([]);});return()=>{active=false;};},[currentTenant.id,currentUser.id]);
+  const markRead=async(n:AppNotification)=>{if(!n.readAt){await notificationService.markRead(currentTenant.id,n.id);setNotifications(items=>items.map(x=>x.id===n.id?{...x,readAt:new Date().toISOString()}:x));}if(n.linkUrl)onNavigate(n.linkUrl.replace(/^#?\/?(app\/)?/,''));setShowNotifications(false);};
+  const markAllRead=async()=>{await notificationService.markAllRead(currentTenant.id);const now=new Date().toISOString();setNotifications(items=>items.map(x=>({...x,readAt:x.readAt||now})));};
 
 
   const matchingStudents = searchQuery.trim()
@@ -218,7 +223,7 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar, onOpenAi, onNav
                 <h4 className="text-xs font-semibold text-slate-900 uppercase tracking-wider">
                   Notifications ({unreadCount} new)
                 </h4>
-                <span className="text-[10px] text-amber-700">Read-only</span>
+                <button className="text-[10px] text-emerald-700 hover:underline" onClick={markAllRead}>Mark all read</button>
               </div>
 
               <div className="mt-3 space-y-2 max-h-72 overflow-y-auto">
@@ -228,12 +233,9 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar, onOpenAi, onNav
                   notifications.map((n) => (
                     <div
                       key={n.id}
-                      onClick={() => {
-                        if (n.linkUrl) onNavigate(n.linkUrl.replace('/', ''));
-                        setShowNotifications(false);
-                      }}
+                      onClick={() => void markRead(n)}
                       className={`p-2.5 rounded-lg border text-xs cursor-pointer transition-colors ${
-                        n.isRead
+                        n.readAt
                           ? 'bg-slate-50 border-slate-200 text-slate-500'
                           : 'bg-emerald-50/50 border-emerald-200 text-slate-800'
                       }`}
@@ -247,6 +249,10 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar, onOpenAi, onNav
                   ))
                 )}
               </div>
+              <label className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between gap-3 text-[11px] text-slate-600">
+                <span>Email fee reminders</span>
+                <input type="checkbox" checked={feeReminderEmail} onChange={async e=>{const enabled=e.target.checked;setFeeReminderEmail(enabled);try{await notificationService.setPreference(currentTenant.id,{eventType:'FEE_DUE_REMINDER',channel:'EMAIL',isEnabled:enabled});}catch{setFeeReminderEmail(!enabled);}}} className="accent-emerald-600" />
+              </label>
             </div>
           )}
         </div>

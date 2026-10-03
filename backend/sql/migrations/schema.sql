@@ -797,3 +797,82 @@ CREATE TABLE IF NOT EXISTS finance_sequences (
     last_value INTEGER NOT NULL DEFAULT 0,
     PRIMARY KEY (tenant_id, type, year)
 );
+-- Phase 10: Communication & Notifications Schema Extension
+
+CREATE TABLE IF NOT EXISTS public.notification_templates (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    tenant_id UUID REFERENCES public.tenants(id) ON DELETE CASCADE, -- NULL means global system template
+    code VARCHAR(100) NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    channel VARCHAR(50) NOT NULL CHECK (channel IN ('IN_APP', 'EMAIL')),
+    subject_template TEXT,
+    body_template TEXT NOT NULL,
+    is_system BOOLEAN DEFAULT false,
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL,
+    UNIQUE (tenant_id, code, channel)
+);
+
+CREATE TABLE IF NOT EXISTS public.notification_preferences (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    tenant_id UUID NOT NULL REFERENCES public.tenants(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+    category VARCHAR(50) NOT NULL CHECK (category IN ('TRANSACTIONAL', 'OPTIONAL', 'SECURITY')),
+    channel VARCHAR(50) NOT NULL CHECK (channel IN ('IN_APP', 'EMAIL')),
+    is_enabled BOOLEAN DEFAULT true,
+    created_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL,
+    UNIQUE (tenant_id, user_id, category, channel)
+);
+
+-- We modify existing notifications table safely by adding columns without breaking existing data
+ALTER TABLE public.notifications ADD COLUMN IF NOT EXISTS template_code VARCHAR(100);
+ALTER TABLE public.notifications ADD COLUMN IF NOT EXISTS source_type VARCHAR(100);
+ALTER TABLE public.notifications ADD COLUMN IF NOT EXISTS source_id VARCHAR(100);
+ALTER TABLE public.notifications ADD COLUMN IF NOT EXISTS priority VARCHAR(20) DEFAULT 'NORMAL';
+ALTER TABLE public.notifications ADD COLUMN IF NOT EXISTS payload JSONB DEFAULT '{}'::jsonb;
+ALTER TABLE public.notifications ADD COLUMN IF NOT EXISTS is_read BOOLEAN DEFAULT false; -- For the in_app state
+
+-- New Recipient Table
+CREATE TABLE IF NOT EXISTS public.notification_recipients (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    notification_id UUID NOT NULL REFERENCES public.notifications(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
+    external_email VARCHAR(255),
+    recipient_type VARCHAR(50) DEFAULT 'USER',
+    status VARCHAR(50) DEFAULT 'PENDING'
+);
+
+-- Job / Outbox Table for the worker
+CREATE TABLE IF NOT EXISTS public.notification_jobs (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    tenant_id UUID REFERENCES public.tenants(id) ON DELETE CASCADE,
+    notification_id UUID NOT NULL REFERENCES public.notifications(id) ON DELETE CASCADE,
+    recipient_id UUID NOT NULL REFERENCES public.notification_recipients(id) ON DELETE CASCADE,
+    channel VARCHAR(50) NOT NULL CHECK (channel IN ('IN_APP', 'EMAIL')),
+    status VARCHAR(50) DEFAULT 'QUEUED' CHECK (status IN ('QUEUED', 'PROCESSING', 'COMPLETED', 'FAILED')),
+    attempts INT DEFAULT 0,
+    max_attempts INT DEFAULT 3,
+    last_error TEXT,
+    next_retry_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()),
+    created_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- Ensure a business event isn't spammed to the same person on the same channel
+CREATE UNIQUE INDEX IF NOT EXISTS idx_notification_idempotency
+ON public.notifications (tenant_id, source_type, source_id, template_code)
+WHERE source_type IS NOT NULL AND source_id IS NOT NULL;
+
+-- Basic seed for Global Templates
+INSERT INTO public.notification_templates (code, name, channel, subject_template, body_template, is_system)
+VALUES
+('OWNER_INVITATION', 'Tenant Owner Invitation', 'EMAIL', 'Welcome to EduNexus! Setup your school', 'Hello {{name}},<br>You have been invited to manage {{school_name}}. Click here to setup your account: <a href="{{setup_url}}">{{setup_url}}</a>', true),
+('TEACHER_INVITATION', 'Teacher Invitation', 'EMAIL', 'You have been invited to join {{school_name}}', 'Hello {{name}},<br>You have been added as a teacher at {{school_name}}. Click here to login: <a href="{{setup_url}}">{{setup_url}}</a>', true),
+('PARENT_INVITATION', 'Parent Portal Access', 'EMAIL', 'Access your Parent Portal at {{school_name}}', 'Hello {{name}},<br>You have been granted parent access for {{student_name}}. Click here to login: <a href="{{setup_url}}">{{setup_url}}</a>', true),
+('FEE_PROOF_APPROVED', 'Fee Payment Approved', 'EMAIL', 'Fee Payment Approved - {{receipt_number}}', 'Dear Parent,<br>Your fee payment proof for {{student_name}} of amount Rs. {{amount}} has been approved. Your receipt number is {{receipt_number}}.', true),
+('FEE_PROOF_REJECTED', 'Fee Payment Rejected', 'EMAIL', 'Fee Payment Rejected', 'Dear Parent,<br>Your fee payment proof for {{student_name}} of amount Rs. {{amount}} was rejected. Reason: {{remarks}}.', true),
+('ATTENDANCE_ABSENT', 'Student Absent Notice', 'EMAIL', 'Absence Alert for {{student_name}}', 'Dear Parent,<br>{{student_name}} has been marked absent on {{date}}.', true),
+('EXAM_RESULT_PUBLISHED', 'Exam Result Published', 'EMAIL', 'Results published for {{exam_name}}', 'Dear Parent,<br>The results for {{exam_name}} have been published for {{student_name}}. Please log in to view the marks.', true)
+ON CONFLICT (tenant_id, code, channel) DO NOTHING;

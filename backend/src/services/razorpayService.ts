@@ -2,6 +2,7 @@ import crypto from 'crypto';
 import { query, transaction } from '../db.js';
 import { config } from '../config.js';
 import { AppError } from '../middleware/errorHandler.js';
+import { enqueueNotification } from './notificationService.js';
 
 /**
  * Validates Razorpay Webhook signature using HMAC SHA256.
@@ -55,7 +56,7 @@ export async function processWebhookEvent(
   return transaction(async (client) => {
     try {
       // Handle the event
-      await handleEvent(client, eventType, payload);
+      await handleEvent(client, eventId, eventType, payload);
       
       // Mark PROCESSED
       await client.query(
@@ -77,7 +78,7 @@ export async function processWebhookEvent(
 /**
  * Handles specific Razorpay webhook events
  */
-async function handleEvent(client: any, eventType: string, payload: any) {
+async function handleEvent(client: any, eventId:string,eventType: string, payload: any) {
   // The subscription object is typically at payload.payload.subscription.entity
   const subscription = payload.payload?.subscription?.entity;
   const payment = payload.payload?.payment?.entity;
@@ -180,4 +181,7 @@ async function handleEvent(client: any, eventType: string, payload: any) {
       );
       break;
   }
+  const statusByEvent:Record<string,string>={'subscription.activated':'ACTIVE','subscription.resumed':'ACTIVE','subscription.charged':'ACTIVE','subscription.halted':'PAST_DUE','subscription.paused':'PAUSED','subscription.cancelled':'CANCELLED','subscription.completed':'EXPIRED'};
+  const status=statusByEvent[eventType];
+  if(status){const owners=await client.query(`SELECT m.user_id FROM memberships m JOIN roles r ON r.id=m.role_id WHERE m.tenant_id=$1 AND m.status='active' AND r.key='TENANT_ADMIN'`,[internalSub.tenant_id]);await enqueueNotification({tenantId:internalSub.tenant_id,eventType:'SAAS_SUBSCRIPTION_STATUS',templateCode:'SAAS_SUBSCRIPTION_STATUS',sourceType:'SAAS_WEBHOOK',sourceId:eventId,payload:{status},priority:status==='PAST_DUE'?'HIGH':'NORMAL'},owners.rows.map((x:any)=>({userId:x.user_id})),client);}
 }

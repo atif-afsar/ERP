@@ -1,8 +1,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert';
+import { randomUUID } from 'node:crypto';
 import { query } from '../src/db.ts';
 
 test('Finance & Accounting Test Suite', async (t) => {
+  const fixtureKey=randomUUID();
   let tenantId;
   let userId;
   let assetAcct;
@@ -14,16 +16,16 @@ test('Finance & Accounting Test Suite', async (t) => {
     // Generate UUIDs on the fly by PostgreSQL
     const res = await query(`
       INSERT INTO tenants (name, slug, tenant_type, status) 
-      VALUES ('Finance School', 'finance-school', 'school', 'active') 
+      VALUES ('Finance School', $1, 'school', 'active')
       RETURNING id
-    `);
+    `,[`finance-${fixtureKey}`]);
     tenantId = res.rows[0].id;
     
     const userRes = await query(`
       INSERT INTO users (email, password_hash)
-      VALUES ('finance@test.com', 'hash')
+      VALUES ($1, 'hash')
       RETURNING id
-    `);
+    `,[`finance-${fixtureKey}@test.com`]);
     userId = userRes.rows[0].id;
   });
 
@@ -160,5 +162,6 @@ test('Finance & Accounting Test Suite', async (t) => {
 
   await t.test('Cleanup', async () => {
     await query(`DELETE FROM tenants WHERE id = $1`, [tenantId]);
+    await query(`DELETE FROM users WHERE id = $1`, [userId]);
   });
 });

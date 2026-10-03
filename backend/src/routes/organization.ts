@@ -8,6 +8,8 @@ import { validateBody } from '../middleware/validation.js';
 import { requirePermission } from '../middleware/permission.js';
 import { AppError } from '../middleware/errorHandler.js';
 import { writeAudit } from '../services/auditService.js';
+import { enqueueNotification } from '../services/notificationService.js';
+import { config } from '../config.js';
 
 const router = Router();
 const inviteSchema = z.object({
@@ -53,6 +55,13 @@ router.post('/invitations', requirePermission('users.invite'), validateBody(invi
       [req.tenantId, email, req.body.displayName, req.body.roleId, tokenHash, req.user.id]);
     await writeAudit({ tenantId: req.tenantId!, userId: req.user.id, action: 'USER_INVITED', module: 'users', entityId: created.rows[0].id,
       details: { email, roleId: req.body.roleId }, request: req }, client);
+
+    const tInfo = await client.query(`SELECT name FROM tenants WHERE id=$1`, [req.tenantId]);
+    await enqueueNotification({ eventType:'OWNER_INVITATION', templateCode:'OWNER_INVITATION', tenantId:req.tenantId!,
+      sourceType:'USER_INVITATION', sourceId:created.rows[0].id,
+      payload:{name:req.body.displayName,school_name:tInfo.rows[0]?.name||'EduNexus',setup_url:`${config.appPublicUrl}/#/onboarding?token=${rawToken}`},priority:'HIGH' },
+      [{externalEmail:email}],client);
+
     return created.rows[0];
   });
   res.status(201).json({ data: { ...invitation, onboardingToken: rawToken }, requestId: req.id, timestamp: new Date().toISOString() });

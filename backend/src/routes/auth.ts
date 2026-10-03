@@ -10,6 +10,7 @@ import { asyncHandler } from '../middleware/asyncHandler.js';
 import { validateBody } from '../middleware/validation.js';
 import { config } from '../config.js';
 import { writeAudit } from '../services/auditService.js';
+import { enqueueNotification } from '../services/notificationService.js';
 
 const router = Router();
 const signInSchema = z.object({ email: z.string().email(), password: z.string().min(1), tenantId: z.string().uuid().optional() });
@@ -120,7 +121,7 @@ router.post('/password', requireAuth, validateBody(passwordSchema), asyncHandler
   if (!await bcrypt.compare(req.body.oldPassword, result.rows[0].password_hash))
     throw new AppError('Current password is incorrect.', 400, 'INCORRECT_PASSWORD');
   const hash = await bcrypt.hash(req.body.newPassword, 12);
-  await query('UPDATE users SET password_hash = $1, auth_version = auth_version + 1, updated_at = NOW() WHERE id = $2', [hash, req.user.id]);
+  await transaction(async client=>{await client.query('UPDATE users SET password_hash=$1,auth_version=auth_version+1,updated_at=NOW() WHERE id=$2',[hash,req.user.id]);await enqueueNotification({tenantId:req.user.tenantId,eventType:'PASSWORD_CHANGED',templateCode:'PASSWORD_CHANGED',sourceType:'SECURITY_EVENT',sourceId:randomUUID(),payload:{},priority:'HIGH'},[{userId:req.user.id}],client);});
   res.json({ data: { success: true, message: 'Password changed. Sign in again.' }, requestId: req.id, timestamp: new Date().toISOString() });
 }));
 router.post('/signout', requireAuth, asyncHandler(async (req, res) => {

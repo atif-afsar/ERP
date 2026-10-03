@@ -27,7 +27,7 @@ import { ExamsModule } from './modules/exams/ExamsModule';
 import { ExaminationAssessmentModule } from './modules/examinations/ExaminationAssessmentModule';
 import { TimetableModule } from './modules/timetable/TimetableModule';
 import { HomeworkModule } from './modules/homework/HomeworkModule';
-import { CommunicationModule } from './modules/communication/CommunicationModule';
+import { CommunicationCenterModule } from './modules/communication/CommunicationCenterModule';
 import { CrmModule } from './modules/crm/CrmModule';
 import { ReportsModule } from './modules/reports/ReportsModule';
 import { SuperAdminModule } from './modules/superadmin/SuperAdminModule';
@@ -50,7 +50,7 @@ import { SuperAdminShell } from './modules/superadmin/SuperAdminShell';
 const READ_ONLY_MODULES = new Set([
   'dashboard', 'academics', 'finance', 'inventory', 'library',
   'transport', 'hostel', 'mess', 'health', 'homework',
-  'communication', 'crm', 'reports', 'settings', 'roles-matrix', 'superadmin-plans', 'superadmin-features',
+  'crm', 'reports', 'settings', 'roles-matrix', 'superadmin-plans', 'superadmin-features',
 ]);
 
 const ReadOnlyModule: React.FC<{ children: React.ReactNode }> = ({ children }) => (
@@ -280,7 +280,7 @@ const MainRouter: React.FC = () => {
         );
       case 'communication':
         return isFeatureEnabled('communication') ? (
-          <CommunicationModule />
+          <CommunicationCenterModule />
         ) : (
           <UnauthorizedCard permission="communication.send" onBackToDashboard={() => navigateTo('dashboard')} />
         );

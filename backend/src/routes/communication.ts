@@ -1,84 +1,20 @@
+import { Router } from 'express';
+import { z } from 'zod';
+import { query,transaction } from '../db.js';
 import { asyncHandler } from '../middleware/asyncHandler.js';
-import { Router, Request, Response } from 'express';
-import { query } from '../db.js';
-import { requireAuth } from '../middleware/auth.js';
 import { tenantContext } from '../middleware/tenantContext.js';
+import { requirePermission } from '../middleware/permission.js';
+import { validateBody } from '../middleware/validation.js';
 import { AppError } from '../middleware/errorHandler.js';
+import { writeAudit } from '../services/auditService.js';
+import { enqueueNotification,resolveParentRecipients } from '../services/notificationService.js';
 
-const router = Router();
-
-// GET /api/v1/communication/announcements
-router.get('/announcements', requireAuth, tenantContext(true), asyncHandler(async (req: Request, res: Response) => {
-  const result = await query(
-    "SELECT * FROM announcements WHERE tenant_id = $1 AND (target_role = 'ALL' OR target_role = $2 OR $3 = true) ORDER BY created_at DESC",
-    [req.tenantId, req.user.role, req.user.isSuperAdmin || req.user.role === 'TENANT_ADMIN']
-  );
-
-  const mapped = result.rows.map((a) => ({
-    id: a.id,
-    tenantId: a.tenant_id,
-    title: a.title,
-    content: a.content,
-    targetRole: a.target_role,
-    createdAt: a.created_at,
-  }));
-
-  res.json({
-    data: mapped,
-    meta: { total: result.rowCount },
-    requestId: req.id,
-    timestamp: new Date().toISOString(),
-  });
-}));
-
-// POST /api/v1/communication/announcements
-router.post('/announcements', requireAuth, tenantContext(true), asyncHandler(async (req: Request, res: Response) => {
-  const tenantId = req.tenantId!;
-  const { title, content, targetRole = 'ALL' } = req.body;
-
-  if (!title || !content) {
-    throw new AppError('Title and content are required.', 422, 'VALIDATION_ERROR');
-  }
-
-  const result = await query(
-    `INSERT INTO announcements (tenant_id, title, content, target_role, published_by)
-     VALUES ($1, $2, $3, $4, $5)
-     RETURNING *`,
-    [tenantId, title, content, targetRole, req.user?.id || null]
-  );
-
-  res.status(201).json({
-    data: result.rows[0],
-    requestId: req.id,
-    timestamp: new Date().toISOString(),
-  });
-}));
-
-// GET /api/v1/communication/notifications
-router.get('/notifications', requireAuth, tenantContext(true), asyncHandler(async (req: Request, res: Response) => {
-  let sql = 'SELECT * FROM notifications WHERE tenant_id = $1';
-  const params: any[] = [req.tenantId];
-
-  if (req.user?.id) {
-    sql += ' AND user_id = $2';
-    params.push(req.user.id);
-  }
-
-  sql += ' ORDER BY created_at DESC LIMIT 50';
-  const result = await query(sql, params);
-
-  res.json({
-    data: result.rows.map((n) => ({
-      id: n.id,
-      title: n.title,
-      message: n.message,
-      isRead: n.is_read,
-      type: n.type,
-      createdAt: n.created_at,
-    })),
-    requestId: req.id,
-    timestamp: new Date().toISOString(),
-  });
-}));
-
+const router=Router();router.use(tenantContext(true));
+const response=(res:any,req:any,data:any,meta?:any)=>res.json({data,...(meta?{meta}:{}),requestId:req.id,timestamp:new Date().toISOString()});
+router.get('/overview',requirePermission('communications.view'),asyncHandler(async(req,res)=>{const r=await query(`SELECT status,channel,COUNT(*)::int count FROM notification_jobs WHERE tenant_id=$1 GROUP BY status,channel ORDER BY channel,status`,[req.tenantId]);response(res,req,r.rows);}));
+router.get('/templates',requirePermission('communications.view'),asyncHandler(async(req,res)=>{const r=await query(`SELECT DISTINCT ON(code,channel) id,code,name,channel,category,subject_template,body_template,is_system,is_active,(tenant_id IS NOT NULL) tenant_override,updated_at FROM notification_templates WHERE tenant_id=$1 OR tenant_id IS NULL ORDER BY code,channel,(tenant_id IS NOT NULL) DESC`,[req.tenantId]);response(res,req,r.rows);}));
+router.put('/templates/:code/:channel',requirePermission('communications.templates.manage'),validateBody(z.object({subjectTemplate:z.string().max(500).optional().nullable(),bodyTemplate:z.string().min(1).max(10000),isActive:z.boolean().default(true)})),asyncHandler(async(req,res)=>{const code=String(req.params.code).toUpperCase(),channel=String(req.params.channel).toUpperCase();if(!['IN_APP','EMAIL'].includes(channel))throw new AppError('Unsupported channel.',422,'VALIDATION_ERROR');const base=await query(`SELECT name,category FROM notification_templates WHERE tenant_id IS NULL AND code=$1 AND channel=$2`,[code,channel]);if(!base.rowCount)throw new AppError('System template not found.',404,'NOT_FOUND');if(base.rows[0].category==='SECURITY')throw new AppError('Security-critical templates cannot be overridden by a tenant.',403,'SECURITY_TEMPLATE_IMMUTABLE');if(channel==='EMAIL'&&!req.body.subjectTemplate)throw new AppError('Email subject is required.',422,'VALIDATION_ERROR');const r=await query(`INSERT INTO notification_templates(tenant_id,code,name,channel,category,subject_template,body_template,is_system,is_active) VALUES($1,$2,$3,$4,$5,$6,$7,false,$8) ON CONFLICT(tenant_id,code,channel) WHERE tenant_id IS NOT NULL DO UPDATE SET subject_template=EXCLUDED.subject_template,body_template=EXCLUDED.body_template,is_active=EXCLUDED.is_active,updated_at=NOW() RETURNING *`,[req.tenantId,code,base.rows[0].name,channel,base.rows[0].category,req.body.subjectTemplate||null,req.body.bodyTemplate,req.body.isActive]);await writeAudit({tenantId:req.tenantId!,userId:req.user.id,action:'NOTIFICATION_TEMPLATE_UPDATED',module:'communications',entityId:r.rows[0].id,details:{code,channel},request:req});response(res,req,r.rows[0]);}));
+router.get('/deliveries',requirePermission('communications.delivery.view'),asyncHandler(async(req,res)=>{const limit=Math.min(Number(req.query.limit)||100,200);const r=await query(`SELECT d.id,d.channel,d.provider,d.status,d.attempt_count,d.last_error,d.queued_at,d.sent_at,d.failed_at,n.event_type,n.source_type,n.source_id FROM notification_deliveries d JOIN notifications n ON n.id=d.notification_id AND n.tenant_id=d.tenant_id WHERE d.tenant_id=$1 ORDER BY d.queued_at DESC LIMIT $2`,[req.tenantId,limit]);response(res,req,r.rows,{total:r.rowCount});}));
+router.post('/deliveries/:jobId/retry',requirePermission('communications.delivery.view'),asyncHandler(async(req,res)=>{const r=await query(`UPDATE notification_jobs SET status='QUEUED',next_attempt_at=NOW(),last_error=NULL,locked_at=NULL,locked_by=NULL,updated_at=NOW() WHERE id=$1 AND tenant_id=$2 AND status='FAILED' RETURNING id`,[req.params.jobId,req.tenantId]);if(!r.rowCount)throw new AppError('Failed delivery job not found.',404,'NOT_FOUND');await writeAudit({tenantId:req.tenantId!,userId:req.user.id,action:'NOTIFICATION_DELIVERY_RETRIED',module:'communications',entityId:req.params.jobId,request:req});response(res,req,{queued:true});}));
+router.post('/fee-reminders',requirePermission('communications.send'),validateBody(z.object({feeAssignmentId:z.string().uuid(),window:z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional()})),asyncHandler(async(req,res)=>{const result=await transaction(async client=>{const a=(await client.query(`SELECT a.id,a.student_id,a.balance_amount,s.first_name,s.last_name,COALESCE(MIN(i.due_date),a.created_at::date) due_date FROM fee_assignments a JOIN students s ON s.id=a.student_id AND s.tenant_id=a.tenant_id LEFT JOIN fee_installments i ON i.fee_assignment_id=a.id AND i.tenant_id=a.tenant_id WHERE a.id=$1 AND a.tenant_id=$2 AND a.status IN ('DUE','PARTIAL','OVERDUE') GROUP BY a.id,s.id`,[req.body.feeAssignmentId,req.tenantId])).rows[0];if(!a)throw new AppError('Outstanding fee assignment not found.',404,'NOT_FOUND');const recipients=await resolveParentRecipients(req.tenantId!,a.student_id,client);if(!recipients.length)throw new AppError('No active parent account is linked to this student.',422,'NO_NOTIFICATION_RECIPIENT');const today=req.body.window||new Date().toISOString().slice(0,10),due=String(a.due_date).slice(0,10),statusLabel=due<today?'Overdue':due===today?'Due today':'Upcoming';const queued=await enqueueNotification({tenantId:req.tenantId!,eventType:'FEE_DUE_REMINDER',templateCode:'FEE_DUE_REMINDER',sourceType:'FEE_ASSIGNMENT_WINDOW',sourceId:`${a.id}:${today}`,payload:{student_name:`${a.first_name} ${a.last_name}`.trim(),amount:a.balance_amount,due_date:due,status_label:statusLabel},priority:due<today?'HIGH':'NORMAL'},recipients,client);await writeAudit({tenantId:req.tenantId!,userId:req.user.id,action:'FEE_REMINDER_QUEUED',module:'communications',entityId:a.id,details:{window:today,recipients:recipients.length},request:req},client);return queued;});response(res,req,result);}));
 export default router;

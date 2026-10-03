@@ -7,6 +7,8 @@ import { requireAuth } from '../middleware/auth.js';
 import { AppError } from '../middleware/errorHandler.js';
 import { validateBody } from '../middleware/validation.js';
 import { writeAudit } from '../services/auditService.js';
+import { enqueueNotification } from '../services/notificationService.js';
+import { config } from '../config.js';
 
 const router = Router();
 const createTenantSchema = z.object({
@@ -78,6 +80,10 @@ router.post('/', requireAuth, validateBody(createTenantSchema), asyncHandler(asy
       [tenant.rows[0].id, owner.email, owner.displayName, ownerRole.rows[0].id, tokenHash, req.user.id]);
     await writeAudit({ tenantId: tenant.rows[0].id, userId: req.user.id, action: 'TENANT_CREATED', module: 'tenants',
       entityId: tenant.rows[0].id, details: { slug, ownerEmail: owner.email }, request: req }, client);
+    await enqueueNotification({ tenantId: tenant.rows[0].id, eventType: 'OWNER_INVITATION', templateCode: 'OWNER_INVITATION',
+      sourceType: 'USER_INVITATION', sourceId: invitation.rows[0].id,
+      payload: { name: owner.displayName, school_name: tenant.rows[0].name, setup_url: `${config.appPublicUrl}/#/onboarding?token=${rawToken}` },
+      priority: 'HIGH' }, [{ externalEmail: owner.email }], client);
     return { tenant: tenant.rows[0], ownerInvitation: invitation.rows[0] };
   }).catch((error: any) => {
     if (error?.code === '23505') throw new AppError('Tenant slug or pending owner invitation already exists.', 409, 'CONFLICT');
