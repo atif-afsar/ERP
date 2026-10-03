@@ -36,7 +36,7 @@ interface SidebarProps {
 
 export const Sidebar: React.FC<SidebarProps> = ({ activeNav, onNavigate, isOpen, onClose }) => {
   const { currentTenant, getLabel, isFeatureEnabled, isSchool } = useTenant();
-  const { currentUser, isSuperAdmin, isTeacher, isParent, isStudent } = useAuth();
+  const { currentUser, isSuperAdmin, isTeacher, isParent, isStudent, can } = useAuth();
 
   // Super Admin view
   if (isSuperAdmin) {
@@ -162,44 +162,51 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeNav, onNavigate, isOpen,
     },
     {
       id: 'staff',
-      label: 'Staff & Payroll HR',
+      label: 'Staff & Teachers',
       icon: UserCheck,
-      show: currentUser.role === 'TENANT_ADMIN' || currentUser.role === 'SUPER_ADMIN' || currentUser.role === 'BRANCH_MANAGER' || currentUser.role === 'ACCOUNTANT',
+      show: can('staff.view'),
+      section: 'FINANCE & HR',
+    },
+    {
+      id: 'hr',
+      label: 'HR & Leave',
+      icon: UserCheck,
+      show: can('hr.leave.request') || can('hr.view'),
       section: 'FINANCE & HR',
     },
     {
       id: 'inventory',
       label: 'Inventory & Assets',
       icon: Package,
-      show: currentUser.role === 'TENANT_ADMIN' || currentUser.role === 'ACCOUNTANT' || currentUser.role === 'STAFF' || currentUser.role === 'SUPER_ADMIN',
+      show: can('inventory.view'),
       section: 'OPERATIONS',
     },
     {
       id: 'library',
       label: isStudent ? 'Library & Books' : 'Library Management',
       icon: BookMarked,
-      show: currentUser.role === 'TENANT_ADMIN' || currentUser.role === 'STAFF' || currentUser.role === 'TEACHER' || isStudent || isParent || currentUser.role === 'SUPER_ADMIN',
+      show: can('library.view'),
       section: 'OPERATIONS',
     },
     {
       id: 'transport',
       label: isStudent ? 'My Bus & Route' : isParent ? "Children's Bus Route" : 'Transport & Fleet',
       icon: Bus,
-      show: currentUser.role === 'TENANT_ADMIN' || currentUser.role === 'STAFF' || currentUser.role === 'SUPER_ADMIN' || isStudent || isParent,
+      show: can('transport.view'),
       section: 'OPERATIONS',
     },
     {
       id: 'hostel',
       label: isStudent ? 'My Hostel Room' : isParent ? "Children's Hostel" : 'Hostel Residence',
       icon: Home,
-      show: currentUser.role === 'TENANT_ADMIN' || currentUser.role === 'STAFF' || currentUser.role === 'SUPER_ADMIN' || isStudent || isParent,
+      show: can('hostel.view'),
       section: 'OPERATIONS',
     },
     {
       id: 'mess',
       label: isStudent ? 'Mess Menu & Meals' : isParent ? 'Mess Dining & Meals' : 'Hostel Mess & Dining',
       icon: UtensilsCrossed,
-      show: currentUser.role === 'TENANT_ADMIN' || currentUser.role === 'STAFF' || currentUser.role === 'SUPER_ADMIN' || isStudent || isParent,
+      show: can('mess.view'),
       section: 'OPERATIONS',
     },
     {

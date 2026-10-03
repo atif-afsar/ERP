@@ -17,11 +17,11 @@ import { AttendanceModule } from './modules/attendance/AttendanceModule';
 import { FeesModule } from './modules/fees/FeesModule';
 import { FeeManagementModule } from './modules/fees/FeeManagementModule';
 import { FinanceModule } from './modules/finance/FinanceModule';
-import { InventoryModule } from './modules/inventory/InventoryModule';
-import { LibraryModule } from './modules/library/LibraryModule';
-import { TransportModule } from './modules/transport/TransportModule';
-import { HostelModule } from './modules/hostel/HostelModule';
-import { MessModule } from './modules/mess/MessModule';
+import { InventoryOperationsModule } from './modules/inventory/InventoryOperationsModule';
+import { LibraryOperationsModule } from './modules/library/LibraryOperationsModule';
+import { TransportOperationsModule } from './modules/transport/TransportOperationsModule';
+import { HostelOperationsModule } from './modules/hostel/HostelOperationsModule';
+import { MessOperationsModule } from './modules/mess/MessOperationsModule';
 import { HealthModule } from './modules/health/HealthModule';
 import { ExamsModule } from './modules/exams/ExamsModule';
 import { ExaminationAssessmentModule } from './modules/examinations/ExaminationAssessmentModule';
@@ -42,14 +42,15 @@ import { SchemaExplorerModule } from './modules/schemaExplorer/SchemaExplorerMod
 import { RolesMatrixModule } from './modules/rolesMatrix/RolesMatrixModule';
 import { StaffModule } from './modules/staff/StaffModule';
 import { AcademicOperationsModule } from './modules/academicOperations/AcademicOperationsModule';
+import { HrOperationsModule } from './modules/hr/HrOperationsModule';
 import { SaaSBillingModule } from './modules/saasBilling/SaaSBillingModule';
 import { GlobalAiAssistantBot } from './components/ai/GlobalAiAssistantBot';
 import { LandingPage } from './modules/public/LandingPage';
 import { SuperAdminShell } from './modules/superadmin/SuperAdminShell';
 
 const READ_ONLY_MODULES = new Set([
-  'dashboard', 'academics', 'finance', 'inventory', 'library',
-  'transport', 'hostel', 'mess', 'health', 'homework',
+  'dashboard', 'academics', 'finance',
+  'health', 'homework',
   'crm', 'reports', 'settings', 'roles-matrix', 'superadmin-plans', 'superadmin-features',
 ]);
 
@@ -66,12 +67,13 @@ const ROUTE_PERMISSIONS: Record<string, Permission> = {
   students: 'student_lifecycle.view',
   'students/new': 'students.create',
   staff: 'staff.view',
+  hr: 'hr.leave.request',
   academics: 'students.view',
   attendance: 'attendance.view',
   'attendance/mark': 'attendance.mark',
   fees: 'fee_management.view',
   finance: 'fees.view',
-  inventory: 'fees.view',
+  inventory: 'inventory.view',
   library: 'library.view',
   transport: 'transport.view',
   hostel: 'hostel.view',
@@ -204,7 +206,7 @@ const MainRouter: React.FC = () => {
 
   // Permission & Feature verification
   const requiredPermission = ROUTE_PERMISSIONS[currentNav];
-  const isAuthorized = !requiredPermission || can(requiredPermission);
+  const isAuthorized = !requiredPermission || can(requiredPermission) || (currentNav === 'hr' && can('hr.view'));
 
   const renderModule = () => {
     if (!isAuthorized && requiredPermission) {
@@ -231,6 +233,8 @@ const MainRouter: React.FC = () => {
         return <StudentLifecycleModule />;
       case 'staff':
         return <AcademicOperationsModule initialTab="staff" />;
+      case 'hr':
+        return <HrOperationsModule />;
       case 'academics':
         return <AcademicsModule />;
       case 'attendance':
@@ -248,15 +252,15 @@ const MainRouter: React.FC = () => {
       case 'finance':
         return <FinanceModule />;
       case 'inventory':
-        return <InventoryModule />;
+        return <InventoryOperationsModule />;
       case 'library':
-        return <LibraryModule />;
+        return <LibraryOperationsModule />;
       case 'transport':
-        return <TransportModule />;
+        return <TransportOperationsModule />;
       case 'hostel':
-        return <HostelModule />;
+        return <HostelOperationsModule />;
       case 'mess':
-        return <MessModule />;
+        return <MessOperationsModule />;
       case 'health':
         return <HealthModule />;
       case 'exams':
