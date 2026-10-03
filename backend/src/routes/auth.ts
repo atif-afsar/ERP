@@ -26,9 +26,8 @@ function profile(row: any) {
     role: row.role_key, tenantId: row.tenant_id, phone: row.phone || '', avatarUrl: row.avatar_url || '',
     status: row.status, createdAt: row.created_at, branchIds: [], linkedStudentIds: [], permissions: row.permissions || [] };
 }
-// Bounded per-process throttling; use shared edge throttling for a multi-process deployment.
-const attempts = new Map<string, { count: number; until: number }>();
-router.post('/onboarding/accept', validateBody(onboardingSchema), asyncHandler(async (req: Request, res: Response) => {
+// Auth limiter applied to routes
+router.post('/onboarding/accept', authLimiter, validateBody(onboardingSchema), asyncHandler(async (req: Request, res: Response) => {
   const tokenHash = createHash('sha256').update(req.body.token).digest('hex');
   const passwordHash = await bcrypt.hash(req.body.password, 12);
   const result = await transaction(async client => {
@@ -65,15 +64,10 @@ router.post('/onboarding/accept', validateBody(onboardingSchema), asyncHandler(a
   });
   res.json({ data: { ...result, success: true }, requestId: req.id, timestamp: new Date().toISOString() });
 }));
-router.post('/signin', validateBody(signInSchema), asyncHandler(async (req: Request, res: Response) => {
+import { authLimiter } from '../middleware/rateLimiter.js';
+
+router.post('/signin', authLimiter, validateBody(signInSchema), asyncHandler(async (req: Request, res: Response) => {
   const email = req.body.email.trim().toLowerCase();
-  const key = (req.ip || '') + ':' + email;
-  const now = Date.now();
-  for (const [k, entry] of attempts) if (entry.until <= now) attempts.delete(k);
-  if (attempts.size >= 10000 && !attempts.has(key)) throw new AppError('Sign-in temporarily limited.', 429, 'RATE_LIMITED');
-  const entry = attempts.get(key) || { count: 0, until: now + 15 * 60 * 1000 };
-  if (entry.count >= 10) throw new AppError('Too many sign-in attempts. Try again later.', 429, 'RATE_LIMITED');
-  entry.count++; attempts.set(key, entry);
   const result = await query(
     `SELECT u.id, u.email, u.password_hash, u.status, u.auth_version, u.created_at,
             p.display_name, p.phone, p.avatar_url
@@ -99,7 +93,6 @@ router.post('/signin', validateBody(signInSchema), asyncHandler(async (req: Requ
   membership.permissions = permissionResult.rows.map(row => row.key);
   const token = createToken({ id: user.id, email: user.email, role: membership.role_key,
     tenantId: membership.tenant_id, version: user.auth_version });
-  attempts.delete(key);
   res.json({ data: { token, user: profile({ ...user, ...membership }), expiresAt: (jwt.decode(token) as jwt.JwtPayload).exp! * 1000 },
     requestId: req.id, timestamp: new Date().toISOString() });
 }));
@@ -116,7 +109,7 @@ router.get('/me', requireAuth, asyncHandler(async (req, res) => {
       permissions: permissions.rows.map(row => row.key) }),
     expiresAt: req.user.exp * 1000 }, requestId: req.id, timestamp: new Date().toISOString() });
 }));
-router.post('/password', requireAuth, validateBody(passwordSchema), asyncHandler(async (req, res) => {
+router.post('/password', requireAuth, authLimiter, validateBody(passwordSchema), asyncHandler(async (req, res) => {
   const result = await query('SELECT password_hash FROM users WHERE id = $1', [req.user.id]);
   if (!await bcrypt.compare(req.body.oldPassword, result.rows[0].password_hash))
     throw new AppError('Current password is incorrect.', 400, 'INCORRECT_PASSWORD');

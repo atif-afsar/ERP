@@ -10,40 +10,40 @@ import { LoginView } from './components/auth/LoginView';
 import { SessionExpiredModal } from './components/auth/SessionExpiredModal';
 
 // Modules
-import { DashboardModule } from './modules/dashboard/DashboardModule';
-import { StudentLifecycleModule } from './modules/students/StudentLifecycleModule';
-import { AcademicsModule } from './modules/academics/AcademicsModule';
-import { AttendanceModule } from './modules/attendance/AttendanceModule';
-import { FeesModule } from './modules/fees/FeesModule';
-import { FeeManagementModule } from './modules/fees/FeeManagementModule';
-import { FinanceModule } from './modules/finance/FinanceModule';
-import { InventoryOperationsModule } from './modules/inventory/InventoryOperationsModule';
-import { LibraryOperationsModule } from './modules/library/LibraryOperationsModule';
-import { TransportOperationsModule } from './modules/transport/TransportOperationsModule';
-import { HostelOperationsModule } from './modules/hostel/HostelOperationsModule';
-import { MessOperationsModule } from './modules/mess/MessOperationsModule';
-import { HealthModule } from './modules/health/HealthModule';
-import { ExamsModule } from './modules/exams/ExamsModule';
-import { ExaminationAssessmentModule } from './modules/examinations/ExaminationAssessmentModule';
-import { TimetableModule } from './modules/timetable/TimetableModule';
-import { HomeworkModule } from './modules/homework/HomeworkModule';
-import { CommunicationCenterModule } from './modules/communication/CommunicationCenterModule';
-import { CrmModule } from './modules/crm/CrmModule';
-import { ReportsModule } from './modules/reports/ReportsModule';
-import { SuperAdminModule } from './modules/superadmin/SuperAdminModule';
-import { SuperAdminSaaSModule } from './modules/superadmin/SuperAdminSaaSModule';
-import { TenantManagementModule } from './modules/superadmin/TenantManagementModule';
-import { OrganizationModule } from './modules/organization/OrganizationModule';
-import { SchoolMasterDataModule } from './modules/masterData/SchoolMasterDataModule';
+const DashboardModule = React.lazy(() => import('./modules/dashboard/DashboardModule').then(m => ({ default: m.DashboardModule })));
+const StudentLifecycleModule = React.lazy(() => import('./modules/students/StudentLifecycleModule').then(m => ({ default: m.StudentLifecycleModule })));
+const AcademicsModule = React.lazy(() => import('./modules/academics/AcademicsModule').then(m => ({ default: m.AcademicsModule })));
+const AttendanceModule = React.lazy(() => import('./modules/attendance/AttendanceModule').then(m => ({ default: m.AttendanceModule })));
+const FeesModule = React.lazy(() => import('./modules/fees/FeesModule').then(m => ({ default: m.FeesModule })));
+const FeeManagementModule = React.lazy(() => import('./modules/fees/FeeManagementModule').then(m => ({ default: m.FeeManagementModule })));
+const FinanceModule = React.lazy(() => import('./modules/finance/FinanceModule').then(m => ({ default: m.FinanceModule })));
+const InventoryOperationsModule = React.lazy(() => import('./modules/inventory/InventoryOperationsModule').then(m => ({ default: m.InventoryOperationsModule })));
+const LibraryOperationsModule = React.lazy(() => import('./modules/library/LibraryOperationsModule').then(m => ({ default: m.LibraryOperationsModule })));
+const TransportOperationsModule = React.lazy(() => import('./modules/transport/TransportOperationsModule').then(m => ({ default: m.TransportOperationsModule })));
+const HostelOperationsModule = React.lazy(() => import('./modules/hostel/HostelOperationsModule').then(m => ({ default: m.HostelOperationsModule })));
+const MessOperationsModule = React.lazy(() => import('./modules/mess/MessOperationsModule').then(m => ({ default: m.MessOperationsModule })));
+const HealthModule = React.lazy(() => import('./modules/health/HealthModule').then(m => ({ default: m.HealthModule })));
+const ExamsModule = React.lazy(() => import('./modules/exams/ExamsModule').then(m => ({ default: m.ExamsModule })));
+const ExaminationAssessmentModule = React.lazy(() => import('./modules/examinations/ExaminationAssessmentModule').then(m => ({ default: m.ExaminationAssessmentModule })));
+const TimetableModule = React.lazy(() => import('./modules/timetable/TimetableModule').then(m => ({ default: m.TimetableModule })));
+const HomeworkModule = React.lazy(() => import('./modules/homework/HomeworkModule').then(m => ({ default: m.HomeworkModule })));
+const CommunicationCenterModule = React.lazy(() => import('./modules/communication/CommunicationCenterModule').then(m => ({ default: m.CommunicationCenterModule })));
+const CrmModule = React.lazy(() => import('./modules/crm/CrmModule').then(m => ({ default: m.CrmModule })));
+const ReportsModule = React.lazy(() => import('./modules/reports/ReportsModule').then(m => ({ default: m.ReportsModule })));
+const SuperAdminModule = React.lazy(() => import('./modules/superadmin/SuperAdminModule').then(m => ({ default: m.SuperAdminModule })));
+const SuperAdminSaaSModule = React.lazy(() => import('./modules/superadmin/SuperAdminSaaSModule').then(m => ({ default: m.SuperAdminSaaSModule })));
+const TenantManagementModule = React.lazy(() => import('./modules/superadmin/TenantManagementModule').then(m => ({ default: m.TenantManagementModule })));
+const OrganizationModule = React.lazy(() => import('./modules/organization/OrganizationModule').then(m => ({ default: m.OrganizationModule })));
+const SchoolMasterDataModule = React.lazy(() => import('./modules/masterData/SchoolMasterDataModule').then(m => ({ default: m.SchoolMasterDataModule })));
+const SettingsModule = React.lazy(() => import('./modules/settings/SettingsModule').then(m => ({ default: m.SettingsModule })));
+const ApiExplorerModule = React.lazy(() => import('./modules/apiExplorer/ApiExplorerModule').then(m => ({ default: m.ApiExplorerModule })));
+const SchemaExplorerModule = React.lazy(() => import('./modules/schemaExplorer/SchemaExplorerModule').then(m => ({ default: m.SchemaExplorerModule })));
+const RolesMatrixModule = React.lazy(() => import('./modules/rolesMatrix/RolesMatrixModule').then(m => ({ default: m.RolesMatrixModule })));
+const StaffModule = React.lazy(() => import('./modules/staff/StaffModule').then(m => ({ default: m.StaffModule })));
+const AcademicOperationsModule = React.lazy(() => import('./modules/academicOperations/AcademicOperationsModule').then(m => ({ default: m.AcademicOperationsModule })));
+const HrOperationsModule = React.lazy(() => import('./modules/hr/HrOperationsModule').then(m => ({ default: m.HrOperationsModule })));
+const SaaSBillingModule = React.lazy(() => import('./modules/saasBilling/SaaSBillingModule').then(m => ({ default: m.SaaSBillingModule })));
 import { OwnerOnboardingView } from './components/auth/OwnerOnboardingView';
-import { SettingsModule } from './modules/settings/SettingsModule';
-import { ApiExplorerModule } from './modules/apiExplorer/ApiExplorerModule';
-import { SchemaExplorerModule } from './modules/schemaExplorer/SchemaExplorerModule';
-import { RolesMatrixModule } from './modules/rolesMatrix/RolesMatrixModule';
-import { StaffModule } from './modules/staff/StaffModule';
-import { AcademicOperationsModule } from './modules/academicOperations/AcademicOperationsModule';
-import { HrOperationsModule } from './modules/hr/HrOperationsModule';
-import { SaaSBillingModule } from './modules/saasBilling/SaaSBillingModule';
 import { GlobalAiAssistantBot } from './components/ai/GlobalAiAssistantBot';
 import { LandingPage } from './modules/public/LandingPage';
 import { SuperAdminShell } from './modules/superadmin/SuperAdminShell';
@@ -394,7 +394,9 @@ const MainRouter: React.FC = () => {
         onNavigate={(nav) => navigateTo(nav)}
         onOpenAi={() => setIsAiModalOpen(true)}
       >
-        {READ_ONLY_MODULES.has(currentNav) ? <ReadOnlyModule>{renderModule()}</ReadOnlyModule> : renderModule()}
+        <React.Suspense fallback={<div className="flex h-64 items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-gray-400" /></div>}>
+          {READ_ONLY_MODULES.has(currentNav) ? <ReadOnlyModule>{renderModule()}</ReadOnlyModule> : renderModule()}
+        </React.Suspense>
       </AppShell>
     );
   };

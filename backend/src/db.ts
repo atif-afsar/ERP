@@ -7,6 +7,14 @@ const { Pool } = pg;
 
 const connectionString = config.databaseUrl;
 
+if (process.env.NODE_ENV === 'test') {
+  if (!connectionString.toLowerCase().endsWith('_test') && !connectionString.toLowerCase().includes('_test?')) {
+    console.error('FATAL: NODE_ENV is test but DATABASE_URL does not point to a _test database.');
+    console.error('Current DATABASE_URL:', connectionString);
+    process.exit(1);
+  }
+}
+
 export const pool = new Pool({
   connectionString,
   max: 20,

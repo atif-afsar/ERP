@@ -39,11 +39,29 @@ import { requireAuth } from './middleware/auth.js';
 import { businessAccess } from './middleware/businessAccess.js';
 import { enforceSubscription } from './middleware/enforceSubscription.js';
 
+import { globalLimiter } from './middleware/rateLimiter.js';
+
 const app = express();
 const PORT = config.port;
 
+// Trust reverse proxy for accurate IP resolution for rate limiting
+app.set('trust proxy', 1);
+
 // Security & Utility Middlewares
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "https://checkout.razorpay.com"],
+      frameSrc: ["'self'", "https://checkout.razorpay.com"],
+      connectSrc: ["'self'", "https://api.razorpay.com"],
+      imgSrc: ["'self'", "data:", "https://*"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+    },
+  },
+  crossOriginEmbedderPolicy: false, // Prevents issues with external checkout frames
+}));
+app.use(globalLimiter);
 
 // Production-ready CORS: Restricts to Vercel FRONTEND_URL in production while permitting local dev
 const corsOptions: cors.CorsOptions = {
@@ -58,18 +76,30 @@ const corsOptions: cors.CorsOptions = {
 
 app.use(cors(corsOptions));
 app.use(express.json({ 
-  limit: '10mb',
+  limit: '2mb',
   verify: (req: any, res, buf) => {
     if (req.originalUrl.includes('/webhooks/razorpay')) {
       req.rawBody = buf;
     }
   }
 }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '2mb' }));
 app.use(requestIdMiddleware);
 
 if (config.nodeEnv !== 'test') {
-  app.use(morgan(':method :url :status :res[content-length] - :response-time ms'));
+  app.use(morgan((tokens, req, res) => {
+    return JSON.stringify({
+      method: tokens.method(req, res),
+      url: tokens.url(req, res),
+      status: Number(tokens.status(req, res)),
+      content_length: tokens.res(req, res, 'content-length'),
+      response_time_ms: Number(tokens['response-time'](req, res)),
+      remote_addr: tokens['remote-addr'](req, res),
+      tenant_id: (req as any).tenantId || req.headers['x-tenant-id'] || null,
+      request_id: (req as any).id || req.headers['x-request-id'] || null,
+      timestamp: new Date().toISOString()
+    });
+  }));
 }
 
 // Health check handler
@@ -143,14 +173,41 @@ app.use((req, res, next) => {
 // Centralized error handler
 app.use(errorHandler);
 
+import { checkDbHealth, pool } from './db.js';
+
+// ... lines 7-145 remain intact
+
 if (process.env.NODE_ENV !== 'test') {
-  app.listen(PORT, () => {
+  const server = app.listen(PORT, () => {
     console.log(`====================================================`);
     console.log(`EduNexus VPS Backend Service running on port ${PORT}`);
     console.log(`Health check: http://127.0.0.1:${PORT}/health`);
     console.log(`API base:     http://127.0.0.1:${PORT}/api/v1`);
     console.log(`====================================================`);
   });
+
+  const shutdown = async (signal: string) => {
+    console.log(`\nReceived ${signal}. Shutting down gracefully...`);
+    server.close(async () => {
+      console.log('HTTP server closed.');
+      try {
+        await pool.end();
+        console.log('PostgreSQL pool closed.');
+        process.exit(0);
+      } catch (err) {
+        console.error('Error during PostgreSQL pool closure:', err);
+        process.exit(1);
+      }
+    });
+
+    setTimeout(() => {
+      console.error('Could not close connections in time, forcefully shutting down');
+      process.exit(1);
+    }, 10000);
+  };
+
+  process.on('SIGTERM', () => shutdown('SIGTERM'));
+  process.on('SIGINT', () => shutdown('SIGINT'));
 }
 
 export default app;
