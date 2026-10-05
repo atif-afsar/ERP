@@ -50,6 +50,35 @@ router.post('/onboarding/accept', authLimiter, validateBody(onboardingSchema), a
         `UPDATE staff SET user_id=$1,updated_at=NOW() WHERE id=$2 AND tenant_id=$3 AND user_id IS NULL RETURNING id`,
         [user.id, invitation.staff_id, invitation.tenant_id]);
       if (!linked.rowCount) throw new AppError('The teacher account link is no longer available.', 409, 'STAFF_LINK_UNAVAILABLE');
+    } else {
+      const staffMatches = await client.query(
+        `SELECT id, user_id FROM staff WHERE tenant_id = $1 AND lower(email) = lower($2) LIMIT 1`,
+        [invitation.tenant_id, invitation.email]
+      );
+      if (staffMatches.rowCount) {
+        if (!staffMatches.rows[0].user_id) {
+          await client.query(
+            `UPDATE staff SET user_id = $1, updated_at = NOW() WHERE id = $2 AND tenant_id = $3`,
+            [user.id, staffMatches.rows[0].id, invitation.tenant_id]
+          );
+        }
+      } else if (invitation.role_key === 'STAFF' || invitation.role_key === 'TEACHER') {
+        const empId = `EMP-${user.id.slice(0, 8).toUpperCase()}`;
+        await client.query(
+          `INSERT INTO staff (tenant_id, user_id, employee_id, name, email, designation, department, status)
+           VALUES ($1, $2, $3, $4, lower($5), $6, $7, 'ACTIVE')
+           ON CONFLICT (tenant_id, employee_id) DO UPDATE SET user_id=EXCLUDED.user_id, updated_at=NOW()`,
+          [
+            invitation.tenant_id,
+            user.id,
+            empId,
+            invitation.display_name || 'Staff Member',
+            invitation.email,
+            invitation.role_key === 'TEACHER' ? 'Teacher' : 'Staff',
+            invitation.role_key === 'TEACHER' ? 'Academics' : 'Administration',
+          ]
+        );
+      }
     }
     if (invitation.parent_id) {
       const linked = await client.query(

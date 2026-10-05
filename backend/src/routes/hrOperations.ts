@@ -22,8 +22,66 @@ async function canViewAll(req: Request) {
 async function ownStaff(req: Request, client?: PoolClient) {
   const sql = `SELECT id FROM staff WHERE tenant_id=$1 AND user_id=$2 AND status='ACTIVE'`;
   const row = (await (client ? client.query(sql, [req.tenantId, req.user.id]) : query(sql, [req.tenantId, req.user.id]))).rows[0];
-  if (!row) throw new AppError('No active staff profile is linked to your account.', 403, 'STAFF_PROFILE_REQUIRED');
-  return row.id as string;
+  if (row) return row.id as string;
+
+  // Check if unlinked staff profile matches the user's email
+  const userRow = (await (client
+    ? client.query(`SELECT email FROM users WHERE id=$1`, [req.user.id])
+    : query(`SELECT email FROM users WHERE id=$1`, [req.user.id]))).rows[0];
+  if (userRow?.email) {
+    const byEmail = (await (client
+      ? client.query(`SELECT id FROM staff WHERE tenant_id=$1 AND lower(email)=lower($2) AND status='ACTIVE'`, [req.tenantId, userRow.email])
+      : query(`SELECT id FROM staff WHERE tenant_id=$1 AND lower(email)=lower($2) AND status='ACTIVE'`, [req.tenantId, userRow.email]))).rows[0];
+    if (byEmail) {
+      await (client
+        ? client.query(`UPDATE staff SET user_id=$1, updated_at=NOW() WHERE id=$2 AND user_id IS NULL`, [req.user.id, byEmail.id])
+        : query(`UPDATE staff SET user_id=$1, updated_at=NOW() WHERE id=$2 AND user_id IS NULL`, [req.user.id, byEmail.id]));
+      return byEmail.id as string;
+    }
+  }
+
+  // If user has role STAFF or TEACHER, provision an active staff record
+  const memberRole = (await (client
+    ? client.query(`SELECT r.key FROM memberships m JOIN roles r ON r.id=m.role_id WHERE m.tenant_id=$1 AND m.user_id=$2 AND m.status='active'`, [req.tenantId, req.user.id])
+    : query(`SELECT r.key FROM memberships m JOIN roles r ON r.id=m.role_id WHERE m.tenant_id=$1 AND m.user_id=$2 AND m.status='active'`, [req.tenantId, req.user.id]))).rows[0];
+  if (memberRole && (memberRole.key === 'STAFF' || memberRole.key === 'TEACHER')) {
+    const profile = (await (client
+      ? client.query(`SELECT display_name FROM profiles WHERE id=$1`, [req.user.id])
+      : query(`SELECT display_name FROM profiles WHERE id=$1`, [req.user.id]))).rows[0];
+    const empId = `EMP-${req.user.id.slice(0, 8).toUpperCase()}`;
+    const newStaff = (await (client
+      ? client.query(
+          `INSERT INTO staff (tenant_id, user_id, employee_id, name, email, designation, department, status)
+           VALUES ($1, $2, $3, $4, lower($5), $6, $7, 'ACTIVE')
+           ON CONFLICT (tenant_id, employee_id) DO UPDATE SET user_id=EXCLUDED.user_id, updated_at=NOW() RETURNING id`,
+          [
+            req.tenantId,
+            req.user.id,
+            empId,
+            profile?.display_name || 'Staff Member',
+            userRow?.email || `${req.user.id}@staff.local`,
+            memberRole.key === 'TEACHER' ? 'Teacher' : 'Staff',
+            memberRole.key === 'TEACHER' ? 'Academics' : 'Administration',
+          ]
+        )
+      : query(
+          `INSERT INTO staff (tenant_id, user_id, employee_id, name, email, designation, department, status)
+           VALUES ($1, $2, $3, $4, lower($5), $6, $7, 'ACTIVE')
+           ON CONFLICT (tenant_id, employee_id) DO UPDATE SET user_id=EXCLUDED.user_id, updated_at=NOW() RETURNING id`,
+          [
+            req.tenantId,
+            req.user.id,
+            empId,
+            profile?.display_name || 'Staff Member',
+            userRow?.email || `${req.user.id}@staff.local`,
+            memberRole.key === 'TEACHER' ? 'Teacher' : 'Staff',
+            memberRole.key === 'TEACHER' ? 'Academics' : 'Administration',
+          ]
+        ))).rows[0];
+    if (newStaff) return newStaff.id as string;
+  }
+
+  throw new AppError('No active staff profile is linked to your account.', 403, 'STAFF_PROFILE_REQUIRED');
 }
 async function audit(req: Request, client: PoolClient, action: string, entityId: string, details?: Record<string, unknown>) {
   await writeAudit({ tenantId: req.tenantId!, userId: req.user.id, action, module: 'hr', entityId, details, request: req }, client);

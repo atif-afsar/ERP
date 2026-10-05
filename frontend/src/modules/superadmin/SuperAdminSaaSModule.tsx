@@ -35,11 +35,11 @@ export function SuperAdminSaaSModule() {
     code: '',
     name: '',
     description: '',
-    price_amount: 0,
+    priceAmount: 0,
     currency: 'INR',
-    billing_period: 'monthly',
-    billing_interval: 1,
-    provider_plan_id: '',
+    billingPeriod: 'monthly',
+    billingInterval: 1,
+    razorpayPlanId: '',
   });
 
   useEffect(() => {
@@ -82,8 +82,8 @@ export function SuperAdminSaaSModule() {
     
     try {
       await apiClient.request(`/api/v1/admin/billing/plans/${planId}`, {
-        method: 'PUT',
-        body: { is_active: !currentStatus }
+        method: 'PATCH',
+        body: { isActive: !currentStatus }
       });
       loadData();
     } catch (err: any) {
@@ -215,31 +215,31 @@ export function SuperAdminSaaSModule() {
             <h2 className="text-xl font-bold mb-4 text-slate-800">Create New Subscription Plan</h2>
             <form onSubmit={handleCreatePlan} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700">Code</label>
-                <input type="text" required value={newPlan.code} onChange={e => setNewPlan({...newPlan, code: e.target.value})} className="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border" placeholder="e.g., PRO_MONTHLY" />
+                <label htmlFor="plan-code" className="block text-sm font-medium text-slate-700">Code</label>
+                <input id="plan-code" type="text" required value={newPlan.code} onChange={e => setNewPlan({...newPlan, code: e.target.value})} className="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border" placeholder="e.g., PRO_MONTHLY" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700">Name</label>
-                <input type="text" required value={newPlan.name} onChange={e => setNewPlan({...newPlan, name: e.target.value})} className="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border" placeholder="e.g., Pro Tier" />
+                <label htmlFor="plan-name" className="block text-sm font-medium text-slate-700">Name</label>
+                <input id="plan-name" type="text" required value={newPlan.name} onChange={e => setNewPlan({...newPlan, name: e.target.value})} className="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border" placeholder="e.g., Pro Tier" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700">Description</label>
-                <input type="text" required value={newPlan.description} onChange={e => setNewPlan({...newPlan, description: e.target.value})} className="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border" />
+                <label htmlFor="plan-description" className="block text-sm font-medium text-slate-700">Description</label>
+                <input id="plan-description" type="text" required value={newPlan.description} onChange={e => setNewPlan({...newPlan, description: e.target.value})} className="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border" />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700">Amount (in subunits, e.g. 50000 = 500 INR)</label>
-                  <input type="number" required min="1" value={newPlan.price_amount} onChange={e => setNewPlan({...newPlan, price_amount: parseInt(e.target.value)})} className="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border" />
+                  <label htmlFor="plan-price-amount" className="block text-sm font-medium text-slate-700">Amount (in subunits, e.g. 50000 = 500 INR)</label>
+                  <input id="plan-price-amount" type="number" required min="1" value={newPlan.priceAmount || ''} onChange={e => setNewPlan({...newPlan, priceAmount: parseInt(e.target.value) || 0})} className="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700">Currency</label>
-                  <input type="text" required value={newPlan.currency} onChange={e => setNewPlan({...newPlan, currency: e.target.value})} className="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border" />
+                  <label htmlFor="plan-currency" className="block text-sm font-medium text-slate-700">Currency</label>
+                  <input id="plan-currency" type="text" required value={newPlan.currency} onChange={e => setNewPlan({...newPlan, currency: e.target.value})} className="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border" />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700">Billing Period</label>
-                  <select required value={newPlan.billing_period} onChange={e => setNewPlan({...newPlan, billing_period: e.target.value})} className="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border">
+                  <label htmlFor="plan-billing-period" className="block text-sm font-medium text-slate-700">Billing Period</label>
+                  <select id="plan-billing-period" required value={newPlan.billingPeriod} onChange={e => setNewPlan({...newPlan, billingPeriod: e.target.value as any})} className="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border">
                     <option value="daily">Daily</option>
                     <option value="weekly">Weekly</option>
                     <option value="monthly">Monthly</option>
@@ -247,13 +247,13 @@ export function SuperAdminSaaSModule() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700">Interval</label>
-                  <input type="number" required min="1" value={newPlan.billing_interval} onChange={e => setNewPlan({...newPlan, billing_interval: parseInt(e.target.value)})} className="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border" />
+                  <label htmlFor="plan-billing-interval" className="block text-sm font-medium text-slate-700">Interval</label>
+                  <input id="plan-billing-interval" type="number" required min="1" value={newPlan.billingInterval} onChange={e => setNewPlan({...newPlan, billingInterval: parseInt(e.target.value) || 1})} className="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border" />
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700">Razorpay Plan ID (Required)</label>
-                <input type="text" required value={newPlan.provider_plan_id} onChange={e => setNewPlan({...newPlan, provider_plan_id: e.target.value})} className="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border font-mono" placeholder="plan_xyz123" />
+                <label htmlFor="plan-razorpay-id" className="block text-sm font-medium text-slate-700">Razorpay Plan ID (Required)</label>
+                <input id="plan-razorpay-id" type="text" required value={newPlan.razorpayPlanId} onChange={e => setNewPlan({...newPlan, razorpayPlanId: e.target.value})} className="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border font-mono" placeholder="plan_xyz123" />
               </div>
               <div className="mt-6 flex justify-end gap-3">
                 <button type="button" onClick={() => setIsAddPlanModalOpen(false)} className="px-4 py-2 border border-slate-300 rounded-md shadow-sm text-sm font-medium text-slate-700 bg-white hover:bg-slate-50">Cancel</button>

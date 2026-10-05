@@ -3,7 +3,10 @@ import dotenv from 'dotenv';
 
 import { config } from './config.js';
 
-const { Pool } = pg;
+const { Pool, types } = pg;
+
+// Parse PostgreSQL DATE (OID 1082) as plain 'YYYY-MM-DD' string to prevent UTC midnight shifts
+types.setTypeParser(1082, (val: string) => val);
 
 const connectionString = config.databaseUrl;
 

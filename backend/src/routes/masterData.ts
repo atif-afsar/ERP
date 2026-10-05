@@ -11,10 +11,26 @@ import { writeAudit } from '../services/auditService.js';
 const router = Router();
 router.use(tenantContext(true));
 const uuid = z.string().uuid();
-const profileSchema = z.object({ name:z.string().trim().min(2).max(255).optional(), email:z.string().email().nullable().optional(), phone:z.string().max(50).nullable().optional(), website:z.string().url().nullable().optional(), logoUrl:z.string().url().nullable().optional(), timezone:z.string().min(1).max(50).optional(), addressLine1:z.string().max(500).nullable().optional(), addressLine2:z.string().max(500).nullable().optional(), city:z.string().max(100).nullable().optional(), state:z.string().max(100).nullable().optional(), postalCode:z.string().max(20).nullable().optional(), country:z.string().max(100).optional() });
+const emptyToNull = (schema: z.ZodTypeAny) =>
+  z.preprocess(val => (typeof val === 'string' && val.trim() === '' ? null : val), schema);
+
+const profileSchema = z.object({
+  name: z.string().trim().min(2).max(255).optional(),
+  email: emptyToNull(z.string().email().nullable()).optional(),
+  phone: emptyToNull(z.string().max(50).nullable()).optional(),
+  website: emptyToNull(z.string().url().nullable()).optional(),
+  logoUrl: emptyToNull(z.string().url().nullable()).optional(),
+  timezone: z.string().min(1).max(50).optional(),
+  addressLine1: emptyToNull(z.string().max(500).nullable()).optional(),
+  addressLine2: emptyToNull(z.string().max(500).nullable()).optional(),
+  city: emptyToNull(z.string().max(100).nullable()).optional(),
+  state: emptyToNull(z.string().max(100).nullable()).optional(),
+  postalCode: emptyToNull(z.string().max(20).nullable()).optional(),
+  country: z.string().max(100).optional()
+});
 const yearBaseSchema = z.object({ name:z.string().trim().min(4).max(100), startDate:z.string().date(), endDate:z.string().date(), status:z.enum(['upcoming','active','closed','archived']).default('upcoming'), isCurrent:z.boolean().default(false) });
 const yearSchema = yearBaseSchema.refine(v=>v.endDate>v.startDate,{message:'End date must be after start date'});
-const branchSchema = z.object({ name:z.string().trim().min(2).max(255), code:z.string().trim().regex(/^[A-Z0-9_-]{2,50}$/), email:z.string().email().nullable().optional(), phone:z.string().max(50).nullable().optional(), addressLine1:z.string().max(500).nullable().optional(), city:z.string().max(100).nullable().optional(), state:z.string().max(100).nullable().optional(), postalCode:z.string().max(20).nullable().optional(), isMain:z.boolean().default(false), status:z.enum(['active','inactive']).default('active') });
+const branchSchema = z.object({ name:z.string().trim().min(2).max(255), code:z.string().trim().regex(/^[A-Z0-9_-]{2,50}$/), email:emptyToNull(z.string().email().nullable()).optional(), phone:emptyToNull(z.string().max(50).nullable()).optional(), addressLine1:emptyToNull(z.string().max(500).nullable()).optional(), city:emptyToNull(z.string().max(100).nullable()).optional(), state:emptyToNull(z.string().max(100).nullable()).optional(), postalCode:emptyToNull(z.string().max(20).nullable()).optional(), isMain:z.boolean().default(false), status:z.enum(['active','inactive']).default('active') });
 const classSchema = z.object({ name:z.string().trim().min(1).max(100), numericLevel:z.number().int().min(0).max(20).nullable().optional(), stream:z.string().max(100).default('General'), branchId:uuid.nullable().optional(), academicYearId:uuid.nullable().optional() });
 const sectionSchema = z.object({ classId:uuid, name:z.string().trim().min(1).max(50), capacity:z.number().int().min(1).max(500).default(40), classTeacherId:uuid.nullable().optional() });
 const subjectBaseSchema = z.object({ name:z.string().trim().min(2).max(100), code:z.string().trim().regex(/^[A-Z0-9_-]{2,50}$/), department:z.string().max(100).nullable().optional(), isElective:z.boolean().default(false), weeklyPeriods:z.number().int().min(1).max(20).default(1), passingMarks:z.number().min(0).default(33), maxMarks:z.number().positive().default(100) });
@@ -29,7 +45,9 @@ const ensureRef = async (table:'branches'|'academic_years'|'classes'|'staff'|'su
 };
 
 router.get('/profile',requirePermission('master_data.view'),asyncHandler(async(req,res)=>{const r=await query('SELECT * FROM tenants WHERE id=$1',[req.tenantId]);respond(res,req,r.rows[0]);}));
-router.patch('/profile',requirePermission('master_data.manage'),validateBody(profileSchema),asyncHandler(async(req,res)=>{const map:Record<string,string>={name:'name',email:'email',phone:'phone',website:'website',logoUrl:'logo_url',timezone:'timezone',addressLine1:'address_line_1',addressLine2:'address_line_2',city:'city',state:'state',postalCode:'postal_code',country:'country'};const entries=Object.entries(req.body).filter(([key])=>map[key]);if(!entries.length)throw new AppError('No profile fields supplied.',422,'VALIDATION_ERROR');const values=entries.map(([,v])=>v);const sets=entries.map(([k],i)=>`${map[k]}=$${i+1}`);values.push(req.tenantId);const r=await query(`UPDATE tenants SET ${sets.join(',')},updated_at=NOW() WHERE id=$${values.length} RETURNING *`,values);await audit(req,'SCHOOL_PROFILE_UPDATED',req.tenantId!,{fields:entries.map(([k])=>k)});respond(res,req,r.rows[0]);}));
+const handleProfileUpdate = asyncHandler(async(req:Request,res:Response)=>{const map:Record<string,string>={name:'name',email:'email',phone:'phone',website:'website',logoUrl:'logo_url',timezone:'timezone',addressLine1:'address_line_1',addressLine2:'address_line_2',city:'city',state:'state',postalCode:'postal_code',country:'country'};const entries=Object.entries(req.body).filter(([key])=>map[key]);if(!entries.length)throw new AppError('No profile fields supplied.',422,'VALIDATION_ERROR');const values=entries.map(([,v])=>v);const sets=entries.map(([k],i)=>`${map[k]}=$${i+1}`);values.push(req.tenantId);const r=await query(`UPDATE tenants SET ${sets.join(',')},updated_at=NOW() WHERE id=$${values.length} RETURNING *`,values);await audit(req,'SCHOOL_PROFILE_UPDATED',req.tenantId!,{fields:entries.map(([k])=>k)});respond(res,req,r.rows[0]);});
+router.patch('/profile',requirePermission('master_data.manage'),validateBody(profileSchema),handleProfileUpdate);
+router.put('/profile',requirePermission('master_data.manage'),validateBody(profileSchema),handleProfileUpdate);
 
 router.get('/academic-years',requirePermission('master_data.view'),asyncHandler(async(req,res)=>{const r=await query('SELECT * FROM academic_years WHERE tenant_id=$1 ORDER BY start_date DESC',[req.tenantId]);respond(res,req,r.rows);}));
 router.post('/academic-years',requirePermission('master_data.manage'),validateBody(yearSchema),asyncHandler(async(req,res)=>{const b=req.body;const row=await transaction(async c=>{if(b.isCurrent||b.status==='active')await c.query(`UPDATE academic_years SET is_current=false,status=CASE WHEN status='active' THEN 'closed' ELSE status END,updated_at=NOW() WHERE tenant_id=$1`,[req.tenantId]);return(await c.query(`INSERT INTO academic_years(tenant_id,name,start_date,end_date,is_current,status) VALUES($1,$2,$3,$4,$5,$6) RETURNING *`,[req.tenantId,b.name,b.startDate,b.endDate,b.isCurrent||b.status==='active',b.status])).rows[0];});await audit(req,'ACADEMIC_YEAR_CREATED',row.id,{name:b.name});respond(res,req,row,201);}));

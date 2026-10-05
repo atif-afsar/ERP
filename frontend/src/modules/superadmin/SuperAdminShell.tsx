@@ -82,11 +82,17 @@ export const SuperAdminShell: React.FC<SuperAdminShellProps> = ({ onNavigate, ac
           </Button>
 
           <div className="pl-3 border-l border-slate-200 flex items-center gap-2">
-            <img
-              src={currentUser.avatarUrl}
-              alt={currentUser.name}
-              className="w-8 h-8 rounded-full ring-1 ring-amber-300 object-cover"
-            />
+            {currentUser.avatarUrl ? (
+              <img
+                src={currentUser.avatarUrl}
+                alt={currentUser.name}
+                className="w-8 h-8 rounded-full ring-1 ring-amber-300 object-cover shrink-0"
+              />
+            ) : (
+              <div className="w-8 h-8 rounded-full bg-amber-500 text-white flex items-center justify-center font-bold text-xs ring-1 ring-amber-300 shrink-0">
+                {currentUser.name ? currentUser.name[0].toUpperCase() : 'A'}
+              </div>
+            )}
             <div className="hidden sm:block text-left text-xs">
               <p className="font-bold text-slate-900 leading-tight">{currentUser.name}</p>
               <p className="text-[10px] text-amber-600 font-semibold">Super Administrator</p>
@@ -94,6 +100,28 @@ export const SuperAdminShell: React.FC<SuperAdminShellProps> = ({ onNavigate, ac
           </div>
         </div>
       </header>
+
+      {/* Mobile Responsive Navigation Strip */}
+      <div className="md:hidden flex overflow-x-auto gap-2 p-2.5 bg-white border-b border-slate-200 shadow-2xs">
+        {navItems.map((item) => {
+          const Icon = item.icon;
+          const isActive = activeTab === item.id;
+          return (
+            <button
+              key={item.id}
+              onClick={() => setActiveTab(item.id)}
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold whitespace-nowrap shrink-0 transition-colors ${
+                isActive
+                  ? 'bg-amber-100 text-amber-800 border border-amber-200'
+                  : 'text-slate-600 hover:bg-slate-100'
+              }`}
+            >
+              <Icon className={`w-4 h-4 ${isActive ? 'text-amber-600' : 'text-slate-400'}`} />
+              <span>{item.label}</span>
+            </button>
+          );
+        })}
+      </div>
 
       {/* Main Framework */}
       <div className="flex-1 flex max-w-7xl mx-auto w-full p-4 sm:p-6 lg:p-8 gap-8">

@@ -266,11 +266,17 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar, onOpenAi, onNav
             onClick={() => setShowUserMenu(!showUserMenu)}
             className="flex items-center gap-2 pl-2 border-l border-slate-200 hover:opacity-90 transition-opacity"
           >
-            <img
-              src={currentUser.avatarUrl}
-              alt={currentUser.name}
-              className="w-8 h-8 rounded-full object-cover border border-slate-300"
-            />
+            {currentUser.avatarUrl ? (
+              <img
+                src={currentUser.avatarUrl}
+                alt={currentUser.name}
+                className="w-8 h-8 rounded-full object-cover border border-slate-300 shrink-0"
+              />
+            ) : (
+              <div className="w-8 h-8 rounded-full bg-emerald-600 text-white flex items-center justify-center font-bold text-xs border border-emerald-700 shrink-0">
+                {currentUser.name ? currentUser.name[0].toUpperCase() : 'U'}
+              </div>
+            )}
             <div className="hidden lg:block text-left">
               <p className="text-xs font-semibold text-slate-900 leading-tight">{currentUser.name}</p>
               <p className="text-[10px] text-emerald-700 font-semibold capitalize">

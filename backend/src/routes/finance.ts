@@ -10,6 +10,13 @@ const router = Router();
 
 // Ensure default accounts
 async function ensureDefaultAccounts(tenantId: string) {
+  if (tenantId === 'a1b2c3d4-e5f6-7890-abcd-ef1234567890') {
+    throw new AppError('Cannot create school finance accounts under platform tenant.', 400, 'TENANT_SELECTION_REQUIRED');
+  }
+  const tenantCheck = await query('SELECT id FROM tenants WHERE id = $1', [tenantId]);
+  if (!tenantCheck.rowCount) {
+    throw new AppError('A valid operational institution must be selected to access finance.', 400, 'TENANT_SELECTION_REQUIRED');
+  }
   const check = await query('SELECT id FROM finance_accounts WHERE tenant_id = $1 LIMIT 1', [tenantId]);
   if (check.rowCount === 0) {
     await transaction(async (client) => {
@@ -26,6 +33,23 @@ async function ensureDefaultAccounts(tenantId: string) {
     });
   }
 }
+
+// All finance operations require authenticated tenant scope pointing to a real operational institution
+router.use(requireAuth);
+router.use(tenantContext(true));
+router.use(asyncHandler(async (req: Request, _res: Response, next) => {
+  if (req.user?.isSuperAdmin) {
+    const suppliedTenant = (req.headers['x-tenant-id'] || req.query.tenantId) as string | undefined;
+    if (!suppliedTenant || suppliedTenant === 'a1b2c3d4-e5f6-7890-abcd-ef1234567890') {
+      throw new AppError('A specific operational institution must be selected to access finance.', 400, 'TENANT_SELECTION_REQUIRED');
+    }
+  }
+  const tenantCheck = await query('SELECT id FROM tenants WHERE id = $1', [req.tenantId]);
+  if (!tenantCheck.rowCount) {
+    throw new AppError('A valid operational institution must be selected to access finance.', 400, 'TENANT_SELECTION_REQUIRED');
+  }
+  next();
+}));
 
 // GET Accounts
 router.get('/accounts', requireAuth, tenantContext(true), asyncHandler(async (req: Request, res: Response) => {

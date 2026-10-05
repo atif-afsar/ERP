@@ -132,22 +132,23 @@ export const ApiExplorerModule: React.FC = () => {
       runner: (t) => financeApi.getStructures(t),
     },
     {
-      id: 'finance-payment',
+      id: 'finance-payment-proof',
       method: 'POST',
-      path: '/api/v1/payments',
+      path: '/api/v1/fees/proofs',
       category: 'Finance',
-      description: 'Transactional payment receipt creation with idempotency',
-      permission: 'payments.create',
-      supportsIdempotency: true,
+      description: 'Submit manual fee payment proof for institutional review',
+      permission: 'payment_proofs.submit',
+      supportsIdempotency: false,
       defaultBody: {
-        studentId: 'student-101',
+        feeAssignmentId: 'assignment-uuid',
         amount: 8500,
-        currency: 'INR',
-        paymentMode: 'RAZORPAY_UPI',
-        remarks: 'Term 1 Tuition settlement',
+        transactionReference: 'UPI-REF-987654',
+        paymentDate: '2026-10-05',
+        fileName: 'receipt.pdf',
+        proofDataUrl: 'data:application/pdf;base64,JVBERi0xLjQK...'
       },
-      runner: (t, body, _, idemp) =>
-        financeApi.recordPayment(t, body, { idempotencyKey: idemp }),
+      runner: (t, body) =>
+        financeApi.recordPayment(t, body),
     },
     {
       id: 'exams-list',
@@ -376,6 +377,14 @@ export const ApiExplorerModule: React.FC = () => {
             Role: {currentUser.role}
           </Badge>
         </div>
+      </div>
+
+      {/* Architecture Disclaimer Banner */}
+      <div className="rounded-xl border border-sky-500/20 bg-sky-950/40 p-3.5 text-xs text-sky-200">
+        <p className="font-semibold">EduNexus V1 Production Architecture Reference</p>
+        <p className="text-sky-300/80 mt-0.5">
+          Endpoints reflect the migrated Express route catalog. Direct payment posting has been replaced by enrollment-linked fee payment proofs and double-entry accounting.
+        </p>
       </div>
 
       {/* Sub-Tabs */}

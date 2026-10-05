@@ -43,7 +43,7 @@ else if(action==='build')run([path.join(path.dirname(process.execPath),'node_mod
 else if(action==='full-tests'){
  const previous=JSON.parse(fs.readFileSync(path.join(root,'qa/artifacts/batch1-state.json')));const previousUrl=new URL(url);previousUrl.pathname='/'+previous.database;
  const history=path.join(dir,'rc-history');fs.mkdirSync(history,{recursive:true});
- Object.assign(process.env,{DATABASE_URL:previousUrl.href,NODE_ENV:'test',BATCH1_STATE:path.join(dir,'batch1-state.json'),BATCH1_ARTIFACT_DIR:history});
+ Object.assign(process.env,{DATABASE_URL:previousUrl.href,NODE_ENV:'test',BATCH1_STATE:path.join(root,'qa/artifacts/batch1-state.json'),BATCH1_ARTIFACT_DIR:history});
  delete process.env.RC_STATE;delete process.env.RC_ARTIFACT_DIR;delete process.env.RC_API_URL;
  run(['--import','tsx','--test',...fs.readdirSync(path.join(root,'backend/tests')).filter(f=>f.endsWith('.test.mjs')).map(f=>'tests/'+f)]);
 }

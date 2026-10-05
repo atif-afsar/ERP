@@ -17,8 +17,14 @@ export function FinanceModule(){
  const accounts=await api.list(tenantId,'accounts');setData((d:any)=>({...d,accounts:accounts.data}));
  const result=await loadResources({cash:()=>api.list(tenantId,'cash-bank-accounts'),journals:()=>api.list(tenantId,'journals'),expenses:()=>api.list(tenantId,'expenses'),income:()=>api.list(tenantId,'other-income'),ledger:()=>api.list(tenantId,'reports/ledger')});setData((d:any)=>({...d,...result.data}));setErrors(result.errors);
  }catch(e:any){setErrors({accounts:e.message||'Unable to load finance accounts.'});}finally{setLoading(false);}};
- useEffect(()=>{if(canOpenModule(currentUser,'finance'))void load();},[tenantId]);
+ useEffect(()=>{if(canOpenModule(currentUser,'finance')&&!(currentUser?.role==='SUPER_ADMIN'&&(!tenantId||tenantId===currentUser.tenantId||tenantId==='tenant-school-1')))void load();},[tenantId]);
  if(!canOpenModule(currentUser,'finance'))return <p role="alert">Finance access is not permitted.</p>;
+ if(currentUser?.role==='SUPER_ADMIN'&&(!tenantId||tenantId===currentUser.tenantId||tenantId==='tenant-school-1'))return(
+  <div className="space-y-4 p-6 bg-amber-50 border border-amber-200 rounded-xl text-amber-900" role="region" aria-label="Tenant selection required">
+    <h1 className="text-2xl font-bold text-amber-950">School Finance & Accounting</h1>
+    <p className="text-sm">School Finance is tenant operational data. As a Platform Super Administrator, please select an operational school institution context to view or manage financial records.</p>
+  </div>
+ );
  const post=async(e:React.FormEvent)=>{e.preventDefault();setBusy(true);setMessage('');try{await api.post(tenantId,tab==='Expenses'?'expenses':'other-income',{...form,amount:Number(form.amount)});setForm(blank);setMessage(tab==='Expenses'?'Expense posted.':'Other income posted.');await load();}catch(e:any){setErrors(previous=>({...previous,mutation:e.message}));}finally{setBusy(false);}};
  const ledgers=(types:string[])=>data.ledger.filter((x:any)=>types.includes(x.account_type));
  const ledgerRows=(rows:any[])=>rows.map(x=>[x.code,x.name,x.account_type,money(x.total_debit),money(x.total_credit),money(x.balance)]);

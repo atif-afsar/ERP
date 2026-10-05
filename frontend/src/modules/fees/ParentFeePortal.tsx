@@ -3,7 +3,20 @@ import { useTenant } from '../../context/TenantContext';
 import { feeManagementService as api } from '../../services/feeManagementService';
 
 const money = (v: any) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(Number(v || 0));
-const date = (v: any) => v ? String(v).slice(0, 10) : '—';
+const date = (v: any) => {
+    if (!v) return '—';
+    const str = String(v);
+    if (str.includes('T')) {
+        const d = new Date(str);
+        if (!isNaN(d.getTime())) {
+            const y = d.getFullYear();
+            const m = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${y}-${m}-${day}`;
+        }
+    }
+    return str.slice(0, 10);
+};
 const Table = ({ heads, rows }: any) => <div className="my-4 overflow-x-auto rounded-xl border bg-white"><table className="w-full text-sm"><thead className="bg-slate-50 text-left"><tr>{heads.map((h: string) => <th key={h} className="p-3">{h}</th>)}</tr></thead><tbody>{rows.map((r: any[], i: number) => <tr key={i} className="border-t">{r.map((v: any, j: number) => <td key={j} className="p-3">{v}</td>)}</tr>)}</tbody></table></div>;
 
 const Input = ({ label, ...p }: any) => <label className="text-xs font-medium text-slate-600">{label}<input {...p} className="mt-1 w-full rounded border p-2 text-sm" /></label>;
@@ -100,6 +113,10 @@ export const ParentFeePortal: React.FC = () => {
 
                         <form onSubmit={e => {
                             e.preventDefault();
+                            if (assignment && Number(proof.amount) > Number(assignment.outstanding)) {
+                                setErr(`Amount cannot exceed the remaining outstanding balance of ${money(assignment.outstanding)}.`);
+                                return;
+                            }
                             run(() => api.submitProof(t, { ...proof, installmentId: proof.installmentId || null }), 'Payment proof submitted for administrator review.');
                         }} className="grid gap-3 rounded-xl border bg-white p-4">
                             <h3 className="font-bold">Submit Payment Proof</h3>
@@ -121,7 +138,7 @@ export const ParentFeePortal: React.FC = () => {
                                     </select>
                                 </label>
                             )}
-                            <Input label="Amount paid" type="number" min="0.01" step="0.01" value={proof.amount} onChange={(e: any) => setProof({ ...proof, amount: Number(e.target.value) })} />
+                            <Input label="Amount paid" type="number" min="0.01" max={assignment ? Number(assignment.outstanding) : undefined} step="0.01" value={proof.amount} onChange={(e: any) => setProof({ ...proof, amount: Number(e.target.value) })} />
                             <Input label="UPI transaction reference" required value={proof.transactionReference} onChange={(e: any) => setProof({ ...proof, transactionReference: e.target.value })} />
                             <Input label="Payment date" type="date" value={proof.paymentDate} onChange={(e: any) => setProof({ ...proof, paymentDate: e.target.value })} />
                             <label className="text-xs">Screenshot or PDF

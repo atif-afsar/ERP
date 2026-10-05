@@ -119,7 +119,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeNav, onNavigate, isOpen,
       id: 'academics',
       label: isTeacher ? `My ${getLabel('groupPlural')}` : getLabel('groupPlural'),
       icon: GraduationCap,
-      show: !isStudent && !isParent && currentUser.role !== 'ACCOUNTANT',
+      show: false,
       section: 'ACADEMICS',
     },
     {
@@ -147,7 +147,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeNav, onNavigate, isOpen,
       id: 'homework',
       label: isStudent ? 'My Homework' : isParent ? "Children's Homework" : 'Homework & Notes',
       icon: BookOpen,
-      show: isFeatureEnabled('homework') && currentUser.role !== 'ACCOUNTANT',
+      show: false,
       section: 'ACADEMICS',
     },
     {
@@ -217,7 +217,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeNav, onNavigate, isOpen,
       id: 'health',
       label: isStudent ? 'My Health & Clinic' : isParent ? "Children's Health Record" : 'Health & Clinic',
       icon: HeartPulse,
-      show: currentUser.role === 'TENANT_ADMIN' || currentUser.role === 'STAFF' || currentUser.role === 'SUPER_ADMIN' || isStudent || isParent,
+      show: false,
       section: 'OPERATIONS',
     },
     {
@@ -231,14 +231,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeNav, onNavigate, isOpen,
       id: 'crm',
       label: isSchool ? 'Admissions Desk' : 'Student Leads Desk',
       icon: UserPlus,
-      show: isFeatureEnabled('inquiryCrm') && (currentUser.role === 'TENANT_ADMIN' || currentUser.role === 'SUPER_ADMIN' || currentUser.role === 'STAFF'),
+      show: false,
       section: 'ADMINISTRATION',
     },
     {
       id: 'reports',
       label: 'Analytics & Reports',
       icon: FileSpreadsheet,
-      show: currentUser.role === 'TENANT_ADMIN' || currentUser.role === 'SUPER_ADMIN' || currentUser.role === 'BRANCH_MANAGER',
+      show: false,
       section: 'ADMINISTRATION',
     },
     {
@@ -259,7 +259,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeNav, onNavigate, isOpen,
       id: 'settings',
       label: 'Institution Settings',
       icon: Settings,
-      show: currentUser.role === 'TENANT_ADMIN' || currentUser.role === 'SUPER_ADMIN',
+      show: false,
       section: 'ADMINISTRATION',
     },
     {
@@ -325,11 +325,17 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeNav, onNavigate, isOpen,
       {/* Footer Profile */}
       <div className="p-3 border-t border-slate-200 bg-slate-50">
         <div className="flex items-center gap-3 p-1.5 rounded-lg">
-          <img
-            src={currentUser.avatarUrl}
-            alt={currentUser.name}
-            className="w-8 h-8 rounded-full object-cover border border-slate-300"
-          />
+          {currentUser.avatarUrl ? (
+            <img
+              src={currentUser.avatarUrl}
+              alt={currentUser.name}
+              className="w-8 h-8 rounded-full object-cover border border-slate-300 shrink-0"
+            />
+          ) : (
+            <div className="w-8 h-8 rounded-full bg-emerald-600 text-white flex items-center justify-center font-bold text-xs border border-emerald-700 shrink-0">
+              {currentUser.name ? currentUser.name[0].toUpperCase() : 'U'}
+            </div>
+          )}
           <div className="flex-1 min-w-0">
             <p className="text-xs font-semibold text-slate-900 truncate">{currentUser.name}</p>
             <p className="text-[11px] text-slate-500 truncate">{currentUser.designation || currentUser.role}</p>

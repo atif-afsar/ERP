@@ -31,7 +31,7 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({ isOpen
     setStep('verify');
   };
 
-  const handleResetSubmit = (e: React.FormEvent) => {
+  const handleResetSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!otpCode || otpCode.length < 4) {
       setError('Please enter the 6-digit verification code.');
@@ -47,7 +47,11 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({ isOpen
     }
 
     setError(null);
-    changePassword('old-mock', newPassword);
+    const res = await changePassword('old-mock', newPassword);
+    if (!res?.success) {
+      setError(res?.error || 'Password reset could not be completed. Please contact your institutional administrator.');
+      return;
+    }
     setStep('done');
   };
 

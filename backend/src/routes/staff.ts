@@ -85,11 +85,21 @@ router.post('/', requireAuth, tenantContext(true), asyncHandler(async (req: Requ
     throw new AppError('Name, employeeId, and designation are required.', 422, 'VALIDATION_ERROR');
   }
 
+  let userId: string | null = b.userId || null;
+  if (!userId && b.email) {
+    const userMatch = await query(
+      `SELECT u.id FROM users u JOIN memberships m ON m.user_id = u.id WHERE m.tenant_id = $1 AND lower(u.email) = lower($2) LIMIT 1`,
+      [tenantId, b.email]
+    );
+    if (userMatch.rowCount) userId = userMatch.rows[0].id;
+  }
+
   const result = await query(
     `INSERT INTO staff (
-       tenant_id, employee_id, name, email, phone, designation, department, basic_salary, status, joined_date
-     ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+       tenant_id, user_id, employee_id, name, email, phone, designation, department, basic_salary, status, joined_date
+     ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
      ON CONFLICT (tenant_id, employee_id) DO UPDATE SET
+       user_id = COALESCE(EXCLUDED.user_id, staff.user_id),
        name = EXCLUDED.name,
        designation = EXCLUDED.designation,
        department = EXCLUDED.department,
@@ -99,6 +109,7 @@ router.post('/', requireAuth, tenantContext(true), asyncHandler(async (req: Requ
      RETURNING *`,
     [
       tenantId,
+      userId,
       b.employeeId,
       b.name,
       b.email || null,

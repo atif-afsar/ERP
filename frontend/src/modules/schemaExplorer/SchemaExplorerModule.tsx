@@ -119,35 +119,34 @@ const TABLES: TableDef[] = [
     ],
   },
   {
-    name: 'guardians',
+    name: 'parents',
     cluster: 'People',
-    description: 'Parent and guardian contact identity entity',
+    description: 'Parent and guardian identity linked to user accounts for multi-child portal access',
     tenantScoped: true,
     branchScoped: false,
     softDelete: false,
     columns: [
-      { name: 'id', type: 'UUID', isPrimary: true, description: 'Guardian UUID' },
+      { name: 'id', type: 'UUID', isPrimary: true, description: 'Parent UUID' },
       { name: 'tenant_id', type: 'UUID', isForeign: true, foreignRef: 'tenants.id', description: 'Tenant ownership' },
-      { name: 'name', type: 'VARCHAR(255)', description: 'Full parent/guardian name' },
+      { name: 'user_id', type: 'UUID', isForeign: true, foreignRef: 'users.id', isNullable: true, description: 'Linked authentication user account' },
+      { name: 'first_name', type: 'VARCHAR(100)', description: 'Parent first name' },
+      { name: 'last_name', type: 'VARCHAR(100)', description: 'Parent last name' },
       { name: 'phone', type: 'VARCHAR(50)', description: 'Primary phone number' },
       { name: 'email', type: 'VARCHAR(255)', isNullable: true, description: 'Parent communications email' },
-      { name: 'occupation', type: 'VARCHAR(100)', isNullable: true, description: 'Guardian profession' },
     ],
   },
   {
-    name: 'student_guardians',
+    name: 'parent_students',
     cluster: 'People',
-    description: 'Many-to-many relationship junction between students and guardians with relationship permissions',
+    description: 'Relationship junction linking parent user accounts to admitted students',
     tenantScoped: true,
     branchScoped: false,
     softDelete: false,
     columns: [
-      { name: 'id', type: 'UUID', isPrimary: true, description: 'Junction relationship UUID' },
-      { name: 'student_id', type: 'UUID', isForeign: true, foreignRef: 'students.id', description: 'Linked student' },
-      { name: 'guardian_id', type: 'UUID', isForeign: true, foreignRef: 'guardians.id', description: 'Linked parent/guardian' },
-      { name: 'relationship_type', type: 'VARCHAR(50)', description: 'FATHER, MOTHER, GUARDIAN' },
-      { name: 'is_primary', type: 'BOOLEAN', description: 'Primary emergency contact indicator' },
-      { name: 'receives_fee_alerts', type: 'BOOLEAN', description: 'Automated invoice & receipt dispatch' },
+      { name: 'parent_id', type: 'UUID', isPrimary: true, isForeign: true, foreignRef: 'parents.id', description: 'Linked parent record' },
+      { name: 'student_id', type: 'UUID', isPrimary: true, isForeign: true, foreignRef: 'students.id', description: 'Linked student record' },
+      { name: 'tenant_id', type: 'UUID', isForeign: true, foreignRef: 'tenants.id', description: 'Tenant ownership' },
+      { name: 'relationship', type: 'VARCHAR(50)', description: 'FATHER, MOTHER, GUARDIAN' },
     ],
   },
   // 3. ACADEMIC STRUCTURES
@@ -235,21 +234,37 @@ const TABLES: TableDef[] = [
     ],
   },
   {
-    name: 'payment_transactions',
+    name: 'payment_proofs',
     cluster: 'Finance',
-    description: 'Immutable financial ledger recording monetary receipts and payment gateway references',
+    description: 'Manual UPI/bank payment receipts uploaded by parents awaiting accountant verification',
     tenantScoped: true,
-    branchScoped: true,
+    branchScoped: false,
     softDelete: false,
     columns: [
-      { name: 'id', type: 'UUID', isPrimary: true, description: 'Payment transaction UUID' },
+      { name: 'id', type: 'UUID', isPrimary: true, description: 'Payment proof UUID' },
       { name: 'tenant_id', type: 'UUID', isForeign: true, foreignRef: 'tenants.id', description: 'Tenant ownership' },
-      { name: 'student_id', type: 'UUID', isForeign: true, foreignRef: 'students.id', description: 'Paying student' },
-      { name: 'receipt_no', type: 'VARCHAR(50)', isUnique: true, description: 'Legal receipt invoice number' },
-      { name: 'amount', type: 'NUMERIC(12,2)', description: 'Paid monetary sum' },
-      { name: 'payment_mode', type: 'VARCHAR(50)', description: 'RAZORPAY_UPI, RAZORPAY_CARD, CASH, CHEQUE' },
-      { name: 'transaction_ref', type: 'VARCHAR(255)', description: 'Gateway txn reference' },
-      { name: 'status', type: 'VARCHAR(20)', description: 'SUCCESS, FAILED, REFUNDED' },
+      { name: 'fee_assignment_id', type: 'UUID', isForeign: true, foreignRef: 'fee_assignments.id', description: 'Assigned fee due' },
+      { name: 'amount', type: 'NUMERIC(12,2)', description: 'Remitted payment amount' },
+      { name: 'transaction_reference', type: 'VARCHAR(150)', isUnique: true, description: 'UPI transaction reference' },
+      { name: 'payment_date', type: 'DATE', description: 'Calendar date of payment' },
+      { name: 'status', type: 'VARCHAR(20)', description: 'PENDING, APPROVED, REJECTED' },
+    ],
+  },
+  {
+    name: 'payments',
+    cluster: 'Finance',
+    description: 'Verified fee payment receipts linked to assignments and double-entry accounting journals',
+    tenantScoped: true,
+    branchScoped: false,
+    softDelete: false,
+    columns: [
+      { name: 'id', type: 'UUID', isPrimary: true, description: 'Payment receipt UUID' },
+      { name: 'tenant_id', type: 'UUID', isForeign: true, foreignRef: 'tenants.id', description: 'Tenant ownership' },
+      { name: 'fee_assignment_id', type: 'UUID', isForeign: true, foreignRef: 'fee_assignments.id', description: 'Associated fee assignment' },
+      { name: 'receipt_no', type: 'VARCHAR(50)', isUnique: true, description: 'Official receipt number' },
+      { name: 'amount', type: 'NUMERIC(12,2)', description: 'Verified payment amount' },
+      { name: 'paid_at', type: 'TIMESTAMPTZ', description: 'Payment timestamp' },
+      { name: 'status', type: 'VARCHAR(20)', description: 'COMPLETED, VOID' },
     ],
   },
   {
@@ -470,6 +485,14 @@ ALTER TABLE public.payment_transactions ENABLE ROW LEVEL SECURITY;`;
         </div>
       </div>
 
+      {/* Architecture Disclaimer Banner */}
+      <div className="rounded-xl border border-emerald-500/20 bg-emerald-950/40 p-3.5 text-xs text-emerald-200">
+        <p className="font-semibold">EduNexus V1 Database Schema Reference</p>
+        <p className="text-emerald-300/80 mt-0.5">
+          Entity structures reflect the native PostgreSQL migrations (`parents`, `parent_students`, `fee_assignments`, `payment_proofs`, `payments`, `finance_entries`). Legacy models (`guardians`, `student_guardians`, `payment_transactions`) have been superseded.
+        </p>
+      </div>
+
       {/* Main Tabs */}
       <Tabs
         tabs={[
@@ -526,8 +549,8 @@ ALTER TABLE public.payment_transactions ENABLE ROW LEVEL SECURITY;`;
                   <p className="text-[10px] text-slate-400">id, admission_no, branch_id, status</p>
                 </div>
                 <div className="p-2.5 bg-slate-950 rounded-xl border border-slate-800">
-                  <p className="font-bold text-white">student_guardians (Junction)</p>
-                  <p className="text-[10px] text-slate-400">student_id, guardian_id, is_primary</p>
+                  <p className="font-bold text-white">parent_students (Junction)</p>
+                  <p className="text-[10px] text-slate-400">parent_id, student_id, relationship</p>
                 </div>
                 <div className="p-2.5 bg-slate-950 rounded-xl border border-slate-800">
                   <p className="font-bold text-white">enrollments (Snapshots)</p>
@@ -547,16 +570,16 @@ ALTER TABLE public.payment_transactions ENABLE ROW LEVEL SECURITY;`;
               </div>
               <div className="space-y-2 font-mono text-xs text-slate-300">
                 <div className="p-2.5 bg-slate-950 rounded-xl border border-slate-800">
-                  <p className="font-bold text-white">fee_structures</p>
-                  <p className="text-[10px] text-slate-400">id, name, heads, total_amount</p>
+                  <p className="font-bold text-white">fee_assignments & proofs</p>
+                  <p className="text-[10px] text-slate-400">id, fee_structure_id, proof_status</p>
                 </div>
                 <div className="p-2.5 bg-slate-950 rounded-xl border border-slate-800">
-                  <p className="font-bold text-white">payment_transactions</p>
-                  <p className="text-[10px] text-slate-400">receipt_no, amount, mode, txn_ref</p>
+                  <p className="font-bold text-white">payments (Verified)</p>
+                  <p className="text-[10px] text-slate-400">receipt_no, amount, mode, paid_at</p>
                 </div>
                 <div className="p-2.5 bg-slate-950 rounded-xl border border-slate-800">
-                  <p className="font-bold text-white">refunds & allocations</p>
-                  <p className="text-[10px] text-slate-400">payment_id, reason, status</p>
+                  <p className="font-bold text-white">finance_entries & accounts</p>
+                  <p className="text-[10px] text-slate-400">double_entry, debits, credits</p>
                 </div>
               </div>
             </div>

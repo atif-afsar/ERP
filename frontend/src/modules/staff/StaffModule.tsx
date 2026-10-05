@@ -365,11 +365,17 @@ export const StaffModule: React.FC = () => {
                     <tr key={t.id} className="hover:bg-slate-800/30 transition-colors">
                       <td className="p-3.5">
                         <div className="flex items-center gap-3">
-                          <img
-                            src={t.avatarUrl}
-                            alt={t.name}
-                            className="w-8 h-8 rounded-full object-cover border border-slate-700"
-                          />
+                          {t.avatarUrl ? (
+                            <img
+                              src={t.avatarUrl}
+                              alt={t.name}
+                              className="w-8 h-8 rounded-full object-cover border border-slate-700 shrink-0"
+                            />
+                          ) : (
+                            <div className="w-8 h-8 rounded-full bg-slate-800 text-sky-400 flex items-center justify-center font-bold text-xs border border-slate-700 shrink-0">
+                              {t.name ? t.name[0].toUpperCase() : 'T'}
+                            </div>
+                          )}
                           <div>
                             <p className="font-bold text-white text-xs">{t.name}</p>
                             <p className="text-[10px] text-slate-400 font-mono">{t.phone}</p>
@@ -451,7 +457,13 @@ export const StaffModule: React.FC = () => {
               <div key={s.id} className="glass-panel p-5 rounded-2xl border border-slate-800 space-y-4">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
-                    <img src={s.avatarUrl} alt={s.name} className="w-10 h-10 rounded-full object-cover border border-slate-700" />
+                    {s.avatarUrl ? (
+                      <img src={s.avatarUrl} alt={s.name} className="w-10 h-10 rounded-full object-cover border border-slate-700 shrink-0" />
+                    ) : (
+                      <div className="w-10 h-10 rounded-full bg-slate-800 text-sky-400 flex items-center justify-center font-bold text-sm border border-slate-700 shrink-0">
+                        {s.name ? s.name[0].toUpperCase() : 'S'}
+                      </div>
+                    )}
                     <div>
                       <h4 className="font-bold text-white text-sm">{s.name}</h4>
                       <p className="text-[11px] text-sky-400 font-medium">{s.designation}</p>
@@ -1219,11 +1231,17 @@ export const StaffModule: React.FC = () => {
             {/* Header */}
             <div className="p-6 bg-slate-950 border-b border-slate-800 flex items-start justify-between gap-4">
               <div className="flex items-center gap-4">
-                <img
-                  src={selectedStaff.avatarUrl}
-                  alt={selectedStaff.name}
-                  className="w-16 h-16 rounded-2xl object-cover border-2 border-sky-500/30 shadow-lg"
-                />
+                {selectedStaff.avatarUrl ? (
+                  <img
+                    src={selectedStaff.avatarUrl}
+                    alt={selectedStaff.name}
+                    className="w-16 h-16 rounded-2xl object-cover border-2 border-sky-500/30 shadow-lg shrink-0"
+                  />
+                ) : (
+                  <div className="w-16 h-16 rounded-2xl bg-slate-800 text-sky-400 flex items-center justify-center font-bold text-2xl border-2 border-sky-500/30 shadow-lg shrink-0">
+                    {selectedStaff.name ? selectedStaff.name[0].toUpperCase() : 'S'}
+                  </div>
+                )}
                 <div>
                   <div className="flex items-center gap-2">
                     <h3 className="text-xl font-bold text-white">{selectedStaff.name}</h3>

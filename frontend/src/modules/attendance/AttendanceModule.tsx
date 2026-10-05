@@ -511,7 +511,13 @@ export const AttendanceModule: React.FC = () => {
                 <div key={st.id} className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-xs space-y-3">
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3">
-                      <img src={st.avatarUrl} alt="" className="w-9 h-9 rounded-full object-cover border border-slate-200" />
+                      {st.avatarUrl ? (
+                        <img src={st.avatarUrl} alt="" className="w-9 h-9 rounded-full object-cover border border-slate-200 shrink-0" />
+                      ) : (
+                        <div className="w-9 h-9 rounded-full bg-slate-100 text-slate-700 flex items-center justify-center font-bold text-xs border border-slate-200 shrink-0">
+                          {st.name ? st.name[0].toUpperCase() : 'S'}
+                        </div>
+                      )}
                       <div>
                         <h5 className="font-bold text-slate-900 text-xs">{st.name}</h5>
                         <p className="text-[10px] text-emerald-700 font-mono font-medium">{st.designation}</p>

@@ -52,7 +52,7 @@ export const DashboardModule: React.FC<DashboardModuleProps> = ({ onNavigate, on
   // Attendance calculations
   const presentCount = attendance.filter((a) => a.status === 'PRESENT').length;
   const absentCount = students.length > presentCount ? students.length - presentCount : 0;
-  const attendanceRate = students.length > 0 ? Math.round((presentCount / students.length) * 100) : 94;
+  const attendanceRate = students.length > 0 ? Math.round((presentCount / students.length) * 100) : 0;
 
   // -------------------------------------------------------------
   // 1. SUPER ADMIN DASHBOARD
@@ -216,11 +216,15 @@ export const DashboardModule: React.FC<DashboardModuleProps> = ({ onNavigate, on
             </div>
             <div className="flex items-baseline justify-between">
               <h3 className="text-xl font-bold text-slate-900">
-                {childAttendance?.status === 'PRESENT' ? 'Present in Class' : 'Present'}
+                {childAttendance?.status === 'PRESENT' ? 'Present in Class' : childAttendance?.status === 'ABSENT' ? 'Marked Absent' : 'No Record Today'}
               </h3>
-              <Badge variant="emerald" size="sm">95.4% Rate</Badge>
+              <Badge variant={childAttendance?.status === 'PRESENT' ? 'emerald' : 'slate'} size="sm">
+                {childAttendance?.status === 'PRESENT' ? 'Present' : 'Not Recorded'}
+              </Badge>
             </div>
-            <p className="text-xs text-slate-500">Checked in at 08:32 AM via campus scanner</p>
+            <p className="text-xs text-slate-500">
+              {childAttendance?.markedAt ? `Checked in at ${childAttendance.markedAt}` : 'Daily attendance status'}
+            </p>
           </div>
 
           <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-2xs space-y-2">
@@ -230,7 +234,7 @@ export const DashboardModule: React.FC<DashboardModuleProps> = ({ onNavigate, on
             </div>
             <div className="flex items-baseline justify-between">
               <h3 className="text-xl font-bold text-slate-900">
-                ₹{(studentLedger?.dueAmount || 0).toLocaleString()}
+                ₹{(studentLedger?.dueAmount || 0).toLocaleString('en-IN')}
               </h3>
               <Badge variant={studentLedger?.dueAmount ? 'amber' : 'emerald'} size="sm">
                 {studentLedger?.dueAmount ? 'Due Pending' : 'Paid in Full'}
@@ -243,12 +247,12 @@ export const DashboardModule: React.FC<DashboardModuleProps> = ({ onNavigate, on
 
           <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-2xs space-y-2">
             <div className="flex items-center justify-between text-xs font-semibold text-slate-500 uppercase">
-              <span>Academic Grade</span>
+              <span>Academic Assessments</span>
               <Award className="w-4 h-4 text-emerald-600" />
             </div>
             <div className="flex items-baseline justify-between">
-              <h3 className="text-xl font-bold text-slate-900">Grade A (88.6%)</h3>
-              <Badge variant="purple" size="sm">Rank #4 in Class</Badge>
+              <h3 className="text-xl font-bold text-slate-900">Academic Records</h3>
+              <Badge variant="purple" size="sm">Current Term</Badge>
             </div>
             <Button size="sm" variant="outline" className="w-full mt-1 text-xs" onClick={() => onNavigate('exams')}>
               View Report Card
@@ -484,8 +488,8 @@ export const DashboardModule: React.FC<DashboardModuleProps> = ({ onNavigate, on
         <StatCard
           title={`Total ${getLabel('studentPlural')}`}
           value={students.length.toLocaleString('en-IN')}
-          change="+8.4% this month"
-          trend="up"
+          change={students.length > 0 ? `${students.length} Enrolled` : 'No admissions yet'}
+          trend={students.length > 0 ? 'up' : 'neutral'}
           icon={Users}
           iconColor="emerald"
           onClick={() => onNavigate('students')}
@@ -494,16 +498,16 @@ export const DashboardModule: React.FC<DashboardModuleProps> = ({ onNavigate, on
           title="Today's Attendance"
           value={`${attendanceRate}%`}
           change={`${presentCount} Present • ${absentCount} Absent`}
-          trend="up"
+          trend={presentCount > 0 ? 'up' : 'neutral'}
           icon={CalendarCheck}
           iconColor="blue"
           onClick={() => onNavigate('attendance')}
         />
         <StatCard
           title="Fee Collection"
-          value={`₹${(totalPaid / 100000).toFixed(1)}L`}
+          value={totalPaid > 0 ? `₹${(totalPaid / 100000).toFixed(1)}L` : '₹0'}
           change={`${collectionPercentage}% Collected`}
-          trend="up"
+          trend={totalPaid > 0 ? 'up' : 'neutral'}
           icon={CreditCard}
           iconColor="emerald"
           onClick={() => onNavigate('fees')}
@@ -511,11 +515,11 @@ export const DashboardModule: React.FC<DashboardModuleProps> = ({ onNavigate, on
         <StatCard
           title="Active Staff"
           value={staff.length}
-          change="100% On Duty"
+          change={staff.length > 0 ? `${staff.length} Active` : 'No staff registered'}
           trend="neutral"
           icon={GraduationCap}
           iconColor="purple"
-          onClick={() => onNavigate('academics')}
+          onClick={() => onNavigate('staff')}
         />
       </div>
 
@@ -635,7 +639,9 @@ export const DashboardModule: React.FC<DashboardModuleProps> = ({ onNavigate, on
             >
               <div className="flex items-center gap-2.5">
                 <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
-                <span className="font-medium text-slate-800">3 students have overdue fees</span>
+                <span className="font-medium text-slate-800">
+                  {totalOutstanding > 0 ? `₹${totalOutstanding.toLocaleString('en-IN')} outstanding fee balance` : 'No outstanding fee arrears'}
+                </span>
               </div>
               <ArrowRight className="w-3.5 h-3.5 text-amber-600" />
             </div>
@@ -646,18 +652,22 @@ export const DashboardModule: React.FC<DashboardModuleProps> = ({ onNavigate, on
             >
               <div className="flex items-center gap-2.5">
                 <CalendarCheck className="w-4 h-4 text-rose-600 shrink-0" />
-                <span className="font-medium text-slate-800">{absentCount} students absent today</span>
+                <span className="font-medium text-slate-800">
+                  {absentCount > 0 ? `${absentCount} students absent today` : 'No absent students recorded today'}
+                </span>
               </div>
               <ArrowRight className="w-3.5 h-3.5 text-rose-600" />
             </div>
 
             <div
-              onClick={() => onNavigate('academics')}
+              onClick={() => onNavigate('timetable')}
               className="p-3 rounded-lg bg-slate-50 border border-slate-200 cursor-pointer flex items-center justify-between text-xs"
             >
               <div className="flex items-center gap-2.5">
                 <Clock className="w-4 h-4 text-slate-500 shrink-0" />
-                <span className="font-medium text-slate-800">Class 10-A Timetable update pending</span>
+                <span className="font-medium text-slate-800">
+                  {timetable.length > 0 ? `${timetable.length} scheduled class periods` : 'Timetable schedule not configured'}
+                </span>
               </div>
               <ArrowRight className="w-3.5 h-3.5 text-slate-500" />
             </div>
@@ -668,20 +678,24 @@ export const DashboardModule: React.FC<DashboardModuleProps> = ({ onNavigate, on
         <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-2xs space-y-3">
           <div className="flex items-center justify-between">
             <h3 className="font-bold text-slate-900 text-sm">Today's Schedule</h3>
-            <span className="text-[11px] text-slate-500 font-medium">Period 1 to 4</span>
+            <span className="text-[11px] text-slate-500 font-medium">Periods</span>
           </div>
           <div className="space-y-2">
-            {timetable.slice(0, 3).map((slot) => (
-              <div key={slot.id} className="p-2.5 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-between text-xs">
-                <div>
-                  <p className="font-semibold text-slate-900">{slot.subject}</p>
-                  <p className="text-[11px] text-slate-500">{slot.groupName} • Room {slot.roomNo}</p>
+            {timetable.length > 0 ? (
+              timetable.slice(0, 3).map((slot) => (
+                <div key={slot.id} className="p-2.5 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-between text-xs">
+                  <div>
+                    <p className="font-semibold text-slate-900">{slot.subject}</p>
+                    <p className="text-[11px] text-slate-500">{slot.groupName} • Room {slot.roomNo}</p>
+                  </div>
+                  <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                    {slot.startTime}
+                  </span>
                 </div>
-                <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
-                  {slot.startTime}
-                </span>
-              </div>
-            ))}
+              ))
+            ) : (
+              <p className="py-4 text-center text-slate-400 text-xs">No timetable periods scheduled for today.</p>
+            )}
           </div>
         </div>
 
@@ -689,30 +703,36 @@ export const DashboardModule: React.FC<DashboardModuleProps> = ({ onNavigate, on
         <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-2xs space-y-3">
           <div className="flex items-center justify-between">
             <h3 className="font-bold text-slate-900 text-sm">Recent Activity</h3>
-            <span className="text-[11px] text-slate-500 font-medium">Today</span>
+            <span className="text-[11px] text-slate-500 font-medium">Session</span>
           </div>
           <div className="space-y-2.5 text-xs">
-            <div className="flex items-start gap-2.5 pb-2 border-b border-slate-100">
-              <span className="text-[11px] text-slate-400 font-medium shrink-0 mt-0.5">10:42 AM</span>
-              <div>
-                <p className="font-medium text-slate-800">Fee payment received</p>
-                <p className="text-[11px] text-emerald-700 font-semibold">₹12,000 from Rahul Sharma</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-2.5 pb-2 border-b border-slate-100">
-              <span className="text-[11px] text-slate-400 font-medium shrink-0 mt-0.5">10:20 AM</span>
-              <div>
-                <p className="font-medium text-slate-800">New student admitted</p>
-                <p className="text-[11px] text-slate-600">Aarav Singh (Class 10-A)</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-2.5">
-              <span className="text-[11px] text-slate-400 font-medium shrink-0 mt-0.5">09:50 AM</span>
-              <div>
-                <p className="font-medium text-slate-800">Attendance completed</p>
-                <p className="text-[11px] text-slate-600">Class 10-A (38/40 Present)</p>
-              </div>
-            </div>
+            {students.length > 0 || feeLedgers.filter((l) => l.paidAmount > 0).length > 0 ? (
+              <>
+                {students.slice(0, 2).map((s) => (
+                  <div key={s.id} className="flex items-start gap-2.5 pb-2 border-b border-slate-100">
+                    <span className="text-[11px] text-slate-400 font-medium shrink-0 mt-0.5">Enrolled</span>
+                    <div>
+                      <p className="font-medium text-slate-800">Student admitted</p>
+                      <p className="text-[11px] text-slate-600">{s.firstName} {s.lastName} ({s.admissionNo})</p>
+                    </div>
+                  </div>
+                ))}
+                {feeLedgers
+                  .filter((l) => l.paidAmount > 0)
+                  .slice(0, 2)
+                  .map((l) => (
+                    <div key={l.id} className="flex items-start gap-2.5 pb-2 border-b border-slate-100">
+                      <span className="text-[11px] text-slate-400 font-medium shrink-0 mt-0.5">Payment</span>
+                      <div>
+                        <p className="font-medium text-slate-800">Fee payment recorded</p>
+                        <p className="text-[11px] text-emerald-700 font-semibold">₹{l.paidAmount.toLocaleString('en-IN')}</p>
+                      </div>
+                    </div>
+                  ))}
+              </>
+            ) : (
+              <p className="py-4 text-center text-slate-400 text-xs">No recent activity recorded for this institution.</p>
+            )}
           </div>
         </div>
       </div>
