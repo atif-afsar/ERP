@@ -44,7 +44,7 @@ router.get('/cash-bank-accounts', requireAuth, tenantContext(true), asyncHandler
 // GET /api/v1/finance/expenses
 router.get('/expenses', requireAuth, tenantContext(true), asyncHandler(async (req: Request, res: Response) => {
   const result = await query(
-    'SELECT * FROM expenses WHERE tenant_id = $1 ORDER BY date DESC, created_at DESC',
+    'SELECT *,date::text AS date FROM expenses WHERE tenant_id = $1 ORDER BY expenses.date DESC, expenses.created_at DESC',
     [req.tenantId]
   );
   res.json({ data: result.rows, meta: { total: result.rowCount } });
@@ -62,30 +62,19 @@ router.post('/expenses', requireAuth, tenantContext(true), asyncHandler(async (r
   const vNo = voucherNo || `EXP-${Date.now().toString().slice(-6)}`;
   const expDate = date || new Date().toISOString().split('T')[0];
 
-  const result = await query(
-    `INSERT INTO expenses (tenant_id, voucher_no, title, account_id, payment_account_id, amount, date, description, status, category)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'POSTED', 'OPERATIONAL')
-     RETURNING *`,
-    [tenantId, vNo, title, account_id, payment_account_id, amount, expDate, description || '']
-  );
-
-  const exp = result.rows[0];
-
-  // Resolve payment account's ledger ID
-  const pAcc = await query('SELECT ledger_account_id FROM finance_cash_bank_accounts WHERE id = $1', [payment_account_id]);
-  const assetAccountId = pAcc.rows[0].ledger_account_id;
-
-  await postJournalEntry({
-    tenantId,
-    transactionDate: expDate,
-    description: `Expense: ${title}`,
-    sourceType: 'EXPENSE',
-    sourceId: exp.id,
-    userId: req.user?.id,
-    lines: [
-      { accountId: account_id, debit: Number(amount) }, // Expense debit
-      { accountId: assetAccountId, credit: Number(amount) } // Asset credit
-    ]
+  const exp = await transaction(async client => {
+    const account = await client.query("SELECT id FROM finance_accounts WHERE id=$1 AND tenant_id=$2 AND account_type='EXPENSE'", [account_id,tenantId]);
+    const payment = await client.query('SELECT ledger_account_id FROM finance_cash_bank_accounts WHERE id=$1 AND tenant_id=$2', [payment_account_id,tenantId]);
+    if (!account.rowCount || !payment.rowCount) throw new AppError('Expense and payment accounts must belong to this institution.',422,'INVALID_ACCOUNT');
+    // The canonical expenses table supports APPROVED; POSTED belongs to journals.
+    const result = await client.query(
+      `INSERT INTO expenses (tenant_id,voucher_no,title,account_id,payment_account_id,amount,date,description,status,category)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'APPROVED','OPERATIONAL') RETURNING *,date::text AS date`,
+      [tenantId,vNo,title,account_id,payment_account_id,amount,expDate,description||'']);
+    const row=result.rows[0];
+    await postJournalEntry({tenantId,transactionDate:expDate,description:`Expense: ${title}`,sourceType:'EXPENSE',sourceId:row.id,userId:req.user?.id,
+      lines:[{accountId:account_id,debit:Number(amount)},{accountId:payment.rows[0].ledger_account_id,credit:Number(amount)}]},client);
+    return row;
   });
 
   res.status(201).json({ data: exp });
@@ -94,7 +83,7 @@ router.post('/expenses', requireAuth, tenantContext(true), asyncHandler(async (r
 // GET /api/v1/finance/other-income
 router.get('/other-income', requireAuth, tenantContext(true), asyncHandler(async (req: Request, res: Response) => {
   const result = await query(
-    'SELECT * FROM other_incomes WHERE tenant_id = $1 ORDER BY date DESC',
+    'SELECT *,date::text AS date FROM other_incomes WHERE tenant_id = $1 ORDER BY other_incomes.date DESC',
     [req.tenantId]
   );
   res.json({ data: result.rows });
@@ -112,29 +101,17 @@ router.post('/other-income', requireAuth, tenantContext(true), asyncHandler(asyn
   const rNo = receipt_no || `INC-${Date.now().toString().slice(-6)}`;
   const incDate = date || new Date().toISOString().split('T')[0];
 
-  const result = await query(
-    `INSERT INTO other_incomes (tenant_id, receipt_no, title, account_id, payment_account_id, amount, date, status, created_by)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, 'POSTED', $8)
-     RETURNING *`,
-    [tenantId, rNo, title, account_id, payment_account_id, amount, incDate, req.user?.id]
-  );
-
-  const inc = result.rows[0];
-
-  const pAcc = await query('SELECT ledger_account_id FROM finance_cash_bank_accounts WHERE id = $1', [payment_account_id]);
-  const assetAccountId = pAcc.rows[0].ledger_account_id;
-
-  await postJournalEntry({
-    tenantId,
-    transactionDate: incDate,
-    description: `Income: ${title}`,
-    sourceType: 'OTHER_INCOME',
-    sourceId: inc.id,
-    userId: req.user?.id,
-    lines: [
-      { accountId: assetAccountId, debit: Number(amount) }, // Asset debit
-      { accountId: account_id, credit: Number(amount) } // Income credit
-    ]
+  const inc = await transaction(async client => {
+    const account = await client.query("SELECT id FROM finance_accounts WHERE id=$1 AND tenant_id=$2 AND account_type='INCOME'",[account_id,tenantId]);
+    const payment = await client.query('SELECT ledger_account_id FROM finance_cash_bank_accounts WHERE id=$1 AND tenant_id=$2',[payment_account_id,tenantId]);
+    if (!account.rowCount || !payment.rowCount) throw new AppError('Income and payment accounts must belong to this institution.',422,'INVALID_ACCOUNT');
+    const result=await client.query(
+      `INSERT INTO other_incomes(tenant_id,receipt_no,title,account_id,payment_account_id,amount,date,status,created_by)
+       VALUES($1,$2,$3,$4,$5,$6,$7,'POSTED',$8) RETURNING *,date::text AS date`,[tenantId,rNo,title,account_id,payment_account_id,amount,incDate,req.user?.id]);
+    const row=result.rows[0];
+    await postJournalEntry({tenantId,transactionDate:incDate,description:`Income: ${title}`,sourceType:'OTHER_INCOME',sourceId:row.id,userId:req.user?.id,
+      lines:[{accountId:payment.rows[0].ledger_account_id,debit:Number(amount)},{accountId:account_id,credit:Number(amount)}]},client);
+    return row;
   });
 
   res.status(201).json({ data: inc });
@@ -143,7 +120,7 @@ router.post('/other-income', requireAuth, tenantContext(true), asyncHandler(asyn
 // GET /api/v1/finance/journals
 router.get('/journals', requireAuth, tenantContext(true), asyncHandler(async (req: Request, res: Response) => {
   const result = await query(
-    `SELECT j.*, json_agg(json_build_object('account_id', l.account_id, 'debit', l.debit, 'credit', l.credit, 'description', l.description)) as lines
+    `SELECT j.*, j.transaction_date::text AS transaction_date, json_agg(json_build_object('account_id', l.account_id, 'debit', l.debit, 'credit', l.credit, 'description', l.description)) as lines
      FROM journal_entries j
      JOIN journal_lines l ON l.journal_entry_id = j.id
      WHERE j.tenant_id = $1

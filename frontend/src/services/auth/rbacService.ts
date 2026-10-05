@@ -168,19 +168,7 @@ export const rbacService = {
     }
 
     // 3. Permission Capability Check
-    const allowed = CANONICAL_ROLE_PERMISSIONS[user.role] || [];
-    // Check canonical permission mapping or general permission string match
-    const hasPerm =
-      allowed.includes(permission as CanonicalPermission) ||
-      (permission === 'students.view' && allowed.includes('students.read')) ||
-      (permission === 'attendance.view' && allowed.includes('attendance.read')) ||
-      (permission === 'fees.view' && allowed.includes('fees.read')) ||
-      (permission === 'payments.record' && allowed.includes('fees.collect')) ||
-      (permission === 'payments.refund' && allowed.includes('fees.refund')) ||
-      (permission === 'exams.view' && allowed.includes('exams.read')) ||
-      (permission === 'reports.view' && allowed.includes('reports.read')) ||
-      (permission === 'settings.view' && allowed.includes('settings.manage')) ||
-      (permission === 'settings.update' && allowed.includes('settings.manage'));
+    const hasPerm = !!user.permissions?.includes(permission as any);
 
     if (!hasPerm) {
       return {

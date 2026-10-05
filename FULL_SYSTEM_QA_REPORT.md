@@ -1,5 +1,13 @@
 # Full-system local QA report
 
+## Local stabilization Batch 3 — 2026-10-05
+
+BUG-004/007/008/019 are VERIFIED. Fresh PostgreSQL; real API finance/fee records; 26 new backend tests and full 209/209 PASS; frontend 26/26 PASS; both TypeScript checks/root build PASS. Chromium eight accounts, 76 steps PASS with zero unexpected HTTP/console errors; 5 deliberate Finance 403s and 64 blocked external resources are labeled. All 20 migrations unchanged. Posted finance journals balance, fee sources remain unique, SaaS excluded. See [complete evidence](LOCAL_STABILIZATION_BATCH3_REPORT.md) and [role/UI matrix](ROLE_UI_PERMISSION_MATRIX.md). Eleven original findings verified; ten remain OPEN (0 critical, 3 high, 7 medium). Full system remains FAIL. Historical sections below describe earlier audit states.
+
+## Local stabilization Batch 2 — 2026-10-05
+
+BUG-001/005/012/020/021 are VERIFIED. Backend 183/183 (35 new Batch 2), frontend relevant 5/5, both TypeScript checks and root build PASS. Generated runtime 6/6 and actual browser 7 scenarios/45 steps PASS; zero unexpected notification 404, subscription authorization errors or server 500. All 20 migrations/checksums unchanged. External Checkout/webhook delivery remains BLOCKED BY EXTERNAL CREDENTIAL. Seven original findings verified; 14 remain OPEN (0 critical, 7 high, 7 medium). The full system remains FAIL. [Complete scoped evidence and policy](LOCAL_STABILIZATION_BATCH2_REPORT.md). Historical audit findings below describe their original state.
+
 Date: 2026-10-03. Outcome: **FAIL — not production ready**. Original audit was analysis only. Subsequent local Batch 1 corrected only BUG-002/003; the historical audit evidence below is retained. No migration, existing environment file or deployment configuration changed.
 
 ## Local stabilization Batch 1 retest — 2026-10-03

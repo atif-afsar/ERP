@@ -1,162 +1,38 @@
-import React, { useEffect, useState } from 'react';
-import { useAuth } from '../../context/AuthContext';
-import { Briefcase } from 'lucide-react';
-
-export function FinanceModule() {
-  const token = localStorage.getItem('token');
-  
-  const [activeTab, setActiveTab] = useState<'LEDGER' | 'JOURNALS' | 'EXPENSES'>('LEDGER');
-  
-  const [ledger, setLedger] = useState<any[]>([]);
-  const [journals, setJournals] = useState<any[]>([]);
-  const [expenses, setExpenses] = useState<any[]>([]);
-  
-  const fetchApi = async (url: string) => {
-    const r = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
-    return r.json();
-  };
-  
-  const loadLedger = async () => {
-    try {
-      const res = await fetchApi('/api/v1/finance/reports/ledger');
-      setLedger(res.data);
-    } catch (e) {
-      console.error(e);
-    }
-  };
-
-  const loadJournals = async () => {
-    try {
-      const res = await fetchApi('/api/v1/finance/journals');
-      setJournals(res.data);
-    } catch (e) {
-      console.error(e);
-    }
-  };
-
-  const loadExpenses = async () => {
-    try {
-      const res = await fetchApi('/api/v1/finance/expenses');
-      setExpenses(res.data);
-    } catch (e) {
-      console.error(e);
-    }
-  };
-
-  useEffect(() => {
-    if (activeTab === 'LEDGER') loadLedger();
-    if (activeTab === 'JOURNALS') loadJournals();
-    if (activeTab === 'EXPENSES') loadExpenses();
-  }, [activeTab]);
-
-  return (
-    <div className="p-6 max-w-7xl mx-auto">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-            <Briefcase className="w-6 h-6 text-indigo-600" />
-            School Finance & Accounting
-          </h1>
-          <p className="text-gray-500">Double-entry accounting, ledger, and financials.</p>
-        </div>
-      </div>
-
-      <div className="flex gap-4 border-b border-gray-200 mb-6">
-        <button onClick={() => setActiveTab('LEDGER')} className={`pb-2 px-2 font-medium ${activeTab === 'LEDGER' ? 'text-indigo-600 border-b-2 border-indigo-600' : 'text-gray-500'}`}>General Ledger</button>
-        <button onClick={() => setActiveTab('JOURNALS')} className={`pb-2 px-2 font-medium ${activeTab === 'JOURNALS' ? 'text-indigo-600 border-b-2 border-indigo-600' : 'text-gray-500'}`}>Journals</button>
-        <button onClick={() => setActiveTab('EXPENSES')} className={`pb-2 px-2 font-medium ${activeTab === 'EXPENSES' ? 'text-indigo-600 border-b-2 border-indigo-600' : 'text-gray-500'}`}>Expenses</button>
-      </div>
-
-      {activeTab === 'LEDGER' && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-          <table className="w-full text-left border-collapse">
-            <thead className="bg-gray-50 text-gray-600 text-sm">
-              <tr>
-                <th className="p-4 border-b">Code</th>
-                <th className="p-4 border-b">Account Name</th>
-                <th className="p-4 border-b">Type</th>
-                <th className="p-4 border-b text-right">Debit</th>
-                <th className="p-4 border-b text-right">Credit</th>
-                <th className="p-4 border-b text-right">Balance</th>
-              </tr>
-            </thead>
-            <tbody>
-              {ledger.map((row: any) => (
-                <tr key={row.id} className="border-b last:border-0 hover:bg-gray-50">
-                  <td className="p-4 font-mono text-sm">{row.code}</td>
-                  <td className="p-4 font-medium">{row.name}</td>
-                  <td className="p-4 text-xs text-gray-500">{row.account_type}</td>
-                  <td className="p-4 text-right">₹{row.total_debit.toLocaleString()}</td>
-                  <td className="p-4 text-right">₹{row.total_credit.toLocaleString()}</td>
-                  <td className={`p-4 text-right font-bold ${row.balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>₹{row.balance.toLocaleString()}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      {activeTab === 'JOURNALS' && (
-        <div className="space-y-4">
-          {journals.map((j: any) => (
-            <div key={j.id} className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-              <div className="flex justify-between border-b pb-2 mb-2">
-                <div>
-                  <span className="font-mono text-sm font-bold text-gray-700">{j.entry_number}</span>
-                  <span className="ml-3 text-xs bg-indigo-100 text-indigo-700 px-2 py-1 rounded">{j.source_type}</span>
-                </div>
-                <div className="text-gray-500 text-sm">{new Date(j.transaction_date).toLocaleDateString()}</div>
-              </div>
-              <p className="text-sm text-gray-600 mb-2">{j.description}</p>
-              <table className="w-full text-sm mt-2">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-3 py-1 text-left font-medium text-gray-500">Account ID</th>
-                    <th className="px-3 py-1 text-right font-medium text-gray-500">Debit</th>
-                    <th className="px-3 py-1 text-right font-medium text-gray-500">Credit</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {j.lines.map((l: any, i: number) => (
-                    <tr key={i} className="border-t">
-                      <td className="px-3 py-2 font-mono text-xs">{l.account_id.substring(0, 8)}...</td>
-                      <td className="px-3 py-2 text-right">{l.debit > 0 ? `₹${Number(l.debit).toLocaleString()}` : '-'}</td>
-                      <td className="px-3 py-2 text-right">{l.credit > 0 ? `₹${Number(l.credit).toLocaleString()}` : '-'}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {activeTab === 'EXPENSES' && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-          <table className="w-full text-left border-collapse">
-            <thead className="bg-gray-50 text-gray-600 text-sm">
-              <tr>
-                <th className="p-4 border-b">Date</th>
-                <th className="p-4 border-b">Voucher No</th>
-                <th className="p-4 border-b">Title</th>
-                <th className="p-4 border-b text-right">Amount</th>
-                <th className="p-4 border-b">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {expenses.map((row: any) => (
-                <tr key={row.id} className="border-b last:border-0 hover:bg-gray-50">
-                  <td className="p-4 text-sm">{new Date(row.date).toLocaleDateString()}</td>
-                  <td className="p-4 font-mono text-xs">{row.voucher_no}</td>
-                  <td className="p-4 font-medium">{row.title}</td>
-                  <td className="p-4 text-right">₹{Number(row.amount).toLocaleString()}</td>
-                  <td className="p-4 text-xs"><span className="bg-green-100 text-green-700 px-2 py-1 rounded">{row.status}</span></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </div>
-  );
+import React,{useEffect,useState} from 'react';
+import {useTenant} from '../../context/TenantContext';
+import {useAuth} from '../../context/AuthContext';
+import {financeService as api} from '../../services/financeService';
+import {loadResources} from '../../services/resourceLoader';
+import {canOpenModule} from '../../services/auth/permissionPolicy';
+const tabs=['Chart of Accounts','Cash/Bank Accounts','Journals','Expenses','Other Income','General Ledger','Cash/Bank Book','Income/Expense Report','Fee Reconciliation'];
+const money=(value:any)=>new Intl.NumberFormat('en-IN',{style:'currency',currency:'INR'}).format(Number(value||0));
+const Table=({heads,rows}:any)=><div className="overflow-x-auto rounded-xl border bg-white"><table className="w-full text-sm"><thead><tr>{heads.map((h:string)=><th key={h} className="p-3 text-left">{h}</th>)}</tr></thead><tbody>{rows.map((r:any[],i:number)=><tr key={i} className="border-t">{r.map((v:any,j:number)=><td key={j} className="p-3">{v}</td>)}</tr>)}</tbody></table></div>;
+export function FinanceModule(){
+ const {currentTenant}=useTenant(),{currentUser}=useAuth(),tenantId=currentTenant.id;
+ const [tab,setTab]=useState(tabs[0]),[data,setData]=useState<any>({accounts:[],cash:[],journals:[],expenses:[],income:[],ledger:[]}),[errors,setErrors]=useState<Record<string,string>>({}),[loading,setLoading]=useState(false),[message,setMessage]=useState(''),[busy,setBusy]=useState(false);
+ const blank={title:'',account_id:'',payment_account_id:'',amount:'',date:new Date().toISOString().slice(0,10)};
+ const [form,setForm]=useState(blank);
+ const load=async()=>{setLoading(true);try{
+ // Account initialization precedes dependent finance lists, as required by the existing API.
+ const accounts=await api.list(tenantId,'accounts');setData((d:any)=>({...d,accounts:accounts.data}));
+ const result=await loadResources({cash:()=>api.list(tenantId,'cash-bank-accounts'),journals:()=>api.list(tenantId,'journals'),expenses:()=>api.list(tenantId,'expenses'),income:()=>api.list(tenantId,'other-income'),ledger:()=>api.list(tenantId,'reports/ledger')});setData((d:any)=>({...d,...result.data}));setErrors(result.errors);
+ }catch(e:any){setErrors({accounts:e.message||'Unable to load finance accounts.'});}finally{setLoading(false);}};
+ useEffect(()=>{if(canOpenModule(currentUser,'finance'))void load();},[tenantId]);
+ if(!canOpenModule(currentUser,'finance'))return <p role="alert">Finance access is not permitted.</p>;
+ const post=async(e:React.FormEvent)=>{e.preventDefault();setBusy(true);setMessage('');try{await api.post(tenantId,tab==='Expenses'?'expenses':'other-income',{...form,amount:Number(form.amount)});setForm(blank);setMessage(tab==='Expenses'?'Expense posted.':'Other income posted.');await load();}catch(e:any){setErrors(previous=>({...previous,mutation:e.message}));}finally{setBusy(false);}};
+ const ledgers=(types:string[])=>data.ledger.filter((x:any)=>types.includes(x.account_type));
+ const ledgerRows=(rows:any[])=>rows.map(x=>[x.code,x.name,x.account_type,money(x.total_debit),money(x.total_credit),money(x.balance)]);
+ const cashLedgerIds=new Set(data.cash.map((x:any)=>x.ledger_account_id));
+ return <div className="space-y-5"><h1 className="text-2xl font-bold">School Finance & Accounting</h1><p className="text-sm text-slate-500">School journals and balances from PostgreSQL.</p><button onClick={()=>void load()} className="rounded border px-3 py-2">Refresh finance</button>
+ {loading&&<p role="status">Loading finance…</p>}{Object.entries(errors).map(([key,error])=><p key={key} role="alert" className="rounded border border-rose-200 bg-rose-50 p-3">{key}: {error}</p>)}{message&&<p role="status">{message}</p>}
+ <div className="flex flex-wrap gap-2">{tabs.map(x=><button key={x} onClick={()=>{setTab(x);setForm(blank);setMessage('');}} className={`rounded border px-3 py-2 ${tab===x?'bg-indigo-600 text-white':'bg-white'}`}>{x}</button>)}</div>
+ {tab==='Chart of Accounts'&&<Table heads={['Code','Account Name','Type']} rows={data.accounts.map((x:any)=>[x.code,x.name,x.account_type])}/>}
+ {tab==='Cash/Bank Accounts'&&<Table heads={['Name','Type','Ledger Account']} rows={data.cash.map((x:any)=>[x.display_name,x.type,data.accounts.find((a:any)=>a.id===x.ledger_account_id)?.name||x.ledger_account_id])}/>}
+ {tab==='Journals'&&data.journals.map((j:any)=><section key={j.id} className="rounded-xl border bg-white p-4"><h2>{j.entry_number} · {j.source_type} · {j.status}</h2><p>{String(j.transaction_date).slice(0,10)} · {j.description}</p><Table heads={['Account','Debit','Credit']} rows={j.lines.map((l:any)=>[data.accounts.find((a:any)=>a.id===l.account_id)?.name||l.account_id,money(l.debit),money(l.credit)])}/></section>)}
+ {(tab==='Expenses'||tab==='Other Income')&&<><form onSubmit={post} className="grid gap-3 rounded-xl border bg-white p-4 md:grid-cols-3"><label>Title<input required value={form.title} onChange={e=>setForm({...form,title:e.target.value})} className="block w-full rounded border p-2"/></label><label>Amount<input required type="number" min="0.01" step="0.01" value={form.amount} onChange={e=>setForm({...form,amount:e.target.value})} className="block w-full rounded border p-2"/></label><label>Date<input required type="date" value={form.date} onChange={e=>setForm({...form,date:e.target.value})} className="block w-full rounded border p-2"/></label><label>{tab==='Expenses'?'Expense account':'Income account'}<select required value={form.account_id} onChange={e=>setForm({...form,account_id:e.target.value})} className="block w-full rounded border p-2"><option value="">Select account</option>{data.accounts.filter((a:any)=>a.account_type===(tab==='Expenses'?'EXPENSE':'INCOME')).map((a:any)=><option key={a.id} value={a.id}>{a.name}</option>)}</select></label><label>Cash/Bank account<select required value={form.payment_account_id} onChange={e=>setForm({...form,payment_account_id:e.target.value})} className="block w-full rounded border p-2"><option value="">Select account</option>{data.cash.map((a:any)=><option key={a.id} value={a.id}>{a.display_name}</option>)}</select></label><button disabled={busy||!!errors.accounts||!!errors.cash} className="self-end rounded bg-indigo-600 p-2 text-white">{tab==='Expenses'?'Post expense':'Post income'}</button></form><Table heads={['Date','Reference','Title','Amount','Status']} rows={(tab==='Expenses'?data.expenses:data.income).map((x:any)=>[String(x.date).slice(0,10),x.voucher_no||x.receipt_no,x.title,money(x.amount),x.status])}/></>}
+ {tab==='General Ledger'&&<Table heads={['Code','Account Name','Type','Debit','Credit','Balance']} rows={ledgerRows(data.ledger)}/>}
+ {tab==='Cash/Bank Book'&&<Table heads={['Code','Account Name','Type','Debit','Credit','Balance']} rows={ledgerRows(data.ledger.filter((x:any)=>cashLedgerIds.has(x.id)))}/>}
+ {tab==='Income/Expense Report'&&<><p>Income: {money(ledgers(['INCOME']).reduce((s:number,x:any)=>s+Number(x.balance),0))} · Expenses: {money(ledgers(['EXPENSE']).reduce((s:number,x:any)=>s+Number(x.balance),0))}</p><Table heads={['Code','Account Name','Type','Debit','Credit','Balance']} rows={ledgerRows(ledgers(['INCOME','EXPENSE']))}/></>}
+ {tab==='Fee Reconciliation'&&<><p>Reconcile verified school fee payments into their existing journals. SaaS billing is separate.</p><button disabled={busy} onClick={async()=>{setBusy(true);try{const r:any=await api.post(tenantId,'reconcile/fee-payments',{});setMessage(`Reconciliation complete: ${r.data.totalProcessed} verified payment(s) checked.`);await load();}catch(e:any){setErrors(v=>({...v,reconciliation:e.message}));}finally{setBusy(false);}}} className="rounded border px-3 py-2">Reconcile fee payments</button></>}
+ </div>;
 }

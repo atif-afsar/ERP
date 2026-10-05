@@ -1,5 +1,5 @@
 import { UserProfile, Permission, Role } from '../../types';
-import { ROLE_PERMISSIONS } from '../../context/AuthContext';
+import { hasPermission as checkPermission } from './permissionPolicy';
 import { storage } from '../storageService';
 
 export interface AccessCheckRequest {
@@ -96,8 +96,8 @@ export function evaluateAccess(request: AccessCheckRequest): AccessEvaluationRes
   }
 
   // Step 5: Canonical Permission Check (Role & Capability)
-  const rolePermissions = ROLE_PERMISSIONS[user.role] || [];
-  const hasPermission = isPlatformSuperAdmin || rolePermissions.includes(requiredPermission);
+  const rolePermissions = user.permissions || [];
+  const hasPermission = checkPermission(user, requiredPermission, targetTenantId);
   steps.push({
     stepNumber: 4,
     name: 'Role-Based Capability Check',

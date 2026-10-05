@@ -1,3 +1,4 @@
+import { canOpenModule } from './services/auth/permissionPolicy';
 import React, { useState, useEffect } from 'react';
 import { TenantProvider, useTenant } from './context/TenantContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -8,6 +9,7 @@ import { Permission } from './types';
 import { UnauthorizedCard } from './components/auth/PermissionGuard';
 import { LoginView } from './components/auth/LoginView';
 import { SessionExpiredModal } from './components/auth/SessionExpiredModal';
+import { apiClient } from './services/api/apiClient';
 
 // Modules
 const DashboardModule = React.lazy(() => import('./modules/dashboard/DashboardModule').then(m => ({ default: m.DashboardModule })));
@@ -49,9 +51,9 @@ import { LandingPage } from './modules/public/LandingPage';
 import { SuperAdminShell } from './modules/superadmin/SuperAdminShell';
 
 const READ_ONLY_MODULES = new Set([
-  'dashboard', 'academics', 'finance',
+  'dashboard', 'academics',
   'health', 'homework',
-  'crm', 'reports', 'settings', 'roles-matrix', 'superadmin-plans', 'superadmin-features',
+  'crm', 'reports', 'settings', 'roles-matrix', 'superadmin-features',
 ]);
 
 const ReadOnlyModule: React.FC<{ children: React.ReactNode }> = ({ children }) => (
@@ -72,7 +74,7 @@ const ROUTE_PERMISSIONS: Record<string, Permission> = {
   attendance: 'attendance.view',
   'attendance/mark': 'attendance.mark',
   fees: 'fee_management.view',
-  finance: 'fees.view',
+  finance: 'fee_management.view',
   inventory: 'inventory.view',
   library: 'library.view',
   transport: 'transport.view',
@@ -84,7 +86,7 @@ const ROUTE_PERMISSIONS: Record<string, Permission> = {
   results: 'exam_marks.view',
   timetable: 'timetable.view',
   homework: 'homework.view',
-  communication: 'communication.send',
+  communication: 'communications.view',
   crm: 'students.create',
   reports: 'reports.view',
   settings: 'settings.view',
@@ -140,9 +142,21 @@ const NotFoundView: React.FC<{ attemptedRoute: string; onBackToDashboard: () => 
 );
 
 const MainRouter: React.FC = () => {
-  const { authState, isAuthenticated, isSuperAdmin, can } = useAuth();
+  const { authState, isAuthenticated, isSuperAdmin, currentUser, can } = useAuth();
   const { currentTenant, isFeatureEnabled } = useTenant();
   const [isAiModalOpen, setIsAiModalOpen] = useState(false);
+  const [ownerEntitlement, setOwnerEntitlement] = useState<{ isActive: boolean } | null>(null);
+  const [entitlementError, setEntitlementError] = useState('');
+  useEffect(() => {
+    let active = true;
+    setOwnerEntitlement(null);
+    setEntitlementError('');
+    if (!isAuthenticated || currentUser.role !== 'TENANT_ADMIN') return;
+    apiClient.request<{ entitlement: { isActive: boolean } }>('/api/v1/billing/subscription')
+      .then(result => { if (active) setOwnerEntitlement(result.data.entitlement); })
+      .catch(error => { if (active) setEntitlementError(error.message); });
+    return () => { active = false; };
+  }, [isAuthenticated, currentUser.id, currentUser.role]);
 
   // Helper to get normalized route from window hash
   const getHashRoute = (): { rawHash: string; path: string; fullPath: string; query: Record<string, string>; subParam?: string } => {
@@ -206,9 +220,21 @@ const MainRouter: React.FC = () => {
 
   // Permission & Feature verification
   const requiredPermission = ROUTE_PERMISSIONS[currentNav];
-  const isAuthorized = !requiredPermission || can(requiredPermission) || (currentNav === 'hr' && can('hr.view'));
+  const isAuthorized = canOpenModule(currentUser, currentNav);
 
   const renderModule = () => {
+    // Keep the existing shell/logout and own billing recovery usable while
+    // preventing expired owners from entering operational screens.
+    if (currentUser.role === 'TENANT_ADMIN' && currentNav !== 'saas-billing') {
+      if (!ownerEntitlement && !entitlementError) return <p>Checking subscription access...</p>;
+      if (entitlementError || !ownerEntitlement?.isActive) return (
+        <div className="rounded-xl border bg-white p-6 space-y-3">
+          <h2 className="text-xl font-bold">Subscription access required</h2>
+          <p>{entitlementError || 'Operational access has expired. Your records are preserved; open billing to recover your subscription.'}</p>
+          <Button onClick={() => navigateTo('saas-billing')}>Open billing</Button>
+        </div>
+      );
+    }
     if (!isAuthorized && requiredPermission) {
       return (
         <UnauthorizedCard
@@ -395,7 +421,8 @@ const MainRouter: React.FC = () => {
         onOpenAi={() => setIsAiModalOpen(true)}
       >
         <React.Suspense fallback={<div className="flex h-64 items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-gray-400" /></div>}>
-          {READ_ONLY_MODULES.has(currentNav) ? <ReadOnlyModule>{renderModule()}</ReadOnlyModule> : renderModule()}
+          {READ_ONLY_MODULES.has(currentNav) && !(currentUser.role === 'TENANT_ADMIN' && (entitlementError || (ownerEntitlement && !ownerEntitlement.isActive)))
+            ? <ReadOnlyModule>{renderModule()}</ReadOnlyModule> : renderModule()}
         </React.Suspense>
       </AppShell>
     );

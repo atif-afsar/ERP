@@ -1,7 +1,9 @@
 import { Router } from 'express';
 import { query } from '../db.js';
 import { requireAuth } from '../middleware/auth.js';
-import { businessAccess } from '../middleware/businessAccess.js';
+import { tenantContext } from '../middleware/tenantContext.js';
+import { requireRole } from '../middleware/auth.js';
+import { asyncHandler } from '../middleware/asyncHandler.js';
 import { AppError } from '../middleware/errorHandler.js';
 import { validateWebhookSignature, processWebhookEvent } from '../services/razorpayService.js';
 import crypto from 'crypto';
@@ -9,7 +11,7 @@ import crypto from 'crypto';
 const router = Router();
 
 // Public/Tenant Context (Billing UI)
-router.get('/plans', async (req, res) => {
+router.get('/plans', asyncHandler(async (req, res) => {
   const plans = await query(
     `SELECT id, code, name, description, price_amount, currency, billing_period, billing_interval, features 
      FROM subscription_plans 
@@ -17,11 +19,15 @@ router.get('/plans', async (req, res) => {
      ORDER BY price_amount ASC`
   );
   res.json({ plans: plans.rows });
+}));
+
+// Billing recovery is authenticated and bound to the JWT membership tenant.
+router.use('/subscription', requireAuth, requireRole('TENANT_ADMIN'), tenantContext(true), (req, _res, next) => {
+  if (req.tenantId !== req.user.tenantId) return next(new AppError('Own-tenant billing only. Use platform administration for other institutions.', 403, 'CROSS_TENANT_ACCESS_DENIED'));
+  next();
 });
 
-router.use('/subscription', requireAuth, businessAccess);
-
-router.get('/subscription', async (req, res) => {
+router.get('/subscription', asyncHandler(async (req, res) => {
   const tenantId = req.user!.tenantId;
   
   const subRes = await query(
@@ -41,13 +47,13 @@ router.get('/subscription', async (req, res) => {
     subscription: subRes.rowCount && subRes.rowCount > 0 ? subRes.rows[0] : null,
     entitlement
   });
-});
+}));
 
-router.post('/subscription', async (req, res) => {
+router.post('/subscription', asyncHandler(async (req, res) => {
   const tenantId = req.user!.tenantId;
   const { planId } = req.body;
   
-  if (!req.user?.roles?.includes('OWNER') && !req.user?.roles?.includes('ADMIN')) {
+  if (req.user.role !== 'TENANT_ADMIN' && !req.user.isSuperAdmin) {
     throw new AppError('Only Owner/Admin can subscribe', 403);
   }
 
@@ -71,12 +77,12 @@ router.post('/subscription', async (req, res) => {
     razorpayKeyId: process.env.RAZORPAY_KEY_ID || 'rzp_test_123',
     status: subRes.rows[0].status
   });
-});
+}));
 
-router.post('/subscription/cancel', async (req, res) => {
+router.post('/subscription/cancel', asyncHandler(async (req, res) => {
   const tenantId = req.user!.tenantId;
   
-  if (!req.user?.roles?.includes('OWNER') && !req.user?.roles?.includes('ADMIN')) {
+  if (req.user.role !== 'TENANT_ADMIN' && !req.user.isSuperAdmin) {
     throw new AppError('Only Owner/Admin can cancel', 403);
   }
   
@@ -89,10 +95,10 @@ router.post('/subscription/cancel', async (req, res) => {
   );
   
   res.json({ message: 'Subscription will be cancelled at period end' });
-});
+}));
 
 // Webhook
-router.post('/webhooks/razorpay', async (req: any, res) => {
+router.post('/webhooks/razorpay', asyncHandler(async (req: any, res) => {
   const signature = req.headers['x-razorpay-signature'] as string;
   const rawBody = req.rawBody; // Captured by our middleware
   
@@ -114,6 +120,6 @@ router.post('/webhooks/razorpay', async (req: any, res) => {
     if (!isValid) return res.status(400).send('Invalid signature');
     res.status(500).send('Webhook error');
   }
-});
+}));
 
 export default router;

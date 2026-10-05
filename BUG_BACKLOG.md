@@ -1,8 +1,10 @@
 # Bug backlog — local audit, 2026-10-03
 
-Batch 1 update: BUG-002 and BUG-003 are VERIFIED; 19 findings remain OPEN (0 critical, 12 high, 7 medium). The original audit recorded 21 confirmed findings: {"CRITICAL":1,"HIGH":13,"MEDIUM":7,"LOW":0}. Expected authorization denials, blocked external resources, and audit selector mistakes are excluded. Some prototype limitations are recorded because they affect the existing product, not as requests to add features.
+Batch 3 update, 2026-10-05: BUG-001/002/003/004/005/007/008/012/019/020/021 are VERIFIED; 10 findings remain OPEN (0 critical, 3 high, 7 medium). See [Batch 3 evidence](LOCAL_STABILIZATION_BATCH3_REPORT.md). The original audit recorded 21 confirmed findings. Expected denials and deliberately blocked resources are excluded.
 
 ## BUG-001 — Build
+
+- Status: **VERIFIED** — OPEN → FIXED → VERIFIED, 2026-10-05. Original reproduction now passes; root cause, changed files and runtime/browser regression evidence: [Batch 2 report](LOCAL_STABILIZATION_BATCH2_REPORT.md). Original evidence below is retained as historical.
 
 - Module: Build
 - Severity: HIGH
@@ -97,6 +99,8 @@ Evidence: [Batch 1 report](LOCAL_STABILIZATION_BATCH1_REPORT.md); ignored qa/art
 
 ## BUG-004 — Finance
 
+- Status: **VERIFIED** — OPEN → FIXED → VERIFIED, 2026-10-05. Exact original Chromium reproduction and separate regressions pass; [Batch 3 root cause/fix/evidence](LOCAL_STABILIZATION_BATCH3_REPORT.md). Original failure below is historical.
+
 - Module: Finance
 - Severity: HIGH
 - Type: Frontend / Integration
@@ -123,6 +127,8 @@ Regression test needed: YES.
 Recommended fix: Use shared API client and review mounted finance workflow against existing APIs.
 
 ## BUG-005 — Notifications
+
+- Status: **VERIFIED** — OPEN → FIXED → VERIFIED, 2026-10-05. Original reproduction now passes; root cause, changed files and runtime/browser regression evidence: [Batch 2 report](LOCAL_STABILIZATION_BATCH2_REPORT.md). Original evidence below is retained as historical.
 
 - Module: Notifications
 - Severity: HIGH
@@ -178,6 +184,8 @@ Recommended fix: Normalize optional blank fields before submission and cover a m
 
 ## BUG-007 — Authorization UI
 
+- Status: **VERIFIED** — OPEN → FIXED → VERIFIED, 2026-10-05. Exact original Chromium reproduction and separate regressions pass; [Batch 3 root cause/fix/evidence](LOCAL_STABILIZATION_BATCH3_REPORT.md). Original failure below is historical.
+
 - Module: Authorization UI
 - Severity: HIGH
 - Type: RBAC / Frontend
@@ -204,6 +212,8 @@ Regression test needed: YES.
 Recommended fix: Use authoritative server grants; distinguish UI authorization from server enforcement.
 
 ## BUG-008 — Fees
+
+- Status: **VERIFIED** — OPEN → FIXED → VERIFIED, 2026-10-05. Exact original Chromium reproduction and separate regressions pass; [Batch 3 root cause/fix/evidence](LOCAL_STABILIZATION_BATCH3_REPORT.md). Original failure below is historical.
 
 - Module: Fees
 - Severity: HIGH
@@ -312,6 +322,8 @@ Regression test needed: YES.
 Recommended fix: Reuse existing parent identity and return a safe conflict instead of an unhandled database error.
 
 ## BUG-012 — SaaS administration
+
+- Status: **VERIFIED** — OPEN → FIXED → VERIFIED, 2026-10-05. Original reproduction now passes; root cause, changed files and runtime/browser regression evidence: [Batch 2 report](LOCAL_STABILIZATION_BATCH2_REPORT.md). Original evidence below is retained as historical.
 
 - Module: SaaS administration
 - Severity: HIGH
@@ -502,6 +514,8 @@ Recommended fix: Enforce remaining assignment/installment balance on submission 
 
 ## BUG-019 — Staff academics
 
+- Status: **VERIFIED** — OPEN → FIXED → VERIFIED, 2026-10-05. Exact original Chromium reproduction and separate regressions pass; [Batch 3 root cause/fix/evidence](LOCAL_STABILIZATION_BATCH3_REPORT.md). Original failure below is historical.
+
 - Module: Staff academics
 - Severity: HIGH
 - Type: Frontend / RBAC
@@ -529,6 +543,8 @@ Recommended fix: Separate prerequisites by permission and keep unauthorized scre
 
 ## BUG-020 — Owner subscription
 
+- Status: **VERIFIED** — OPEN → FIXED → VERIFIED, 2026-10-05. Original reproduction now passes; root cause, changed files and runtime/browser regression evidence: [Batch 2 report](LOCAL_STABILIZATION_BATCH2_REPORT.md). Original evidence below is retained as historical.
+
 - Module: Owner subscription
 - Severity: HIGH
 - Type: Backend / Routing
@@ -555,6 +571,8 @@ Regression test needed: YES.
 Recommended fix: Use authenticated tenant-scoped billing authorization rather than business module dispatch.
 
 ## BUG-021 — Subscription entitlement
+
+- Status: **VERIFIED** — OPEN → FIXED → VERIFIED, 2026-10-05. Original reproduction now passes; root cause, changed files and runtime/browser regression evidence: [Batch 2 report](LOCAL_STABILIZATION_BATCH2_REPORT.md). Original evidence below is retained as historical.
 
 - Module: Subscription entitlement
 - Severity: HIGH

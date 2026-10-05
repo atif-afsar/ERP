@@ -3,7 +3,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
-import { checkDbHealth } from './db.js';
+import { checkDbHealth, pool } from './db.js';
 import { requestIdMiddleware } from './middleware/requestId.js';
 import { errorHandler, AppError } from './middleware/errorHandler.js';
 
@@ -122,21 +122,23 @@ const healthHandler: express.RequestHandler = async (req, res) => {
 };
 
 app.get('/health', healthHandler);
+app.get('/readiness', healthHandler);
 
 // API Routes Router (Supports both /api/v1 and /api base paths seamlessly)
 const apiRouter = express.Router();
 apiRouter.get('/health', healthHandler);
+apiRouter.get('/readiness', healthHandler);
 apiRouter.use('/auth', authRoutes);
 
 // SaaS Billing Routes
 apiRouter.use('/billing', billingRoutes);
 apiRouter.use('/admin/billing', adminBillingRoutes);
 
+// Own notification shell remains available during subscription recovery.
+apiRouter.use('/notifications', requireAuth, notificationRoutes);
 apiRouter.use(requireAuth, businessAccess);
 
-if (config.nodeEnv !== 'test') {
-  apiRouter.use(enforceSubscription);
-}
+apiRouter.use(enforceSubscription);
 
 apiRouter.use('/tenants', tenantsRoutes);
 apiRouter.use('/students', studentsRoutes);
@@ -156,7 +158,6 @@ apiRouter.use('/exams', examsRoutes);
 apiRouter.use('/homework', homeworkRoutes);
 apiRouter.use('/timetable', timetableRoutes);
 apiRouter.use('/communication', communicationRoutes);
-apiRouter.use('/notifications', notificationRoutes);
 apiRouter.use('/audit', auditRoutes);
 apiRouter.use('/organization', organizationRoutes);
 apiRouter.use('/master-data', masterDataRoutes);
@@ -173,9 +174,6 @@ app.use((req, res, next) => {
 // Centralized error handler
 app.use(errorHandler);
 
-import { checkDbHealth, pool } from './db.js';
-
-// ... lines 7-145 remain intact
 
 if (process.env.NODE_ENV !== 'test') {
   const server = app.listen(PORT, () => {

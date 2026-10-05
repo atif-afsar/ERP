@@ -8,7 +8,7 @@ const router = Router();
 // Middleware to ensure Super Admin access
 router.use(requireAuth);
 router.use((req, res, next) => {
-  if (!req.user?.roles?.includes('SUPERADMIN')) {
+  if (!req.user?.isSuperAdmin || req.user.role !== 'SUPER_ADMIN') {
     throw new AppError('Super Admin access required', 403);
   }
   next();

@@ -1,5 +1,13 @@
 # UI screen audit
 
+## Local stabilization Batch 3 — 2026-10-05
+
+BUG-004/007/008/019 are VERIFIED. Fresh PostgreSQL; real API finance/fee records; 26 new backend tests and full 209/209 PASS; frontend 26/26 PASS; both TypeScript checks/root build PASS. Chromium eight accounts, 76 steps PASS with zero unexpected HTTP/console errors; 5 deliberate Finance 403s and 64 blocked external resources are labeled. All 20 migrations unchanged. Posted finance journals balance, fee sources remain unique, SaaS excluded. See [complete evidence](LOCAL_STABILIZATION_BATCH3_REPORT.md) and [role/UI matrix](ROLE_UI_PERMISSION_MATRIX.md). Eleven original findings verified; ten remain OPEN (0 critical, 3 high, 7 medium). Full system remains FAIL. Historical sections below describe earlier audit states.
+
+## Local stabilization Batch 2 — 2026-10-05
+
+BUG-001/005/012/020/021 are VERIFIED. Backend 183/183 (35 new Batch 2), frontend relevant 5/5, both TypeScript checks and root build PASS. Generated runtime 6/6 and actual browser 7 scenarios/45 steps PASS; zero unexpected notification 404, subscription authorization errors or server 500. All 20 migrations/checksums unchanged. External Checkout/webhook delivery remains BLOCKED BY EXTERNAL CREDENTIAL. Seven original findings verified; 14 remain OPEN (0 critical, 7 high, 7 medium). The full system remains FAIL. [Complete scoped evidence and policy](LOCAL_STABILIZATION_BATCH2_REPORT.md). Historical audit findings below describe their original state.
+
 32 application route targets × 8 roles = 256 route/role probes; 8 login probes; 32 final responsive probes (8 targets × 4 widths), plus 24 initial responsive probes. Total 320 screen visits/probes; 35 distinct URL targets including login, landing and owner onboarding were exercised across all audit scripts. Direct authorization-denied pages count as probes, not working screens.
 
 Main viewport: 1440×900; final responsive widths 1440,1366,768,390. Role inventory: TENANT_ADMIN, SUPER_ADMIN, ADMIN, TEACHER, ACCOUNTANT, PARENT, STUDENT, STAFF. Screenshots and console/network logs are retained locally under qa/artifacts.

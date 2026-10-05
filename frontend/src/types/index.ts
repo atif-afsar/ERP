@@ -29,6 +29,7 @@ export type Role = UserRole;
 export type PermissionScope = 'GLOBAL' | 'TENANT' | 'BRANCH' | 'ASSIGNED' | 'SELF';
 
 export type Permission =
+  | 'communications.view' | 'communications.send' | 'communications.delivery.view' | 'communications.templates.manage' | 'notifications.view_own'
   | 'student_lifecycle.view'
   | 'student_lifecycle.manage'
   | 'student_documents.manage'

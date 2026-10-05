@@ -1,7 +1,8 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { UserProfile, UserRole, Permission, AuthState, UserInvitation, AuditLog } from '../types';
 import { useTenant } from './TenantContext';
-import { authService, rbacService } from '../services/auth';
+import { authService } from '../services/auth';
+import { hasPermission } from '../services/auth/permissionPolicy';
 
 interface LoginResult {
   success: boolean;
@@ -439,21 +440,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const can = (permission: Permission, resourceId?: string, branchId?: string): boolean => {
-    if (currentUser.role === 'SUPER_ADMIN') return true;
-    if (currentUser.permissions?.includes(permission)) return true;
-
-    // Direct check against full ROLE_PERMISSIONS matrix
-    const directPerms = ROLE_PERMISSIONS[currentUser.role] || [];
-    if (directPerms.includes(permission)) {
-      return true;
-    }
-
-    const result = rbacService.can(currentUser, permission, {
-      targetTenantId: currentTenant.id,
-      targetStudentId: resourceId,
-      targetBranchId: branchId,
-    });
-    return result.granted;
+    if (authState !== 'AUTHENTICATED') return false;
+    if (!hasPermission(currentUser, permission, currentTenant.id)) return false;
+    if (resourceId && currentUser.role === 'PARENT' && !currentUser.linkedStudentIds?.includes(resourceId)) return false;
+    if (branchId && currentUser.branchIds?.length && !currentUser.branchIds.includes(branchId)) return false;
+    return true;
   };
 
   const isSuperAdmin = currentUser.role === 'SUPER_ADMIN';

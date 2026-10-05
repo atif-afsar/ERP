@@ -26,12 +26,13 @@ interface TenantSubscription {
 export function SaaSBillingModule() {
   const { currentTenant } = useTenant();
   const { currentUser } = useAuth();
-  const isOwner = currentUser?.role === 'TENANT_ADMIN' || currentUser?.role === 'SUPER_ADMIN';
+  const isOwner = currentUser?.role === 'TENANT_ADMIN';
   const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
   const [subscription, setSubscription] = useState<TenantSubscription | null>(null);
   const [entitlement, setEntitlement] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     loadData();
@@ -40,6 +41,7 @@ export function SaaSBillingModule() {
   const loadData = async () => {
     try {
       setLoading(true);
+      setError('');
       const [plansRes, subRes] = await Promise.all([
         apiClient.request<{ plans: SubscriptionPlan[] }>('/api/v1/billing/plans', { method: 'GET' }),
         apiClient.request<{ subscription: TenantSubscription | null, entitlement: any }>('/api/v1/billing/subscription', { method: 'GET' })
@@ -47,7 +49,8 @@ export function SaaSBillingModule() {
       setPlans(plansRes.data.plans);
       setSubscription(subRes.data.subscription);
       setEntitlement(subRes.data.entitlement);
-    } catch (err) {
+    } catch (err: any) {
+      setError(err.message || 'Failed to load billing data.');
       console.error('Failed to load billing data', err);
     } finally {
       setLoading(false);
@@ -144,6 +147,8 @@ export function SaaSBillingModule() {
         <p className="text-sm text-slate-500 mt-1">Manage your EduNexus ERP platform subscription and billing history.</p>
       </div>
 
+      {error && <p role="alert" className="text-rose-700">{error}</p>}
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="md:col-span-2 space-y-6">
           <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
@@ -165,7 +170,7 @@ export function SaaSBillingModule() {
                   
                   <button 
                     onClick={() => handleSubscribe(plan.id)}
-                    disabled={processing || (!isOwner) || (subscription?.plan_name === plan.name && subscription?.status === 'ACTIVE')}
+                    disabled={processing || (!isOwner) || (subscription?.plan_name === plan.name && subscription?.status === 'ACTIVE' && entitlement?.isActive)}
                     className="mt-6 w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50"
                   >
                     {subscription?.plan_name === plan.name ? 'Manage' : 'Subscribe'}
@@ -195,13 +200,20 @@ export function SaaSBillingModule() {
                       ? 'bg-emerald-100 text-emerald-800'
                       : 'bg-rose-100 text-rose-800'
                   }`}>
-                    {subscription?.status || (entitlement?.inGracePeriod ? 'TRIAL/GRACE' : 'INACTIVE')}
+                    {entitlement?.inGracePeriod ? 'Onboarding grace' : entitlement?.status || 'INACTIVE'}
                   </span>
                   {entitlement?.isLegacy && (
                     <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">Legacy Access</span>
                   )}
                 </div>
               </div>
+
+              {entitlement?.providerStatus && entitlement.providerStatus !== entitlement.status && (
+                <p className="text-xs text-slate-500">Provider status: {entitlement.providerStatus}. Operational access: {entitlement.isActive ? 'Allowed' : 'Expired'}.</p>
+              )}
+              {entitlement?.inGracePeriod && entitlement.graceEndsAt && (
+                <p className="text-xs text-slate-500">Onboarding grace ends {new Date(entitlement.graceEndsAt).toLocaleString()}.</p>
+              )}
 
               {subscription?.current_period_end && (
                 <div>
@@ -212,7 +224,7 @@ export function SaaSBillingModule() {
 
               {subscription?.cancel_at_period_end && (
                 <div className="p-3 bg-amber-50 text-amber-800 text-xs rounded border border-amber-200 mt-4">
-                  Your subscription will cancel at the end of the billing period.
+                  {entitlement?.isActive ? 'Your subscription will cancel at the end of the billing period.' : 'Your paid-through period has ended.'}
                 </div>
               )}
 

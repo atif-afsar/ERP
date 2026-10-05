@@ -1,3 +1,4 @@
+import { canOpenModule } from '../../services/auth/permissionPolicy';
 import React from 'react';
 import {
   LayoutDashboard,
@@ -75,6 +76,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeNav, onNavigate, isOpen,
             return (
               <button
                 key={item.id}
+                data-module={item.id}
                 onClick={() => {
                   onNavigate(item.id);
                   if (onClose) onClose();
@@ -95,6 +97,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeNav, onNavigate, isOpen,
     );
   }
 
+  const featureForModule:Record<string,Parameters<typeof isFeatureEnabled>[0]>={attendance:'attendance',exams:'exams',timetable:'timetable',homework:'homework',fees:'fees',finance:'fees',communication:'communication',crm:'inquiryCrm'};
+
   // Tenant-Scoped Navigation Items
   const navItems = [
     {
@@ -108,7 +112,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeNav, onNavigate, isOpen,
       id: 'students',
       label: isTeacher ? `My ${getLabel('studentPlural')}` : getLabel('studentPlural'),
       icon: Users,
-      show: (!isStudent && !isParent) || !!currentUser.permissions?.includes('student_lifecycle.view'),
+      show: can('student_lifecycle.view'),
       section: 'ACADEMICS',
     },
     {
@@ -241,14 +245,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeNav, onNavigate, isOpen,
       id: 'master-data',
       label: 'School Master Data',
       icon: Building,
-      show: currentUser.role === 'TENANT_ADMIN' || !!currentUser.permissions?.includes('master_data.view'),
+      show: can('master_data.view'),
       section: 'ADMINISTRATION',
     },
     {
       id: 'organization',
       label: 'Users & Access',
       icon: Shield,
-      show: currentUser.role === 'TENANT_ADMIN' || !!currentUser.permissions?.includes('users.view'),
+      show: can('users.view') || can('roles.view'),
       section: 'ADMINISTRATION',
     },
     {
@@ -292,7 +296,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeNav, onNavigate, isOpen,
       {/* Navigation Links */}
       <div className="flex-1 px-3 py-3 space-y-0.5 overflow-y-auto">
         {navItems
-          .filter((item) => item.show)
+          .filter((item) => canOpenModule(currentUser, item.id) && (!featureForModule[item.id] || isFeatureEnabled(featureForModule[item.id])))
           .map((item) => {
             const Icon = item.icon;
             const normalizedActive = activeNav.replace(/^app\//, '');
@@ -300,6 +304,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeNav, onNavigate, isOpen,
             return (
               <button
                 key={item.id}
+                data-module={item.id}
                 onClick={() => {
                   onNavigate(`app/${item.id}`);
                   if (onClose) onClose();

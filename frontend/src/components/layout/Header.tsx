@@ -25,10 +25,11 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({ onToggleSidebar, onOpenAi, onNavigate }) => {
   const { currentTenant, allTenants, switchTenant, isSchool, getLabel, branches, currentBranch, switchBranch } = useTenant();
-  const { currentUser, isParent, activeStudentId, setActiveStudentId, logout } = useAuth();
+  const { currentUser, isParent, activeStudentId, setActiveStudentId, logout, can } = useAuth();
   
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
+  const [notificationError, setNotificationError] = useState('');
   const [feeReminderEmail, setFeeReminderEmail] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearchResults, setShowSearchResults] = useState(false);
@@ -37,8 +38,9 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar, onOpenAi, onNav
   const students = storage.getStudents(currentTenant.id);
   const staff = storage.getStaff(currentTenant.id);
 
+  const notificationsAllowed = can('notifications.view_own');
   const unreadCount = notifications.filter((n) => !n.readAt).length;
-  useEffect(()=>{let active=true;Promise.all([notificationService.list(currentTenant.id),notificationService.preferences(currentTenant.id)]).then(([items,prefs])=>{if(!active)return;setNotifications(items);const saved=prefs.data.preferences.find((x:any)=>x.event_type==='FEE_DUE_REMINDER'&&x.channel==='EMAIL');setFeeReminderEmail(saved?saved.is_enabled:true);}).catch(()=>{if(active)setNotifications([]);});return()=>{active=false;};},[currentTenant.id,currentUser.id]);
+  useEffect(()=>{let active=true;setNotificationError('');if(!notificationsAllowed){setNotifications([]);return;}Promise.all([notificationService.list(currentTenant.id),notificationService.preferences(currentTenant.id)]).then(([items,prefs])=>{if(!active)return;setNotifications(items);const saved=prefs.data.preferences.find((x:any)=>x.event_type==='FEE_DUE_REMINDER'&&x.channel==='EMAIL');setFeeReminderEmail(saved?saved.is_enabled:true);}).catch(error=>{if(active){console.error('Failed to load notifications',error);setNotificationError(error.message||'Notifications could not be loaded.');}});return()=>{active=false;};},[currentTenant.id,currentUser.id,notificationsAllowed]);
   const markRead=async(n:AppNotification)=>{if(!n.readAt){await notificationService.markRead(currentTenant.id,n.id);setNotifications(items=>items.map(x=>x.id===n.id?{...x,readAt:new Date().toISOString()}:x));}if(n.linkUrl)onNavigate(n.linkUrl.replace(/^#?\/?(app\/)?/,''));setShowNotifications(false);};
   const markAllRead=async()=>{await notificationService.markAllRead(currentTenant.id);const now=new Date().toISOString();setNotifications(items=>items.map(x=>({...x,readAt:x.readAt||now})));};
 
@@ -207,6 +209,7 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar, onOpenAi, onNav
         {/* Notifications Bell */}
         <div className="relative">
           <button
+            disabled={!notificationsAllowed}
             onClick={() => setShowNotifications(!showNotifications)}
             className="p-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors relative"
             title="Notifications"
@@ -227,7 +230,7 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar, onOpenAi, onNav
               </div>
 
               <div className="mt-3 space-y-2 max-h-72 overflow-y-auto">
-                {notifications.length === 0 ? (
+                {notificationError ? <p role="alert" className="text-xs text-rose-700">{notificationError}</p> : notifications.length === 0 ? (
                   <p className="text-xs text-slate-500 text-center py-6">No new notifications</p>
                 ) : (
                   notifications.map((n) => (
