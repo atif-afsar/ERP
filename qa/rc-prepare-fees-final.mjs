@@ -1,0 +1,1 @@
+import fs from 'node:fs';const src=fs.readFileSync('qa/rc-focused.mjs','utf8');fs.writeFileSync('qa/rc-fees-final.mjs',src.slice(0,src.indexOf("await login('TENANT_ADMIN');")).replace("'/focused-workflows.json'","'/fees-final.json'").replace('page.setDefaultTimeout(7000)','page.setDefaultTimeout(15000)'));

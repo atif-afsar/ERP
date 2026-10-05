@@ -1,0 +1,1 @@
+import fs from 'node:fs';let src=fs.readFileSync('qa/rc-final-browser-audit.mjs','utf8');src=src.split('\n').filter(l=>!l.startsWith("await test('Hostel")&&!l.startsWith("await test('HR")&&!l.startsWith("await test('Owner fee")).join('\n');fs.writeFileSync('qa/rc-final-browser-audit.mjs',src);

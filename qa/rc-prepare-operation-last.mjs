@@ -1,0 +1,1 @@
+import fs from 'node:fs';const src=fs.readFileSync('qa/rc-focused.mjs','utf8');fs.writeFileSync('qa/rc-operation-last.mjs',src.slice(0,src.indexOf("await login('TENANT_ADMIN');")).replace("'/focused-workflows.json'","'/operation-last.json'"));
