@@ -350,9 +350,9 @@ export const DashboardModule: React.FC<DashboardModuleProps> = ({ onNavigate, on
                 variant="outline"
                 className="w-full justify-start text-xs text-slate-700"
                 leftIcon={<BookOpen className="w-4 h-4 text-emerald-600" />}
-                onClick={() => onNavigate('homework')}
+                onClick={() => onNavigate('timetable')}
               >
-                Create Homework & Notes
+                View Timetable & Notes
               </Button>
               <Button
                 variant="outline"
@@ -460,7 +460,7 @@ export const DashboardModule: React.FC<DashboardModuleProps> = ({ onNavigate, on
             variant="primary"
             size="sm"
             leftIcon={<UserPlus className="w-4 h-4" />}
-            onClick={() => onNavigate('students')}
+            onClick={() => onNavigate('app/students?admit=1')}
           >
             + Add {getLabel('student')}
           </Button>
@@ -492,7 +492,7 @@ export const DashboardModule: React.FC<DashboardModuleProps> = ({ onNavigate, on
           trend={students.length > 0 ? 'up' : 'neutral'}
           icon={Users}
           iconColor="emerald"
-          onClick={() => onNavigate('students')}
+          onClick={() => onNavigate('app/students?admit=1')}
         />
         <StatCard
           title="Today's Attendance"
@@ -571,7 +571,7 @@ export const DashboardModule: React.FC<DashboardModuleProps> = ({ onNavigate, on
           <h3 className="font-bold text-slate-900 text-sm">Quick Actions</h3>
           <div className="grid grid-cols-2 gap-2">
             <button
-              onClick={() => onNavigate('students')}
+              onClick={() => onNavigate('app/students?admit=1')}
               className="p-3 rounded-lg border border-slate-200 bg-slate-50 hover:bg-emerald-50 hover:border-emerald-300 text-left transition-colors group"
             >
               <UserPlus className="w-4 h-4 text-emerald-600 mb-1.5" />
@@ -598,11 +598,11 @@ export const DashboardModule: React.FC<DashboardModuleProps> = ({ onNavigate, on
             </button>
 
             <button
-              onClick={() => onNavigate('homework')}
+              onClick={() => onNavigate('timetable')}
               className="p-3 rounded-lg border border-slate-200 bg-slate-50 hover:bg-emerald-50 hover:border-emerald-300 text-left transition-colors group"
             >
               <BookOpen className="w-4 h-4 text-emerald-600 mb-1.5" />
-              <p className="text-xs font-semibold text-slate-800 group-hover:text-emerald-800">Create Homework</p>
+              <p className="text-xs font-semibold text-slate-800 group-hover:text-emerald-800">View Timetable</p>
               <p className="text-[10px] text-slate-500">Assignments</p>
             </button>
 

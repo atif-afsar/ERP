@@ -51,7 +51,7 @@ import { LandingPage } from './modules/public/LandingPage';
 import { SuperAdminShell } from './modules/superadmin/SuperAdminShell';
 
 const READ_ONLY_MODULES = new Set([
-  'dashboard', 'academics',
+  'academics',
   'health', 'homework',
   'crm', 'reports', 'settings', 'roles-matrix', 'superadmin-features',
 ]);

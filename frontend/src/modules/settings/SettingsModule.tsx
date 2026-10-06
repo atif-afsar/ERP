@@ -190,7 +190,7 @@ export const SettingsModule: React.FC = () => {
       {activeTab === 'features' && (
         <div className="glass-panel p-6 rounded-2xl border border-slate-800 space-y-6">
           <div>
-            <h3 className="font-bold text-white text-base">Modular Feature Toggles</h3>
+            <h3 className="font-bold text-slate-900 text-base">Modular Feature Toggles</h3>
             <p className="text-xs text-slate-400 mt-0.5">
               Turn modules ON or OFF for {currentTenant.name}. Disabled modules will disappear from navigation and routes.
             </p>
@@ -206,13 +206,13 @@ export const SettingsModule: React.FC = () => {
                   onClick={() => toggleFeature(feat.key)}
                   className={`p-4 rounded-xl border flex items-center justify-between gap-3 cursor-pointer transition-all ${
                     isEnabled
-                      ? 'bg-slate-900/90 border-sky-500/40 hover:border-sky-500'
-                      : 'bg-slate-950/40 border-slate-800 opacity-60 hover:opacity-100'
+                      ? 'bg-sky-50 border-sky-200 hover:border-sky-400'
+                      : 'bg-white border-slate-300 hover:border-slate-400'
                   }`}
                 >
                   <div>
-                    <h4 className="font-bold text-white text-xs">{feat.label}</h4>
-                    <p className="text-[11px] text-slate-400 mt-0.5">{feat.desc}</p>
+                    <h4 className="font-semibold text-slate-900 text-sm">{feat.label}</h4>
+                    <p className="text-sm text-slate-600 mt-1">{feat.desc}</p>
                   </div>
 
                   <div className="shrink-0">
@@ -237,7 +237,7 @@ export const SettingsModule: React.FC = () => {
       {activeTab === 'terminology' && (
         <form onSubmit={handleSaveTerminology} className="glass-panel p-6 rounded-2xl border border-slate-800 space-y-6 text-xs">
           <div>
-            <h3 className="font-bold text-white text-base">Custom Terminology Mapping</h3>
+            <h3 className="font-bold text-slate-900 text-base">Custom Terminology Mapping</h3>
             <p className="text-xs text-slate-400 mt-0.5">
               Define how domain entities are labeled across the UI for this specific tenant.
             </p>
@@ -250,7 +250,7 @@ export const SettingsModule: React.FC = () => {
                 type="text"
                 value={labels.group}
                 onChange={(e) => setLabels({ ...labels, group: e.target.value })}
-                className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white font-semibold"
+                className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-slate-900 font-semibold"
               />
             </div>
             <div>
@@ -259,7 +259,7 @@ export const SettingsModule: React.FC = () => {
                 type="text"
                 value={labels.groupPlural}
                 onChange={(e) => setLabels({ ...labels, groupPlural: e.target.value })}
-                className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white font-semibold"
+                className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-slate-900 font-semibold"
               />
             </div>
             <div>
@@ -268,7 +268,7 @@ export const SettingsModule: React.FC = () => {
                 type="text"
                 value={labels.student}
                 onChange={(e) => setLabels({ ...labels, student: e.target.value })}
-                className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white font-semibold"
+                className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-slate-900 font-semibold"
               />
             </div>
             <div>
@@ -277,7 +277,7 @@ export const SettingsModule: React.FC = () => {
                 type="text"
                 value={labels.staff}
                 onChange={(e) => setLabels({ ...labels, staff: e.target.value })}
-                className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white font-semibold"
+                className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-slate-900 font-semibold"
               />
             </div>
             <div>
@@ -286,7 +286,7 @@ export const SettingsModule: React.FC = () => {
                 type="text"
                 value={labels.exam}
                 onChange={(e) => setLabels({ ...labels, exam: e.target.value })}
-                className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white font-semibold"
+                className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-slate-900 font-semibold"
               />
             </div>
             <div>
@@ -295,7 +295,7 @@ export const SettingsModule: React.FC = () => {
                 type="text"
                 value={labels.homework}
                 onChange={(e) => setLabels({ ...labels, homework: e.target.value })}
-                className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white font-semibold"
+                className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-slate-900 font-semibold"
               />
             </div>
           </div>
@@ -312,7 +312,7 @@ export const SettingsModule: React.FC = () => {
       {activeTab === 'branding' && (
         <form onSubmit={handleSaveBranding} className="glass-panel p-6 rounded-2xl border border-slate-800 space-y-6 text-xs">
           <div>
-            <h3 className="font-bold text-white text-base">Institution Identity & Branding</h3>
+            <h3 className="font-bold text-slate-900 text-base">Institution Identity & Branding</h3>
             <p className="text-xs text-slate-400 mt-0.5">
               Update organization name, official communications email, address, and tagline.
             </p>
@@ -325,7 +325,7 @@ export const SettingsModule: React.FC = () => {
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white font-semibold"
+                className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-slate-900 font-semibold"
               />
             </div>
             <div>
@@ -334,7 +334,7 @@ export const SettingsModule: React.FC = () => {
                 type="text"
                 value={tagline}
                 onChange={(e) => setTagline(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white"
+                className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-slate-900"
               />
             </div>
             <div>
@@ -343,7 +343,7 @@ export const SettingsModule: React.FC = () => {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white"
+                className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-slate-900"
               />
             </div>
             <div>
@@ -352,7 +352,7 @@ export const SettingsModule: React.FC = () => {
                 type="text"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white"
+                className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-slate-900"
               />
             </div>
             <div className="sm:col-span-2">
@@ -361,7 +361,7 @@ export const SettingsModule: React.FC = () => {
                 type="text"
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white"
+                className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-slate-900"
               />
             </div>
           </div>
@@ -403,7 +403,7 @@ export const SettingsModule: React.FC = () => {
               className="glass-panel p-6 rounded-2xl border border-slate-800 space-y-4 text-xs"
             >
               <div className="flex items-center justify-between">
-                <h3 className="font-bold text-white text-sm flex items-center gap-2">
+                <h3 className="font-bold text-slate-900 text-sm flex items-center gap-2">
                   <KeyRound className="w-4 h-4 text-sky-400" />
                   Change Password
                 </h3>
@@ -428,7 +428,7 @@ export const SettingsModule: React.FC = () => {
                   value={oldPassword}
                   onChange={(e) => setOldPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white"
+                  className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-slate-900"
                   required
                 />
               </div>
@@ -440,7 +440,7 @@ export const SettingsModule: React.FC = () => {
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white"
+                  className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-slate-900"
                   required
                 />
               </div>
@@ -452,7 +452,7 @@ export const SettingsModule: React.FC = () => {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white"
+                  className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-slate-900"
                   required
                 />
               </div>
@@ -468,7 +468,7 @@ export const SettingsModule: React.FC = () => {
             <div className="glass-panel p-6 rounded-2xl border border-slate-800 space-y-4 text-xs flex flex-col justify-between">
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <h3 className="font-bold text-white text-sm flex items-center gap-2">
+                  <h3 className="font-bold text-slate-900 text-sm flex items-center gap-2">
                     <Laptop className="w-4 h-4 text-purple-400" />
                     Active Logged-in Sessions
                   </h3>
@@ -497,7 +497,7 @@ export const SettingsModule: React.FC = () => {
                     >
                       <div>
                         <div className="flex items-center gap-2">
-                          <p className="font-bold text-white">{s.device}</p>
+                          <p className="font-bold text-slate-900">{s.device}</p>
                           {s.isCurrent && (
                             <span className="px-2 py-0.2 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-semibold">
                               This Device
@@ -515,7 +515,7 @@ export const SettingsModule: React.FC = () => {
               {/* Demo Simulator Action */}
               <div className="pt-4 border-t border-slate-800 flex items-center justify-between">
                 <div>
-                  <p className="font-bold text-white">Test Session Timeout</p>
+                  <p className="font-bold text-slate-900">Test Session Timeout</p>
                   <p className="text-[11px] text-slate-400">Trigger simulated 30s session expiration modal</p>
                 </div>
                 <Button
@@ -534,7 +534,7 @@ export const SettingsModule: React.FC = () => {
           <div className="glass-panel p-6 rounded-2xl border border-slate-800 space-y-4">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
               <div>
-                <h3 className="font-bold text-white text-base flex items-center gap-2">
+                <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
                   <UserPlus className="w-4 h-4 text-sky-400" />
                   Team Invitations & Role Provisioning
                 </h3>
@@ -567,7 +567,7 @@ export const SettingsModule: React.FC = () => {
                 <tbody className="divide-y divide-slate-800/60">
                   {invitations.map((inv) => (
                     <tr key={inv.id} className="hover:bg-slate-800/40">
-                      <td className="p-3 font-semibold text-white">{inv.name}</td>
+                      <td className="p-3 font-semibold text-slate-900">{inv.name}</td>
                       <td className="p-3 text-slate-300">{inv.email}</td>
                       <td className="p-3">
                         <Badge variant="blue" size="sm">{inv.role}</Badge>
@@ -606,7 +606,7 @@ export const SettingsModule: React.FC = () => {
           <div className="glass-panel p-6 rounded-2xl border border-slate-800 space-y-4">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div>
-                <h3 className="font-bold text-white text-base">Security & Operational Audit Log</h3>
+                <h3 className="font-bold text-slate-900 text-base">Security & Operational Audit Log</h3>
                 <p className="text-xs text-slate-400 mt-0.5">
                   Immutable, tenant-isolated audit trail answering who, what, when, and what changed.
                 </p>
@@ -625,14 +625,14 @@ export const SettingsModule: React.FC = () => {
                   value={auditSearch}
                   onChange={(e) => setAuditSearch(e.target.value)}
                   placeholder="Search audit trail by actor, action, details..."
-                  className="w-full pl-10 pr-4 py-2 bg-slate-950/70 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-sky-500"
+                  className="w-full pl-10 pr-4 py-2 bg-slate-950/70 border border-slate-700 rounded-xl text-xs text-slate-900 focus:outline-none focus:border-sky-500"
                 />
               </div>
 
               <select
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}
-                className="px-3 py-2 bg-slate-950/70 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-sky-500"
+                className="px-3 py-2 bg-slate-950/70 border border-slate-700 rounded-xl text-xs text-slate-900 focus:outline-none focus:border-sky-500"
               >
                 <option value="ALL">All Categories</option>
                 <option value="FEES">Fees & Finance</option>
@@ -681,7 +681,7 @@ export const SettingsModule: React.FC = () => {
                         </td>
 
                         <td className="px-6 py-4">
-                          <p className="font-bold text-white">{log.actorName}</p>
+                          <p className="font-bold text-slate-900">{log.actorName}</p>
                           <span className="text-[10px] text-slate-400 font-mono">{log.actorRole}</span>
                         </td>
 
@@ -729,7 +729,7 @@ export const SettingsModule: React.FC = () => {
                 <Landmark className="w-5 h-5" />
               </div>
               <div>
-                <h4 className="font-bold text-white text-sm">Direct School Settlement (BYOK - Bring Your Own Key)</h4>
+                <h4 className="font-bold text-slate-900 text-sm">Direct School Settlement (BYOK - Bring Your Own Key)</h4>
                 <p className="text-xs text-slate-300 mt-1 max-w-2xl leading-relaxed">
                   Student fees flow <strong>100% directly</strong> into your institution's bank account via your own merchant gateway credentials. 
                   Zero intermediary escrow, zero tax entanglement (school tuition is 0% GST exempt), and instant T+1 banking settlement.
@@ -752,7 +752,7 @@ export const SettingsModule: React.FC = () => {
             <div className="lg:col-span-2 glass-panel p-6 rounded-2xl border border-slate-800 space-y-5">
               <div className="flex items-center justify-between border-b border-slate-800 pb-3">
                 <div>
-                  <h3 className="font-bold text-white text-sm flex items-center gap-2">
+                  <h3 className="font-bold text-slate-900 text-sm flex items-center gap-2">
                     <CreditCard className="w-4 h-4 text-sky-400" />
                     Merchant Gateway Credentials (Razorpay India)
                   </h3>
@@ -768,7 +768,7 @@ export const SettingsModule: React.FC = () => {
                     className={`px-3 py-1 rounded-lg font-semibold transition-all ${
                       paymentConfig.environment === 'TEST'
                         ? 'bg-amber-500 text-slate-950 shadow-sm'
-                        : 'text-slate-400 hover:text-white'
+                        : 'text-slate-400 hover:text-slate-900'
                     }`}
                   >
                     Test Sandbox
@@ -779,7 +779,7 @@ export const SettingsModule: React.FC = () => {
                     className={`px-3 py-1 rounded-lg font-semibold transition-all ${
                       paymentConfig.environment === 'LIVE'
                         ? 'bg-emerald-500 text-slate-950 shadow-sm'
-                        : 'text-slate-400 hover:text-white'
+                        : 'text-slate-400 hover:text-slate-900'
                     }`}
                   >
                     Live Production
@@ -798,7 +798,7 @@ export const SettingsModule: React.FC = () => {
                     value={paymentConfig.razorpayKeyId || ''}
                     onChange={(e) => setPaymentConfig({ ...paymentConfig, razorpayKeyId: e.target.value })}
                     placeholder={paymentConfig.environment === 'LIVE' ? 'rzp_live_xxxxxxxxxxxxxxxx' : 'rzp_test_xxxxxxxxxxxxxxxx'}
-                    className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white font-mono focus:border-sky-500 focus:outline-none"
+                    className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-slate-900 font-mono focus:border-sky-500 focus:outline-none"
                   />
                   <p className="text-[11px] text-slate-400 mt-1">
                     Public Key used to render the client-side checkout popup for UPI, Cards & NetBanking.
@@ -815,12 +815,12 @@ export const SettingsModule: React.FC = () => {
                       value={paymentConfig.razorpayKeySecret || ''}
                       onChange={(e) => setPaymentConfig({ ...paymentConfig, razorpayKeySecret: e.target.value })}
                       placeholder="Enter merchant secret key"
-                      className="w-full px-3 py-2 pr-10 rounded-xl bg-slate-950 border border-slate-800 text-white font-mono focus:border-sky-500 focus:outline-none"
+                      className="w-full px-3 py-2 pr-10 rounded-xl bg-slate-950 border border-slate-800 text-slate-900 font-mono focus:border-sky-500 focus:outline-none"
                     />
                     <button
                       type="button"
                       onClick={() => setShowSecretKey(!showSecretKey)}
-                      className="absolute right-3 top-2.5 text-slate-400 hover:text-white"
+                      className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-900"
                     >
                       {showSecretKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
@@ -839,7 +839,7 @@ export const SettingsModule: React.FC = () => {
                     value={paymentConfig.webhookSecret || ''}
                     onChange={(e) => setPaymentConfig({ ...paymentConfig, webhookSecret: e.target.value })}
                     placeholder="whsec_xxxxxxxxxxxxxxxxxxxxxx"
-                    className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white font-mono focus:border-sky-500 focus:outline-none"
+                    className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-slate-900 font-mono focus:border-sky-500 focus:outline-none"
                   />
                   <p className="text-[11px] text-slate-400 mt-1">
                     Used to verify incoming Razorpay webhook events (<code className="text-sky-300">payment.captured</code>).
@@ -849,7 +849,7 @@ export const SettingsModule: React.FC = () => {
 
               {/* Supported Payment Instruments */}
               <div className="pt-4 border-t border-slate-800">
-                <span className="block font-bold text-white text-xs mb-3">Accepted Payment Channels</span>
+                <span className="block font-bold text-slate-900 text-xs mb-3">Accepted Payment Channels</span>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   <label className="flex items-center gap-2 p-3 rounded-xl bg-slate-950/60 border border-slate-800 cursor-pointer text-xs">
                     <input
@@ -897,7 +897,7 @@ export const SettingsModule: React.FC = () => {
             {/* Direct Settlement Bank Details */}
             <div className="glass-panel p-6 rounded-2xl border border-slate-800 space-y-4">
               <div className="border-b border-slate-800 pb-3">
-                <h3 className="font-bold text-white text-sm flex items-center gap-2">
+                <h3 className="font-bold text-slate-900 text-sm flex items-center gap-2">
                   <Landmark className="w-4 h-4 text-emerald-400" />
                   Direct Settlement Bank
                 </h3>
@@ -919,7 +919,7 @@ export const SettingsModule: React.FC = () => {
                         bankAccount: { ...paymentConfig.bankAccount, accountName: e.target.value },
                       })
                     }
-                    className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white font-medium focus:border-sky-500 focus:outline-none"
+                    className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-slate-900 font-medium focus:border-sky-500 focus:outline-none"
                   />
                 </div>
 
@@ -936,7 +936,7 @@ export const SettingsModule: React.FC = () => {
                       })
                     }
                     placeholder="e.g. HDFC Bank / State Bank of India"
-                    className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white focus:border-sky-500 focus:outline-none"
+                    className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-slate-900 focus:border-sky-500 focus:outline-none"
                   />
                 </div>
 
@@ -952,7 +952,7 @@ export const SettingsModule: React.FC = () => {
                         bankAccount: { ...paymentConfig.bankAccount, accountNumber: e.target.value },
                       })
                     }
-                    className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white font-mono focus:border-sky-500 focus:outline-none"
+                    className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-slate-900 font-mono focus:border-sky-500 focus:outline-none"
                   />
                 </div>
 
@@ -969,7 +969,7 @@ export const SettingsModule: React.FC = () => {
                           bankAccount: { ...paymentConfig.bankAccount, ifscCode: e.target.value.toUpperCase() },
                         })
                       }
-                      className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white font-mono uppercase focus:border-sky-500 focus:outline-none"
+                      className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-slate-900 font-mono uppercase focus:border-sky-500 focus:outline-none"
                     />
                   </div>
                   <div>
@@ -983,7 +983,7 @@ export const SettingsModule: React.FC = () => {
                           bankAccount: { ...paymentConfig.bankAccount, branch: e.target.value },
                         })
                       }
-                      className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white focus:border-sky-500 focus:outline-none"
+                      className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-slate-900 focus:border-sky-500 focus:outline-none"
                     />
                   </div>
                 </div>
@@ -1000,7 +1000,7 @@ export const SettingsModule: React.FC = () => {
                       })
                     }
                     placeholder="e.g. school@hdfcbank"
-                    className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white font-mono focus:border-sky-500 focus:outline-none"
+                    className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-slate-900 font-mono focus:border-sky-500 focus:outline-none"
                   />
                 </div>
               </div>
