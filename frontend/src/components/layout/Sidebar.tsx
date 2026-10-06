@@ -296,7 +296,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeNav, onNavigate, isOpen,
       {/* Navigation Links */}
       <div className="flex-1 px-3 py-3 space-y-0.5 overflow-y-auto">
         {navItems
-          .filter((item) => canOpenModule(currentUser, item.id) && (!featureForModule[item.id] || isFeatureEnabled(featureForModule[item.id])))
+          .filter((item) => item.show !== false && canOpenModule(currentUser, item.id) && (!featureForModule[item.id] || isFeatureEnabled(featureForModule[item.id])))
           .map((item) => {
             const Icon = item.icon;
             const normalizedActive = activeNav.replace(/^app\//, '');

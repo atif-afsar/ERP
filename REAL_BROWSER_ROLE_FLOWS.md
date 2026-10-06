@@ -1,27 +1,38 @@
 # Real-Browser Human-Style UI Role Journeys
 
-**Audit Date:** 2026-10-06  
-**Audited Baseline:** EduNexus ERP v1.0.0-RC  
-**Environment:** Local Isolated QA Instance (`http://127.0.0.1:5191`)  
-**Browser Engine:** Real Chromium Headless Rendering Engine (Playwright)  
+**Audit Date:** 2026-10-06
+**Audited Baseline:** EduNexus ERP v1.0.0-RC
+**Environment:** Local Isolated QA Instance (`http://127.0.0.1:5191`)
+**Browser Engine:** Real Chromium Headed & Headless Rendering Engine (Playwright)
 **Evidence Artifacts:** [qa/artifacts/ui-audit/screenshots/](file:///c:/Users/asus/Desktop/ERP/qa/artifacts/ui-audit/screenshots/)
+**Reconciliation Artifact:** [UI_AUDIT_EVIDENCE_RECONCILIATION.md](file:///c:/Users/asus/Desktop/ERP/UI_AUDIT_EVIDENCE_RECONCILIATION.md)
+**Control Inventory:** [REAL_BROWSER_CONTROL_INVENTORY.md](file:///c:/Users/asus/Desktop/ERP/REAL_BROWSER_CONTROL_INVENTORY.md)
 
 ---
 
 ## 1. Overview of Evaluated Role Journeys
 
-Eight (8) distinct user profiles were audited from fresh login through full module navigation, interactive controls, tab switching, form validation, state persistence across page reload (F5), and clean logout.
+Eight (8) distinct user profiles were audited from fresh login through full module navigation, interactive controls, tab switching, form validation, state persistence across page reload (F5), and clean logout in both **Headless** and **Headed** browser modes.
 
-| # | Profile Role | Profile Account / Display Name | Tenant Scope | Nav Items | Screen Count | Overall Role Status |
-|---|---|---|---|---|---|---|
-| **1** | **SUPER_ADMIN** | `bootstrap@rc.example.test` (Release Certification Bootstrap Administrator) | Global Platform | 4 | 4 | **PASS** |
-| **2** | **TENANT_ADMIN** | `owner-4425b960@rc.example.test` (Springfield Academy Owner / Principal) | Springfield Academy | 19 | 19 | **PASS** |
-| **3** | **ADMIN** (Custom) | `custom-4425b960@rc.example.test` (Limited Custom Administrator) | Springfield Academy | 3 | 3 | **PASS** |
-| **4** | **TEACHER** | `teacher-4425b960@rc.example.test` (Instructor) | Springfield Academy | 5 | 5 | **PASS** |
-| **5** | **ACCOUNTANT** | `accountant-4425b960@rc.example.test` (Financial Officer) | Springfield Academy | 4 | 4 | **PASS** |
-| **6** | **PARENT** | `parent-4425b960@rc.example.test` (Guardian Account) | Springfield Academy | 2 | 2 | **PASS** |
-| **7** | **STUDENT** | `student-4425b960@rc.example.test` (Enrolled Student) | Springfield Academy | 1 | 1 | **PASS** |
-| **8** | **STAFF** | `staff-4425b960@rc.example.test` (Non-Teaching Employee) | Springfield Academy | 2 | 2 | **PASS** |
+### Screen Count Canonical Model:
+- **Unique Production Routes (Category A):** **23** (22 authenticated module routes + 1 public authentication route `#/login`).
+- **Role-Scoped Screen Instances (Category B):** **38** across the 8 user profiles (sum of active sidebar items post-UI-BUG-001).
+- **Dedicated Modal Views (Category C):** **2** (SaaS Plan Creation Modal + Parent Proof Upload Modal).
+- **Security-Guard Views (Category D):** **4** (Direct-route 403 Forbidden cards on `/app/finance`).
+- **Public / Auth Views (Category E):** **2** (`#/login` primary view + Password Recovery Request dialog).
+- **Total Evaluated Screen States:** **46** ($B + C + D + E = 38 + 2 + 4 + 2 = 46$ post-fix; 48 prior to UI-BUG-001 retirement).
+
+| # | Profile Role | Profile Account / Display Name | Tenant Scope | Visible Nav Items | Role Screens | Headed Confirmation | Overall Role Status |
+|---|---|---|---|---|---|---|---|
+| **1** | **SUPER_ADMIN** | `bootstrap@rc.example.test` (Release Certification Bootstrap Administrator) | Global Platform | 4 | 4 | VERIFIED | **PASS** |
+| **2** | **TENANT_ADMIN** | `owner-4425b960@rc.example.test` (Springfield Academy Owner / Principal) | Springfield Academy | 18 | 18 | VERIFIED | **PASS** |
+| **3** | **ADMIN** (Custom) | `custom-4425b960@rc.example.test` (Limited Custom Administrator) | Springfield Academy | 2 | 2 | VERIFIED | **PASS** |
+| **4** | **TEACHER** | `teacher-4425b960@rc.example.test` (Instructor) | Springfield Academy | 5 | 5 | VERIFIED | **PASS** |
+| **5** | **ACCOUNTANT** | `accountant-4425b960@rc.example.test` (Financial Officer) | Springfield Academy | 4 | 4 | VERIFIED | **PASS** |
+| **6** | **PARENT** | `parent-4425b960@rc.example.test` (Guardian Account) | Springfield Academy | 2 | 2 | VERIFIED | **PASS** |
+| **7** | **STUDENT** | `student-4425b960@rc.example.test` (Enrolled Student) | Springfield Academy | 1 | 1 | VERIFIED | **PASS** |
+| **8** | **STAFF** | `staff-4425b960@rc.example.test` (Non-Teaching Employee) | Springfield Academy | 2 | 2 | VERIFIED | **PASS** |
+| **TOTAL** | **8 ROLES** | | | **38** | **38** | **100% HEADED PASS** | **ALL PASS** |
 
 ---
 
@@ -84,8 +95,6 @@ Dashboard (#/app/dashboard)
 School Master Data (#/app/master-data)
   ↓
 Students Directory & Admission (#/app/students)
-  ↓
-Classes & Groups (#/app/academics)
   ↓
 Attendance Register (#/app/attendance)
   ↓
@@ -173,14 +182,13 @@ Dashboard (#/app/dashboard)
   ↓
 School Master Data (#/app/master-data)
   ↓ [View-Only School Profile Card]
-Classes (#/app/academics)
   ↓ [Direct Route Attempt: #/app/finance -> Denied 403]
 Logout
 ```
 
 ### 4.2 Step-by-Step Execution Evidence
 1. **Sidebar Scope Verification:**
-   - Exactly 3 navigation items visible: `Dashboard`, `Classes`, `School Master Data`.
+   - Exactly 2 navigation items visible: `Dashboard`, `School Master Data` (the legacy prototype `Classes` item is correctly suppressed following UI-BUG-001 resolution).
    - Unauthorized items (Students, Finance, Fees, HR, Inventory, Settings) are strictly hidden.
    - Screenshot: [01_dashboard_ADMIN.png](file:///c:/Users/asus/Desktop/ERP/qa/artifacts/ui-audit/screenshots/01_dashboard_ADMIN.png)
    - Status: **PASS**

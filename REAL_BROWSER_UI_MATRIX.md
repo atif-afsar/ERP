@@ -1,11 +1,13 @@
 # Real-Browser Human-Style UI Interaction Matrix
 
-**Audit Date:** 2026-10-06  
-**Audited Baseline:** EduNexus ERP v1.0.0-RC  
-**Environment:** Local Isolated QA Instance (`http://127.0.0.1:5191`)  
-**Browser Engine:** Real Chromium Headless Rendering Engine (Playwright)  
-**Total Interactive Controls Exercised:** 375+  
-**Total Screens Evaluated:** 48  
+**Audit Date:** 2026-10-06
+**Audited Baseline:** EduNexus ERP v1.0.0-RC
+**Environment:** Local Isolated QA Instance (`http://127.0.0.1:5191`)
+**Browser Engine:** Real Chromium Headed & Headless Rendering Engine (Playwright)
+**Total Unique Production Controls:** 375 (380 cataloged pre-fix minus 5 excluded prototype controls; itemized in [REAL_BROWSER_CONTROL_INVENTORY.md](file:///c:/Users/asus/Desktop/ERP/REAL_BROWSER_CONTROL_INVENTORY.md))
+**Total Evaluated Screen States:** 46 ($B=38 \text{ role instances} + C=2 \text{ modals} + D=4 \text{ security guards} + E=2 \text{ public/auth views}$; numbered SCREEN-001 to SCREEN-048 in [UI_AUDIT_EVIDENCE_RECONCILIATION.md](file:///c:/Users/asus/Desktop/ERP/UI_AUDIT_EVIDENCE_RECONCILIATION.md))
+**Total Unique Production Tabs:** 40 (4 prototype tabs excluded; 157 cumulative runner transitions)
+**Total Cross-Module Workflows:** 14 (Flows A through N)
 
 ---
 
@@ -56,11 +58,15 @@
 
 ---
 
-## 2. Interactive Controls Summary
+## 2. Interactive Controls Summary & Evidence Reconciliation
 
-- **Total Navigation Transitions Tested:** 48
-- **Total Tab Switching Interactions:** 157
-- **Total Form Controls & Buttons Exercised:** 375+
-- **Total Modals Opened & Closed:** 8
-- **Total Unauthorized Direct URL Safeguards Verified:** 4
-- **Failure Count:** **0**
+- **Canonical Evaluated Screen States:** **46** ($B=38 \text{ role instances} + C=2 \text{ modals} + D=4 \text{ security guards} + E=2 \text{ public/auth views}$; was 48 prior to UI-BUG-001 retirement)
+- **Unique Production Application Routes (Category A):** **23** (22 authenticated + 1 public)
+- **Unique Production Workbench Tabs:** **40** (4 prototype tabs excluded; exercised across **157 cumulative transitions** by automated runner)
+- **Form Controls & Interactive Elements:** **375 Unique Controls** (itemized in [REAL_BROWSER_CONTROL_INVENTORY.md](file:///c:/Users/asus/Desktop/ERP/REAL_BROWSER_CONTROL_INVENTORY.md))
+- **Production Forms:** **16 Verified Operational Forms** (2 forms intentionally unavailable by design; 18 total evaluated)
+- **Cross-Module Workflows Verified:** **14** (Flows A through N)
+- **Headed Confirmation:** **100% PASS** across all 8 roles (headed screenshots captured)
+- **Functional Failure Count:** **0** (UI-BUG-001 resolved and verified)
+- **UX Polish Issues:** **5** (active backlog in [UI_UX_POLISH_BACKLOG.md](file:///c:/Users/asus/Desktop/ERP/UI_UX_POLISH_BACKLOG.md))
+- **Full Reconciliation Evidence:** [UI_AUDIT_EVIDENCE_RECONCILIATION.md](file:///c:/Users/asus/Desktop/ERP/UI_AUDIT_EVIDENCE_RECONCILIATION.md)

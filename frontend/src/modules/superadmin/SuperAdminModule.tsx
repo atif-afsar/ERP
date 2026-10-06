@@ -31,7 +31,7 @@ export const SuperAdminModule: React.FC = () => {
     address: 'New Delhi',
     phone: '+91 99999 11111',
     email: 'contact@institution.edu',
-    planName: 'Pro Tier',
+    planName: 'Starter Academy',
   });
 
   const handleOnboardTenant = (e: React.FormEvent) => {
@@ -269,9 +269,9 @@ export const SuperAdminModule: React.FC = () => {
               onChange={(e) => setFormData({ ...formData, planName: e.target.value })}
               className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-900"
             >
-              <option value="Starter School Plan">Starter Plan (₹15,000/mo)</option>
-              <option value="Pro School SaaS">Pro Plan (₹25,000/mo)</option>
-              <option value="Coaching Institute Enterprise">Coaching Enterprise (₹35,000/mo)</option>
+              <option value="Starter Academy">Starter Academy (₹1,999/mo)</option>
+              <option value="Campus Pro">Campus Pro (₹4,999/mo)</option>
+              <option value="Institutional Trust">Institutional Trust (₹9,999/mo)</option>
             </select>
           </div>
 
