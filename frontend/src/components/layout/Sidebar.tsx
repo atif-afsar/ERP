@@ -124,7 +124,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeNav, onNavigate, isOpen,
     },
     {
       id: 'attendance',
-      label: isStudent ? 'My Attendance' : isParent ? "Children's Attendance" : 'Attendance & QR',
+      label: isStudent ? 'My Attendance' : isParent ? "Children's Attendance" : 'Attendance',
       icon: CalendarCheck,
       show: isFeatureEnabled('attendance') && currentUser.role !== 'ACCOUNTANT',
       section: 'ACADEMICS',

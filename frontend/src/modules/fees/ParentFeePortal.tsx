@@ -29,6 +29,7 @@ export const ParentFeePortal: React.FC = () => {
     const [err, setErr] = useState('');
     const [msg, setMsg] = useState('');
     const [childId, setChildId] = useState<string>('');
+    const [copiedUpi, setCopiedUpi] = useState(false);
     const [proof, setProof] = useState<any>({ feeAssignmentId: '', installmentId: '', amount: 0, transactionReference: '', paymentDate: new Date().toISOString().slice(0, 10), fileName: '', proofDataUrl: '' });
 
     const load = async () => {
@@ -97,17 +98,61 @@ export const ParentFeePortal: React.FC = () => {
                     </div>
 
                     <div className="grid gap-5 lg:grid-cols-2">
-                        <div className="rounded-xl border bg-white p-5">
-                            <h3 className="font-bold">Payment Instructions</h3>
+                        <div className="rounded-xl border bg-white p-5 space-y-3">
+                            <div className="flex items-center justify-between">
+                                <h3 className="font-bold text-slate-900">School Payment Information</h3>
+                                <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                                    Direct UPI / Bank
+                                </span>
+                            </div>
                             {d.settings ? (
                                 <>
-                                    <p className="mt-2 text-sm">Payee: {d.settings.payee_name}</p>
-                                    <p className="text-lg font-bold">UPI ID: {d.settings.upi_id}</p>
-                                    {d.settings.has_qr && <img alt="School payment QR" src={d.qrUrl} className="mt-3 max-h-64 rounded border" />}
-                                    <p className="mt-2 text-xs text-slate-500">{d.settings.instructions}</p>
+                                    <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 space-y-1">
+                                        <p className="text-xs text-slate-500">Official Payee Account</p>
+                                        <p className="text-sm font-bold text-slate-900">{d.settings.payee_name}</p>
+                                        {d.settings.bank_name && (
+                                            <p className="text-xs text-slate-600">{d.settings.bank_name} {d.settings.account_last_four ? `(A/C ending in ${d.settings.account_last_four})` : ''}</p>
+                                        )}
+                                    </div>
+
+                                    <div className="p-3 rounded-lg bg-violet-50/60 border border-violet-200 space-y-2">
+                                        <p className="text-xs font-semibold text-violet-900">Institutional UPI ID</p>
+                                        <div className="flex items-center justify-between bg-white px-3 py-2 rounded-lg border border-violet-200">
+                                            <span className="font-mono text-sm font-bold text-violet-800 truncate select-all">{d.settings.upi_id}</span>
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    navigator.clipboard.writeText(d.settings.upi_id);
+                                                    setCopiedUpi(true);
+                                                    setTimeout(() => setCopiedUpi(false), 2000);
+                                                }}
+                                                className="ml-2 text-xs font-semibold px-2 py-1 bg-violet-600 text-white rounded hover:bg-violet-700 transition-colors shrink-0"
+                                            >
+                                                {copiedUpi ? 'Copied!' : 'Copy UPI'}
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {d.settings.has_qr && d.qrUrl ? (
+                                        <div className="text-center pt-2">
+                                            <img alt="School payment QR" src={d.qrUrl} className="mx-auto max-h-56 rounded-xl border border-slate-200 shadow-xs" />
+                                            <p className="text-[11px] text-slate-500 mt-2">Scan with Google Pay, PhonePe, Paytm, or any UPI app</p>
+                                        </div>
+                                    ) : (
+                                        <div className="p-3 rounded-lg bg-amber-50 border border-amber-200 text-xs text-amber-800 leading-relaxed">
+                                            <strong>External Transfer Note:</strong> Open your preferred UPI application (PhonePe, Google Pay, Paytm, or BHIM), initiate a transfer to the UPI ID above, and submit the 12-digit UTR reference with your payment screenshot.
+                                        </div>
+                                    )}
+
+                                    {d.settings.instructions && (
+                                        <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-600">
+                                            <span className="font-semibold text-slate-700 block mb-0.5">School Note:</span>
+                                            {d.settings.instructions}
+                                        </div>
+                                    )}
                                 </>
                             ) : (
-                                <p className="text-sm text-amber-700">School payment settings are not configured.</p>
+                                <p className="text-sm text-amber-700">School payment settings are currently being configured by administration.</p>
                             )}
                         </div>
 

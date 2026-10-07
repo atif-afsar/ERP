@@ -133,7 +133,8 @@ class ApiClient {
           requestId,
           timestamp,
         };
-        const err: any = new Error(errorData.message);
+        const issues = Array.isArray(errorData.details) ? errorData.details.filter((issue: any) => typeof issue?.message === 'string').map((issue: any) => [issue.field, issue.message].filter(Boolean).join(': ')) : [];
+        const err: any = new Error(issues.length ? issues.join('; ') : errorData.message);
         err.code = errorData.code;
         err.status = res.status;
         err.details = errorData.details;

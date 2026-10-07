@@ -1,3 +1,4 @@
+import {apiClient} from '../services/api/apiClient';
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { TenantConfig, TenantLabels, TenantFeatureFlags, TenantType, Branch } from '../types';
 import { storage } from '../services/storageService';
@@ -96,6 +97,7 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       return template ? [...existing, { ...template, id: tenantId, name: 'Authenticated institution' }] : existing;
     });
     setCurrentTenantId(tenantId);
+    void apiClient.request<any>('/api/v1/tenants/'+encodeURIComponent(tenantId)).then(result=>{const school=result.data;if(school.id!==tenantId)return;setAllTenants(existing=>existing.map(tenant=>tenant.id===tenantId?{...tenant,name:school.name,email:school.email||'',phone:school.phone||'',address:school.address||'',tenantType:school.tenant_type||tenant.tenantType}:tenant));}).catch(()=>{/* Preserve authenticated scope if profile lookup is unavailable. */});
   };
 
   const getLabel = (key: keyof TenantLabels): string => {

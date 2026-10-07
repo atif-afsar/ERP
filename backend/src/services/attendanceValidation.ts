@@ -1,0 +1,3 @@
+import {z} from 'zod';
+export const attendanceScopeSchema=z.object({academicYearId:z.string().uuid(),classId:z.string().uuid(),sectionId:z.string().uuid(),date:z.string().date()});
+export const attendanceBulkSchema=attendanceScopeSchema.extend({records:z.array(z.object({enrollmentId:z.string().uuid(),status:z.enum(['PRESENT','ABSENT','LATE','EXCUSED','HALF_DAY']),remarks:z.string().max(1000).optional().nullable()})).min(1).max(200)}).refine(v=>new Set(v.records.map(r=>r.enrollmentId)).size===v.records.length,{path:['records'],message:'Each enrollment must appear only once in an attendance submission.'});

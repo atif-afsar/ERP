@@ -89,7 +89,7 @@ const ROUTE_PERMISSIONS: Record<string, Permission> = {
   communication: 'communications.view',
   crm: 'students.create',
   reports: 'reports.view',
-  settings: 'settings.view',
+  settings: 'organization.view',
   organization: 'users.view',
   'master-data': 'master_data.view',
   'api-docs': 'organization.view',
@@ -98,8 +98,8 @@ const ROUTE_PERMISSIONS: Record<string, Permission> = {
   'superadmin-dashboard': 'tenants.manage',
   'superadmin-tenants': 'tenants.manage',
   'superadmin-plans': 'subscriptions.manage',
-  'superadmin-features': 'settings.view',
-  'saas-billing': 'settings.view',
+  'superadmin-features': 'tenants.manage',
+  'saas-billing': 'organization.view',
 };
 
 const SuspendedTenantView: React.FC<{ tenantName: string }> = ({ tenantName }) => (
@@ -223,6 +223,16 @@ const MainRouter: React.FC = () => {
   const isAuthorized = canOpenModule(currentUser, currentNav);
 
   const renderModule = () => {
+    // Restrict Super Admin to platform operations when operating without school context
+    if (isSuperAdmin && (currentNav === 'fees' || currentNav === 'fees/new' || currentNav === 'students' || currentNav === 'students/new' || currentNav === 'finance' || currentNav === 'attendance')) {
+      return (
+        <UnauthorizedCard
+          permission="tenants.manage"
+          onBackToDashboard={() => navigateTo('superadmin-dashboard')}
+        />
+      );
+    }
+
     // Keep the existing shell/logout and own billing recovery usable while
     // preventing expired owners from entering operational screens.
     if (currentUser.role === 'TENANT_ADMIN' && currentNav !== 'saas-billing') {

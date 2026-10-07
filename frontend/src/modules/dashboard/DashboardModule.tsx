@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Users,
   CalendarCheck,
@@ -18,6 +18,8 @@ import {
   Building,
   ArrowRight,
   Send,
+  Printer,
+  X
 } from 'lucide-react';
 import { useTenant } from '../../context/TenantContext';
 import { useAuth } from '../../context/AuthContext';
@@ -25,6 +27,9 @@ import { storage } from '../../services/storageService';
 import { StatCard } from '../../components/ui/StatCard';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
+import { Modal } from '../../components/ui/Modal';
+import { studentLifecycleService } from '../../services/studentLifecycleService';
+import { feeManagementService } from '../../services/feeManagementService';
 
 interface DashboardModuleProps {
   onNavigate: (navId: string) => void;
@@ -33,7 +38,36 @@ interface DashboardModuleProps {
 
 export const DashboardModule: React.FC<DashboardModuleProps> = ({ onNavigate, onOpenAi }) => {
   const { currentTenant, getLabel, isSchool, currentBranch } = useTenant();
-  const { currentUser, isSuperAdmin, isTeacher, isParent, isStudent, activeStudentId } = useAuth();
+  const { currentUser, isSuperAdmin, isTeacher, isParent, isStudent, isAccountant, isStaff, can, activeStudentId } = useAuth();
+  const [showStudentIdCard, setShowStudentIdCard] = useState(false);
+  const [liveStats, setLiveStats] = useState<{
+    studentCount: number | null;
+    totalDue: number | null;
+    totalPaid: number | null;
+  }>({ studentCount: null, totalDue: null, totalPaid: null });
+
+  useEffect(() => {
+    if (!currentTenant?.id || isSuperAdmin) return;
+    let active = true;
+    Promise.allSettled([
+      studentLifecycleService.list(currentTenant.id, { pageSize: 1 }),
+      feeManagementService.assignments(currentTenant.id)
+    ]).then(([studentsRes, feesRes]) => {
+      if (!active) return;
+      let sCount: number | null = null;
+      let due: number | null = null;
+      let paid: number | null = null;
+      if (studentsRes.status === 'fulfilled' && studentsRes.value?.meta?.total !== undefined) {
+        sCount = studentsRes.value.meta.total;
+      }
+      if (feesRes.status === 'fulfilled' && Array.isArray(feesRes.value?.data)) {
+        due = feesRes.value.data.reduce((acc: number, x: any) => acc + Number(x.outstanding || 0), 0);
+        paid = feesRes.value.data.reduce((acc: number, x: any) => acc + Number(x.verified_paid || 0), 0);
+      }
+      setLiveStats({ studentCount: sCount, totalDue: due, totalPaid: paid });
+    }).catch(() => {});
+    return () => { active = false; };
+  }, [currentTenant?.id, isSuperAdmin]);
 
   // Live storage data
   const students = storage.getStudents(currentTenant.id);
@@ -399,7 +433,7 @@ export const DashboardModule: React.FC<DashboardModuleProps> = ({ onNavigate, on
               <p className="text-xs text-slate-500">Admission No: {student?.admissionNo} • Roll No: {student?.rollNo || '12'}</p>
             </div>
           </div>
-          <Button variant="outline" size="sm" leftIcon={<QrCode className="w-4 h-4" />} onClick={() => onNavigate('attendance')}>
+          <Button variant="outline" size="sm" leftIcon={<QrCode className="w-4 h-4" />} onClick={() => setShowStudentIdCard(true)}>
             View My Digital ID Card
           </Button>
         </div>
@@ -427,6 +461,89 @@ export const DashboardModule: React.FC<DashboardModuleProps> = ({ onNavigate, on
             iconColor="blue"
           />
         </div>
+
+        {/* Digital Student Identity Card Modal */}
+        <Modal
+          isOpen={showStudentIdCard}
+          onClose={() => setShowStudentIdCard(false)}
+          title="Digital Student Identity Card"
+          subtitle="Official institutional credential badge with verifiable QR"
+          maxWidth="md"
+        >
+          <div className="space-y-4">
+            <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-gradient-to-b from-white to-slate-50 shadow-md">
+              <div className="bg-gradient-to-r from-emerald-600 to-teal-700 px-6 py-4 text-white">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="font-bold text-sm tracking-wide">{currentTenant.name}</h4>
+                    <p className="text-[10px] text-emerald-100">{currentBranch?.name || 'Main Campus'} • Session 2026–27</p>
+                  </div>
+                  <Badge variant="slate" size="sm" className="bg-white/20 text-white border-white/30 text-[10px]">
+                    STUDENT PASS
+                  </Badge>
+                </div>
+              </div>
+
+              <div className="p-5 flex flex-col items-center text-center space-y-3">
+                <div className="w-20 h-20 rounded-2xl bg-gradient-to-tr from-slate-200 to-slate-100 border-2 border-emerald-600 flex items-center justify-center text-2xl font-bold text-slate-700 shadow-sm overflow-hidden">
+                  {student?.photoUrl ? (
+                    <img src={student.photoUrl} alt="Student" className="w-full h-full object-cover" />
+                  ) : (
+                    <span>{currentUser.name ? currentUser.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase() : 'ST'}</span>
+                  )}
+                </div>
+
+                <div>
+                  <h3 className="text-base font-bold text-slate-900">{currentUser.name}</h3>
+                  <p className="text-xs font-semibold text-emerald-700 mt-0.5">Enrolled Student</p>
+                </div>
+
+                <div className="w-full grid grid-cols-2 gap-2 text-left text-xs bg-white p-3 rounded-xl border border-slate-200">
+                  <div>
+                    <p className="text-[10px] text-slate-400">Admission No</p>
+                    <p className="font-semibold text-slate-800">{student?.admissionNo || 'EDN/2026/0481'}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-slate-400">Roll Number</p>
+                    <p className="font-semibold text-slate-800">{student?.rollNo || '12'}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-slate-400">Current Class</p>
+                    <p className="font-semibold text-slate-800">Class 10 - Section A</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-slate-400">Status</p>
+                    <p className="font-semibold text-emerald-700">ACTIVE</p>
+                  </div>
+                </div>
+
+                {/* QR Code Graphic */}
+                <div className="flex flex-col items-center pt-1">
+                  <div className="p-2.5 bg-white border border-slate-200 rounded-xl shadow-xs">
+                    <QrCode className="w-16 h-16 text-slate-800" />
+                  </div>
+                  <p className="text-[10px] text-slate-400 mt-1 font-mono tracking-wider">
+                    SCAN FOR CAMPUS VERIFICATION
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-between items-center pt-2">
+              <Button
+                variant="outline"
+                size="sm"
+                leftIcon={<Printer className="w-4 h-4" />}
+                onClick={() => window.print()}
+              >
+                Print Badge
+              </Button>
+              <Button variant="primary" size="sm" onClick={() => setShowStudentIdCard(false)}>
+                Close
+              </Button>
+            </div>
+          </div>
+        </Modal>
       </div>
     );
   }
@@ -456,30 +573,56 @@ export const DashboardModule: React.FC<DashboardModuleProps> = ({ onNavigate, on
 
         {/* Actions */}
         <div className="flex flex-wrap items-center gap-2.5">
-          <Button
-            variant="primary"
-            size="sm"
-            leftIcon={<UserPlus className="w-4 h-4" />}
-            onClick={() => onNavigate('app/students?admit=1')}
-          >
-            + Add {getLabel('student')}
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            leftIcon={<CalendarCheck className="w-4 h-4" />}
-            onClick={() => onNavigate('attendance')}
-          >
-            Take Attendance
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            leftIcon={<CreditCard className="w-4 h-4" />}
-            onClick={() => onNavigate('fees')}
-          >
-            Collect Fee
-          </Button>
+          {can('students.create') && (
+            <Button
+              variant="primary"
+              size="sm"
+              leftIcon={<UserPlus className="w-4 h-4" />}
+              onClick={() => onNavigate('app/students?admit=1')}
+            >
+              + Add {getLabel('student')}
+            </Button>
+          )}
+          {can('attendance.mark') && (
+            <Button
+              variant="outline"
+              size="sm"
+              leftIcon={<CalendarCheck className="w-4 h-4" />}
+              onClick={() => onNavigate('attendance')}
+            >
+              Take Attendance
+            </Button>
+          )}
+          {can('fees.create') && (
+            <Button
+              variant="outline"
+              size="sm"
+              leftIcon={<CreditCard className="w-4 h-4" />}
+              onClick={() => onNavigate('fees')}
+            >
+              Collect Fee
+            </Button>
+          )}
+          {(currentUser.role === 'ACCOUNTANT' || isAccountant) && (
+            <Button
+              variant="primary"
+              size="sm"
+              leftIcon={<CreditCard className="w-4 h-4" />}
+              onClick={() => onNavigate('fees')}
+            >
+              Review Fee Dues
+            </Button>
+          )}
+          {(currentUser.role === 'STAFF' || isStaff || can('hr.leave.request')) && (
+            <Button
+              variant="outline"
+              size="sm"
+              leftIcon={<Calendar className="w-4 h-4" />}
+              onClick={() => onNavigate('hr')}
+            >
+              Request Leave
+            </Button>
+          )}
         </div>
       </div>
 
@@ -487,12 +630,12 @@ export const DashboardModule: React.FC<DashboardModuleProps> = ({ onNavigate, on
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           title={`Total ${getLabel('studentPlural')}`}
-          value={students.length.toLocaleString('en-IN')}
-          change={students.length > 0 ? `${students.length} Enrolled` : 'No admissions yet'}
-          trend={students.length > 0 ? 'up' : 'neutral'}
+          value={(liveStats.studentCount !== null ? liveStats.studentCount : students.length).toLocaleString('en-IN')}
+          change={students.length > 0 || liveStats.studentCount ? `${liveStats.studentCount ?? students.length} Enrolled` : 'No admissions yet'}
+          trend="up"
           icon={Users}
           iconColor="emerald"
-          onClick={() => onNavigate('app/students?admit=1')}
+          onClick={() => onNavigate('app/students')}
         />
         <StatCard
           title="Today's Attendance"
@@ -505,9 +648,9 @@ export const DashboardModule: React.FC<DashboardModuleProps> = ({ onNavigate, on
         />
         <StatCard
           title="Fee Collection"
-          value={totalPaid > 0 ? `₹${(totalPaid / 100000).toFixed(1)}L` : '₹0'}
-          change={`${collectionPercentage}% Collected`}
-          trend={totalPaid > 0 ? 'up' : 'neutral'}
+          value={liveStats.totalPaid !== null ? `₹${liveStats.totalPaid.toLocaleString('en-IN')}` : totalPaid > 0 ? `₹${(totalPaid / 100000).toFixed(1)}L` : '₹0'}
+          change={liveStats.totalDue !== null ? `₹${liveStats.totalDue.toLocaleString('en-IN')} Outstanding` : `${collectionPercentage}% Collected`}
+          trend={totalPaid > 0 || liveStats.totalPaid ? 'up' : 'neutral'}
           icon={CreditCard}
           iconColor="emerald"
           onClick={() => onNavigate('fees')}
@@ -539,8 +682,8 @@ export const DashboardModule: React.FC<DashboardModuleProps> = ({ onNavigate, on
 
           <div className="space-y-2">
             <div className="flex justify-between text-xs font-semibold">
-              <span className="text-emerald-700">Collected: ₹{totalPaid.toLocaleString('en-IN')} ({collectionPercentage}%)</span>
-              <span className="text-slate-600">Outstanding: ₹{totalOutstanding.toLocaleString('en-IN')}</span>
+              <span className="text-emerald-700">Collected: ₹{(liveStats.totalPaid !== null ? liveStats.totalPaid : totalPaid).toLocaleString('en-IN')} ({collectionPercentage}%)</span>
+              <span className="text-slate-600">Outstanding: ₹{(liveStats.totalDue !== null ? liveStats.totalDue : totalOutstanding).toLocaleString('en-IN')}</span>
             </div>
             <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden flex">
               <div
@@ -553,15 +696,15 @@ export const DashboardModule: React.FC<DashboardModuleProps> = ({ onNavigate, on
           <div className="grid grid-cols-3 gap-3 pt-2">
             <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
               <p className="text-[11px] text-slate-500 font-medium uppercase tracking-wider">Total Net Invoiced</p>
-              <p className="text-sm font-bold text-slate-900 mt-0.5">₹{totalNetPayable.toLocaleString('en-IN')}</p>
+              <p className="text-sm font-bold text-slate-900 mt-0.5">₹{(liveStats.totalDue !== null && liveStats.totalPaid !== null ? (liveStats.totalDue + liveStats.totalPaid) : totalNetPayable).toLocaleString('en-IN')}</p>
             </div>
             <div className="p-3 bg-emerald-50/60 rounded-lg border border-emerald-200">
               <p className="text-[11px] text-emerald-800 font-medium uppercase tracking-wider">Collected Revenue</p>
-              <p className="text-sm font-bold text-emerald-800 mt-0.5">₹{totalPaid.toLocaleString('en-IN')}</p>
+              <p className="text-sm font-bold text-emerald-800 mt-0.5">₹{(liveStats.totalPaid !== null ? liveStats.totalPaid : totalPaid).toLocaleString('en-IN')}</p>
             </div>
             <div className="p-3 bg-rose-50/60 rounded-lg border border-rose-200">
               <p className="text-[11px] text-rose-800 font-medium uppercase tracking-wider">Outstanding Dues</p>
-              <p className="text-sm font-bold text-rose-800 mt-0.5">₹{totalOutstanding.toLocaleString('en-IN')}</p>
+              <p className="text-sm font-bold text-rose-800 mt-0.5">₹{(liveStats.totalDue !== null ? liveStats.totalDue : totalOutstanding).toLocaleString('en-IN')}</p>
             </div>
           </div>
         </div>
@@ -570,59 +713,82 @@ export const DashboardModule: React.FC<DashboardModuleProps> = ({ onNavigate, on
         <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-2xs space-y-4">
           <h3 className="font-bold text-slate-900 text-sm">Quick Actions</h3>
           <div className="grid grid-cols-2 gap-2">
-            <button
-              onClick={() => onNavigate('app/students?admit=1')}
-              className="p-3 rounded-lg border border-slate-200 bg-slate-50 hover:bg-emerald-50 hover:border-emerald-300 text-left transition-colors group"
-            >
-              <UserPlus className="w-4 h-4 text-emerald-600 mb-1.5" />
-              <p className="text-xs font-semibold text-slate-800 group-hover:text-emerald-800">Add Student</p>
-              <p className="text-[10px] text-slate-500">Admissions</p>
-            </button>
+            {can('students.create') && (
+              <button
+                onClick={() => onNavigate('app/students?admit=1')}
+                className="p-3 rounded-lg border border-slate-200 bg-slate-50 hover:bg-emerald-50 hover:border-emerald-300 text-left transition-colors group"
+              >
+                <UserPlus className="w-4 h-4 text-emerald-600 mb-1.5" />
+                <p className="text-xs font-semibold text-slate-800 group-hover:text-emerald-800">Add Student</p>
+                <p className="text-[10px] text-slate-500">Admissions</p>
+              </button>
+            )}
 
-            <button
-              onClick={() => onNavigate('attendance')}
-              className="p-3 rounded-lg border border-slate-200 bg-slate-50 hover:bg-emerald-50 hover:border-emerald-300 text-left transition-colors group"
-            >
-              <CalendarCheck className="w-4 h-4 text-emerald-600 mb-1.5" />
-              <p className="text-xs font-semibold text-slate-800 group-hover:text-emerald-800">Take Attendance</p>
-              <p className="text-[10px] text-slate-500">Daily Register</p>
-            </button>
+            {can('attendance.mark') && (
+              <button
+                onClick={() => onNavigate('attendance')}
+                className="p-3 rounded-lg border border-slate-200 bg-slate-50 hover:bg-emerald-50 hover:border-emerald-300 text-left transition-colors group"
+              >
+                <CalendarCheck className="w-4 h-4 text-emerald-600 mb-1.5" />
+                <p className="text-xs font-semibold text-slate-800 group-hover:text-emerald-800">Take Attendance</p>
+                <p className="text-[10px] text-slate-500">Daily Register</p>
+              </button>
+            )}
 
-            <button
-              onClick={() => onNavigate('fees')}
-              className="p-3 rounded-lg border border-slate-200 bg-slate-50 hover:bg-emerald-50 hover:border-emerald-300 text-left transition-colors group"
-            >
-              <CreditCard className="w-4 h-4 text-emerald-600 mb-1.5" />
-              <p className="text-xs font-semibold text-slate-800 group-hover:text-emerald-800">Collect Fee</p>
-              <p className="text-[10px] text-slate-500">Issue Receipt</p>
-            </button>
+            {can('fees.view') && (
+              <button
+                onClick={() => onNavigate('fees')}
+                className="p-3 rounded-lg border border-slate-200 bg-slate-50 hover:bg-emerald-50 hover:border-emerald-300 text-left transition-colors group"
+              >
+                <CreditCard className="w-4 h-4 text-emerald-600 mb-1.5" />
+                <p className="text-xs font-semibold text-slate-800 group-hover:text-emerald-800">Fee Dues & Collect</p>
+                <p className="text-[10px] text-slate-500">Accounting</p>
+              </button>
+            )}
 
-            <button
-              onClick={() => onNavigate('timetable')}
-              className="p-3 rounded-lg border border-slate-200 bg-slate-50 hover:bg-emerald-50 hover:border-emerald-300 text-left transition-colors group"
-            >
-              <BookOpen className="w-4 h-4 text-emerald-600 mb-1.5" />
-              <p className="text-xs font-semibold text-slate-800 group-hover:text-emerald-800">View Timetable</p>
-              <p className="text-[10px] text-slate-500">Assignments</p>
-            </button>
+            {can('timetable.view') && (
+              <button
+                onClick={() => onNavigate('timetable')}
+                className="p-3 rounded-lg border border-slate-200 bg-slate-50 hover:bg-emerald-50 hover:border-emerald-300 text-left transition-colors group"
+              >
+                <BookOpen className="w-4 h-4 text-emerald-600 mb-1.5" />
+                <p className="text-xs font-semibold text-slate-800 group-hover:text-emerald-800">View Timetable</p>
+                <p className="text-[10px] text-slate-500">Assignments</p>
+              </button>
+            )}
 
-            <button
-              onClick={() => onNavigate('exams')}
-              className="p-3 rounded-lg border border-slate-200 bg-slate-50 hover:bg-emerald-50 hover:border-emerald-300 text-left transition-colors group"
-            >
-              <Award className="w-4 h-4 text-emerald-600 mb-1.5" />
-              <p className="text-xs font-semibold text-slate-800 group-hover:text-emerald-800">Create Exam</p>
-              <p className="text-[10px] text-slate-500">Assessments</p>
-            </button>
+            {can('exams.create') && (
+              <button
+                onClick={() => onNavigate('exams')}
+                className="p-3 rounded-lg border border-slate-200 bg-slate-50 hover:bg-emerald-50 hover:border-emerald-300 text-left transition-colors group"
+              >
+                <Award className="w-4 h-4 text-emerald-600 mb-1.5" />
+                <p className="text-xs font-semibold text-slate-800 group-hover:text-emerald-800">Create Exam</p>
+                <p className="text-[10px] text-slate-500">Assessments</p>
+              </button>
+            )}
 
-            <button
-              onClick={() => onNavigate('communication')}
-              className="p-3 rounded-lg border border-slate-200 bg-slate-50 hover:bg-emerald-50 hover:border-emerald-300 text-left transition-colors group"
-            >
-              <Send className="w-4 h-4 text-emerald-600 mb-1.5" />
-              <p className="text-xs font-semibold text-slate-800 group-hover:text-emerald-800">Announcement</p>
-              <p className="text-[10px] text-slate-500">Broadcast Notice</p>
-            </button>
+            {can('communication.send') && (
+              <button
+                onClick={() => onNavigate('communication')}
+                className="p-3 rounded-lg border border-slate-200 bg-slate-50 hover:bg-emerald-50 hover:border-emerald-300 text-left transition-colors group"
+              >
+                <Send className="w-4 h-4 text-emerald-600 mb-1.5" />
+                <p className="text-xs font-semibold text-slate-800 group-hover:text-emerald-800">Announcement</p>
+                <p className="text-[10px] text-slate-500">Broadcast Notice</p>
+              </button>
+            )}
+
+            {(currentUser.role === 'STAFF' || isStaff || can('hr.leave.request')) && (
+              <button
+                onClick={() => onNavigate('hr')}
+                className="p-3 rounded-lg border border-slate-200 bg-slate-50 hover:bg-emerald-50 hover:border-emerald-300 text-left transition-colors group"
+              >
+                <Calendar className="w-4 h-4 text-emerald-600 mb-1.5" />
+                <p className="text-xs font-semibold text-slate-800 group-hover:text-emerald-800">Request Leave</p>
+                <p className="text-[10px] text-slate-500">HR Services</p>
+              </button>
+            )}
           </div>
         </div>
       </div>

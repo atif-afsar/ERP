@@ -10,12 +10,14 @@ import {
   ShieldCheck,
   GraduationCap,
   Users,
-  BookOpen
+  BookOpen,
+  User
 } from 'lucide-react';
 import { useTenant } from '../../context/TenantContext';
 import { useAuth } from '../../context/AuthContext';
 import { storage } from '../../services/storageService';
 import { notificationService, type AppNotification } from '../../services/notificationService';
+import { UserProfileModal } from './UserProfileModal';
 
 interface HeaderProps {
   onToggleSidebar: () => void;
@@ -34,6 +36,7 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar, onOpenAi, onNav
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearchResults, setShowSearchResults] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
 
   const students = storage.getStudents(currentTenant.id);
   const staff = storage.getStaff(currentTenant.id);
@@ -298,11 +301,12 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar, onOpenAi, onNav
 
               <button
                 onClick={() => {
-                  onNavigate('app/settings');
+                  setShowProfileModal(true);
                   setShowUserMenu(false);
                 }}
                 className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-700 hover:text-slate-900 hover:bg-slate-50 rounded-lg transition-colors"
               >
+                <User className="w-3.5 h-3.5 text-slate-500" />
                 Profile & Settings
               </button>
 
@@ -321,6 +325,13 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar, onOpenAi, onNav
           )}
         </div>
       </div>
+
+      {/* User Profile & Security Modal */}
+      <UserProfileModal
+        isOpen={showProfileModal}
+        onClose={() => setShowProfileModal(false)}
+        onNavigate={onNavigate}
+      />
     </header>
   );
 };

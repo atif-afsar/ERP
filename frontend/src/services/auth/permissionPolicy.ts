@@ -20,7 +20,7 @@ export const MODULE_ACCESS: Record<string, { view?: string[]; roles?: string[]; 
  health:{view:['health.view'],prototype:true},exams:{view:['examinations.view'],write:['examinations.manage','exam_marks.manage']},
  results:{view:['exam_marks.view'],write:['exam_marks.manage']},timetable:{view:['timetable.view'],write:['timetable.manage']},
  homework:{view:['homework.view'],prototype:true},communication:{view:['communications.view','communications.send'],write:['communications.send','communications.templates.manage']},
- crm:{view:['students.create'],prototype:true},reports:{view:['reports.view'],prototype:true},settings:{view:['settings.view'],prototype:true},
+ crm:{view:['students.create'],prototype:true},reports:{view:['reports.view'],prototype:true},settings:{roles:['SUPER_ADMIN','TENANT_ADMIN'],view:['organization.view'],prototype:true},
  organization:{view:['users.view','roles.view'],write:['users.invite','users.manage','roles.manage']},'master-data':{view:['master_data.view'],write:['master_data.manage']},
  'api-docs':{roles:['SUPER_ADMIN','TENANT_ADMIN'],view:['organization.view'],prototype:true},schema:{roles:['SUPER_ADMIN','TENANT_ADMIN'],view:['organization.view'],prototype:true},'roles-matrix':{view:['roles.view'],prototype:true},
  'superadmin-dashboard':{roles:['SUPER_ADMIN'],prototype:true},'superadmin-tenants':{roles:['SUPER_ADMIN'],write:['tenants.manage']},
