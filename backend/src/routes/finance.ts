@@ -4,6 +4,7 @@ import { query, transaction } from '../db.js';
 import { requireAuth } from '../middleware/auth.js';
 import { tenantContext } from '../middleware/tenantContext.js';
 import { AppError } from '../middleware/errorHandler.js';
+import { reconcileFeePayments } from '../services/feeAccountingService.js';
 import { postJournalEntry } from '../services/financeService.js';
 
 const router = Router();
@@ -189,47 +190,8 @@ router.get('/reports/ledger', requireAuth, tenantContext(true), asyncHandler(asy
 
 // POST /api/v1/finance/reconcile/fee-payments
 router.post('/reconcile/fee-payments', requireAuth, tenantContext(true), asyncHandler(async (req: Request, res: Response) => {
-  // Reconcile and backfill COMPLETED student fee payments into accounting
-  await ensureDefaultAccounts(req.tenantId!);
-  
-  const tenantId = req.tenantId!;
-  // Get default cash account and income account
-  const incAcc = await query(`SELECT id FROM finance_accounts WHERE tenant_id = $1 AND code = 'INC-FEE'`, [tenantId]);
-  const cashAccCfg = await query(`SELECT ledger_account_id FROM finance_cash_bank_accounts WHERE tenant_id = $1 LIMIT 1`, [tenantId]);
-
-  if (incAcc.rowCount === 0 || cashAccCfg.rowCount === 0) {
-    throw new AppError('System accounts not initialized', 500);
-  }
-
-  const incomeAccountId = incAcc.rows[0].id;
-  const assetAccountId = cashAccCfg.rows[0].ledger_account_id;
-
-  const payments = await query(
-    `SELECT id, amount, paid_at FROM payments WHERE tenant_id = $1 AND status = 'COMPLETED'`,
-    [tenantId]
-  );
-
-  let posted = 0;
-  for (const p of payments.rows) {
-    try {
-      await postJournalEntry({
-        tenantId,
-        transactionDate: new Date(p.paid_at),
-        description: `Student Fee Collection Payment: ${p.id}`,
-        sourceType: 'STUDENT_FEE_PAYMENT',
-        sourceId: p.id,
-        lines: [
-          { accountId: assetAccountId, debit: Number(p.amount) }, // Debit asset
-          { accountId: incomeAccountId, credit: Number(p.amount) } // Credit income
-        ]
-      });
-      posted++;
-    } catch (e) {
-      // Ignore idempotency skips
-    }
-  }
-
-  res.json({ message: 'Reconciliation complete', totalProcessed: payments.rowCount, newlyPosted: posted });
+  const result = await reconcileFeePayments(req.tenantId!, req.user.id);
+  res.json({ message: result.failed ? 'Reconciliation completed with failures' : 'Reconciliation complete', ...result });
 }));
 
 export default router;

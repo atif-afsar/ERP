@@ -19,6 +19,10 @@ export interface PostJournalInput {
 }
 
 export async function postJournalEntry(input: PostJournalInput, existingClient?: any) {
+  return (await postJournalEntryWithStatus(input, existingClient)).id;
+}
+
+export async function postJournalEntryWithStatus(input: PostJournalInput, existingClient?: any) {
   let totalDebit = 0;
   let totalCredit = 0;
 
@@ -41,18 +45,19 @@ export async function postJournalEntry(input: PostJournalInput, existingClient?:
 
   const doWork = async (client: any) => {
     if (input.sourceId) {
+      await client.query('SELECT pg_advisory_xact_lock(hashtextextended($1, 0))', [input.tenantId + ':' + input.sourceType + ':' + input.sourceId]);
       const existing = await client.query(
         `SELECT id FROM journal_entries WHERE tenant_id = $1 AND source_type = $2 AND source_id = $3 AND status != 'REVERSED'`,
         [input.tenantId, input.sourceType, input.sourceId]
       );
       if (existing.rowCount && existing.rowCount > 0) {
-        return existing.rows[0].id;
+        return { id: existing.rows[0].id, created: false };
       }
     }
 
     const { rows } = await client.query(
       `INSERT INTO journal_entries (tenant_id, entry_number, transaction_date, description, status, source_type, source_id, created_by)
-       VALUES ($1, 'JV-' || to_char(now(), 'YYYYMMDD-HH24MISSMS'), $2, $3, 'POSTED', $4, $5, $6)
+       VALUES ($1, 'JV-' || to_char(clock_timestamp(), 'YYYYMMDD-HH24MISSMS') || '-' || substr(gen_random_uuid()::text, 1, 8), $2, $3, 'POSTED', $4, $5, $6)
        RETURNING id, entry_number`,
       [input.tenantId, input.transactionDate, input.description, input.sourceType, input.sourceId || null, input.userId || null]
     );
@@ -67,7 +72,7 @@ export async function postJournalEntry(input: PostJournalInput, existingClient?:
       );
     }
     
-    return journalId;
+    return { id: journalId, created: true };
   };
 
   if (existingClient) {
