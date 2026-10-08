@@ -90,6 +90,7 @@ export const ParentFeePortal: React.FC = () => {
 
             {childId ? (
                 <div className="space-y-5">
+                    <p className="text-sm text-slate-600">Summary for the selected child across all fee assignments. Pending proofs do not reduce the outstanding balance. The payment form below applies to the selected fee only.</p>
                     <div className="grid gap-3 md:grid-cols-4">
                         <div className="rounded-xl border bg-white p-4"><p className="text-xs text-slate-500">Total Fee</p><p className="text-xl font-bold">{money(total)}</p></div>
                         <div className="rounded-xl border bg-white p-4"><p className="text-xs text-slate-500">Verified Paid</p><p className="text-xl font-bold text-emerald-600">{money(paid)}</p></div>
