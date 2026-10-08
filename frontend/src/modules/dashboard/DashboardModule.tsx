@@ -1,3 +1,4 @@
+import { apiClient } from '../../services/api/apiClient';
 import React, { useState, useEffect } from 'react';
 import {
   Users,
@@ -39,6 +40,9 @@ interface DashboardModuleProps {
 export const DashboardModule: React.FC<DashboardModuleProps> = ({ onNavigate, onOpenAi }) => {
   const { currentTenant, getLabel, isSchool, currentBranch } = useTenant();
   const { currentUser, isSuperAdmin, isTeacher, isParent, isStudent, isAccountant, isStaff, can, activeStudentId } = useAuth();
+  const [studentIdentity,setStudentIdentity]=useState<any>(null);
+  const [identityError,setIdentityError]=useState('');
+  useEffect(()=>{let active=true;setStudentIdentity(null);setIdentityError('');if(isStudent)apiClient.request<any>('/api/v1/students/self/id-card',{tenantId:currentTenant.id}).then(r=>{if(active)setStudentIdentity(r.data)}).catch(e=>{if(active)setIdentityError(e.message)});return()=>{active=false}},[isStudent,currentTenant.id,currentUser.id]);
   const [showStudentIdCard, setShowStudentIdCard] = useState(false);
   const [liveStats, setLiveStats] = useState<{
     studentCount: number | null;
@@ -226,7 +230,7 @@ export const DashboardModule: React.FC<DashboardModuleProps> = ({ onNavigate, on
                 {student?.firstName} {student?.lastName}
               </h2>
               <p className="text-xs text-slate-500">
-                Admission No: <span className="font-semibold text-slate-800">{student?.admissionNo}</span> • Roll No: {student?.rollNo || '12'}
+                Admission No: <span className="font-semibold text-slate-800">{student?.admissionNo}</span> • Roll No: {student?.rollNo || 'Not available'}
               </p>
             </div>
           </div>
@@ -415,7 +419,7 @@ export const DashboardModule: React.FC<DashboardModuleProps> = ({ onNavigate, on
   // 4. STUDENT DASHBOARD
   // -------------------------------------------------------------
   if (isStudent) {
-    const student = students[0];
+    const student = studentIdentity ? {id:studentIdentity.id,firstName:studentIdentity.first_name,lastName:studentIdentity.last_name,admissionNo:studentIdentity.admission_no,rollNo:studentIdentity.roll_no,photoUrl:studentIdentity.photo_url} : null;
     const studentLedger = feeLedgers.find((l) => l.studentId === student?.id);
 
     return (
@@ -430,7 +434,7 @@ export const DashboardModule: React.FC<DashboardModuleProps> = ({ onNavigate, on
             <div>
               <Badge variant="emerald" size="sm">Student Portal</Badge>
               <h2 className="text-xl font-bold text-slate-900 mt-1">Hello, {student?.firstName || 'Student'}!</h2>
-              <p className="text-xs text-slate-500">Admission No: {student?.admissionNo} • Roll No: {student?.rollNo || '12'}</p>
+              <p className="text-xs text-slate-500">Admission No: {student?.admissionNo} • Roll No: {student?.rollNo || 'Not available'}</p>
             </div>
           </div>
           <Button variant="outline" size="sm" leftIcon={<QrCode className="w-4 h-4" />} onClick={() => setShowStudentIdCard(true)}>
@@ -501,22 +505,23 @@ export const DashboardModule: React.FC<DashboardModuleProps> = ({ onNavigate, on
                 <div className="w-full grid grid-cols-2 gap-2 text-left text-xs bg-white p-3 rounded-xl border border-slate-200">
                   <div>
                     <p className="text-[10px] text-slate-400">Admission No</p>
-                    <p className="font-semibold text-slate-800">{student?.admissionNo || 'EDN/2026/0481'}</p>
+                    <p className="font-semibold text-slate-800">{student?.admissionNo || 'Not available'}</p>
                   </div>
                   <div>
                     <p className="text-[10px] text-slate-400">Roll Number</p>
-                    <p className="font-semibold text-slate-800">{student?.rollNo || '12'}</p>
+                    <p className="font-semibold text-slate-800">{student?.rollNo || 'Not available'}</p>
                   </div>
                   <div>
                     <p className="text-[10px] text-slate-400">Current Class</p>
-                    <p className="font-semibold text-slate-800">Class 10 - Section A</p>
+                    <p className="font-semibold text-slate-800">{studentIdentity?.class_name ? `${studentIdentity.class_name}${studentIdentity.section_name ? ' - '+studentIdentity.section_name : ''}` : 'Not available'}</p>
                   </div>
                   <div>
                     <p className="text-[10px] text-slate-400">Status</p>
-                    <p className="font-semibold text-emerald-700">ACTIVE</p>
+                    <p className="font-semibold text-emerald-700">{studentIdentity?.status || 'Not available'}</p>
                   </div>
                 </div>
 
+                {identityError&&<p role="alert" className="text-xs text-rose-700">{identityError}</p>}
                 {/* QR Code Graphic */}
                 <div className="flex flex-col items-center pt-1">
                   <div className="p-2.5 bg-white border border-slate-200 rounded-xl shadow-xs">

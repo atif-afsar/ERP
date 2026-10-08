@@ -50,7 +50,7 @@ router.post('/onboarding/accept', authLimiter, validateBody(onboardingSchema), a
         `UPDATE staff SET user_id=$1,updated_at=NOW() WHERE id=$2 AND tenant_id=$3 AND user_id IS NULL RETURNING id`,
         [user.id, invitation.staff_id, invitation.tenant_id]);
       if (!linked.rowCount) throw new AppError('The teacher account link is no longer available.', 409, 'STAFF_LINK_UNAVAILABLE');
-    } else {
+    } else if (invitation.role_key === 'STAFF' || invitation.role_key === 'TEACHER') {
       const staffMatches = await client.query(
         `SELECT id, user_id FROM staff WHERE tenant_id = $1 AND lower(email) = lower($2) LIMIT 1`,
         [invitation.tenant_id, invitation.email]
@@ -85,6 +85,12 @@ router.post('/onboarding/accept', authLimiter, validateBody(onboardingSchema), a
         `UPDATE parents SET user_id=$1,updated_at=NOW() WHERE id=$2 AND tenant_id=$3 AND user_id IS NULL RETURNING id`,
         [user.id, invitation.parent_id, invitation.tenant_id]);
       if (!linked.rowCount) throw new AppError('The parent account link is no longer available.', 409, 'PARENT_LINK_UNAVAILABLE');
+    }
+    if (invitation.student_id) {
+      if(invitation.role_key !== 'STUDENT')throw new AppError('Student invitation role is invalid.',422,'INVALID_ROLE');
+      const linked = await client.query('UPDATE students SET user_id=$1,updated_at=NOW() WHERE id=$2 AND tenant_id=$3 AND user_id IS NULL RETURNING id',[user.id,invitation.student_id,invitation.tenant_id]);
+      if(!linked.rowCount)throw new AppError('Student account link is no longer available.',409,'STUDENT_LINK_UNAVAILABLE');
+      await writeAudit({tenantId:invitation.tenant_id,userId:user.id,action:'STUDENT_ACCOUNT_ACTIVATED',module:'students',entityId:invitation.student_id,details:{invitationId:invitation.id},request:req},client);
     }
     await client.query(`UPDATE user_invitations SET status='accepted',accepted_at=NOW() WHERE id=$1`, [invitation.id]);
     await writeAudit({ tenantId: invitation.tenant_id, userId: user.id, action: 'OWNER_ONBOARDING_COMPLETED', module: 'users',

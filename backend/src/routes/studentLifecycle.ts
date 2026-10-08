@@ -1,3 +1,4 @@
+import { createStudentInvitation, linkStudentAccount } from '../services/studentAccountService.js';
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { query, transaction } from '../db.js';
@@ -19,6 +20,20 @@ const respond=(res:Response,req:Request,data:any,status=200,meta?:any)=>res.stat
 const audit=(req:Request,action:string,entityId:string,details:Record<string,unknown>={},client?:any)=>writeAudit({tenantId:req.tenantId!,userId:req.user.id,action,module:'students',entityId,details,request:req},client);
 async function validatePlacement(client:any,tenantId:string,e:any){const r=await client.query(`SELECT 1 FROM academic_years y JOIN classes c ON c.id=$2 AND c.tenant_id=y.tenant_id JOIN sections s ON s.id=$3 AND s.class_id=c.id AND s.tenant_id=c.tenant_id WHERE y.id=$1 AND y.tenant_id=$4`,[e.academicYearId,e.classId,e.sectionId,tenantId]);if(!r.rowCount)throw new AppError('Academic year, class, and section must belong to this institution and each other.',422,'INVALID_PLACEMENT');}
 
+// A student may retrieve only their own identity and current enrollment.
+router.get('/self/id-card',asyncHandler(async(req,res)=>{
+  if(req.user.role!=='STUDENT')throw new AppError('Student access required.',403,'FORBIDDEN');
+  const result=await query(`SELECT s.id,s.admission_no,s.first_name,s.last_name,s.photo_url,s.status,e.roll_no,y.name academic_year_name,c.name class_name,sec.name section_name
+    FROM students s LEFT JOIN LATERAL(SELECT * FROM enrollments x WHERE x.student_id=s.id AND x.tenant_id=s.tenant_id AND x.status='enrolled' AND x.start_date<=CURRENT_DATE AND (x.end_date IS NULL OR x.end_date>=CURRENT_DATE) ORDER BY x.start_date DESC,x.enrolled_at DESC,x.id DESC LIMIT 1)e ON true
+    LEFT JOIN academic_years y ON y.id=e.academic_year_id AND y.tenant_id=s.tenant_id
+    LEFT JOIN classes c ON c.id=e.class_id AND c.tenant_id=s.tenant_id
+    LEFT JOIN sections sec ON sec.id=e.section_id AND sec.tenant_id=s.tenant_id
+    WHERE s.tenant_id=$1 AND s.user_id=$2 ORDER BY s.id LIMIT 2`,[req.tenantId,req.user.id]);
+  if(!result.rowCount)throw new AppError('Your account is not linked to a student record. Contact your institution administrator.',404,'STUDENT_NOT_LINKED');
+  if(result.rowCount!==1)throw new AppError('Your student account has ambiguous identity links. Contact your institution administrator.',409,'STUDENT_LINK_AMBIGUOUS');
+  respond(res,req,result.rows[0]);
+}));
+
 router.get('/',requirePermission('student_lifecycle.view'),asyncHandler(async(req,res)=>{
   const page=Math.max(1,Number(req.query.page)||1),pageSize=Math.min(100,Math.max(1,Number(req.query.pageSize)||25)),offset=(page-1)*pageSize;
   const search=typeof req.query.search==='string'?req.query.search.trim():'';
@@ -36,6 +51,9 @@ router.get('/',requirePermission('student_lifecycle.view'),asyncHandler(async(re
 }));
 
 router.post('/admissions',requirePermission('student_lifecycle.manage'),validateBody(admission),asyncHandler(async(req,res)=>{const b=req.body;const result=await transaction(async client=>{await validatePlacement(client,req.tenantId!,b.enrollment);const student=(await client.query(`INSERT INTO students(tenant_id,admission_no,first_name,last_name,gender,dob,email,phone,photo_url,address,status,admission_date,blood_group,nationality,notes) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,COALESCE($12,CURRENT_DATE),$13,$14,$15) RETURNING *`,[req.tenantId,b.admissionNo,b.firstName,b.lastName,b.gender,b.dob||null,b.email||null,b.phone||null,b.photoUrl||null,b.address||null,b.status,b.admissionDate||null,b.bloodGroup||null,b.nationality||'Indian',b.notes||null])).rows[0];const enr=(await client.query(`INSERT INTO enrollments(tenant_id,student_id,academic_year_id,class_id,section_id,roll_no,status,start_date,end_date,remarks) VALUES($1,$2,$3,$4,$5,$6,$7,COALESCE($8,CURRENT_DATE),$9,$10) RETURNING *`,[req.tenantId,student.id,b.enrollment.academicYearId,b.enrollment.classId,b.enrollment.sectionId,b.enrollment.rollNo||null,b.enrollment.status,b.enrollment.startDate||null,b.enrollment.endDate||null,b.enrollment.remarks||null])).rows[0];let guardian=null;if(b.guardian){guardian=(await client.query(`INSERT INTO parents(tenant_id,first_name,last_name,phone,email,relation,occupation,address) VALUES($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *`,[req.tenantId,b.guardian.firstName,b.guardian.lastName,b.guardian.phone,b.guardian.email||null,b.guardian.relation,b.guardian.occupation||null,b.guardian.address||null])).rows[0];await client.query(`INSERT INTO parent_students(tenant_id,parent_id,student_id,is_primary,relationship_type,can_pickup,receives_notifications) VALUES($1,$2,$3,$4,$5,$6,$7)`,[req.tenantId,guardian.id,student.id,b.guardian.isPrimary,b.guardian.relationshipType,b.guardian.canPickup,b.guardian.receivesNotifications]);}await audit(req,'STUDENT_ADMITTED',student.id,{admissionNo:b.admissionNo,enrollmentId:enr.id,guardianId:guardian?.id},client);return{student,enrollment:enr,guardian};});respond(res,req,result,201);}));
+
+router.post('/:id/invitation',requirePermission('student_lifecycle.manage'),requirePermission('users.invite'),validateBody(z.object({email:z.string().email()})),asyncHandler(async(req,res)=>{respond(res,req,await createStudentInvitation(req),201)}));
+router.post('/:id/account-link',requirePermission('student_lifecycle.manage'),requirePermission('users.manage'),validateBody(z.object({email:z.string().email()})),asyncHandler(async(req,res)=>{respond(res,req,await linkStudentAccount(req))}));
 
 router.get('/:id',requirePermission('student_lifecycle.view'),asyncHandler(async(req,res)=>{const s=await query('SELECT * FROM students WHERE id=$1 AND tenant_id=$2',[req.params.id,req.tenantId]);if(!s.rowCount)throw new AppError('Student not found.',404,'NOT_FOUND');const [parents,enrollments,documents]=await Promise.all([query(`SELECT p.*,ps.relationship_type,ps.is_primary,ps.can_pickup,ps.receives_notifications FROM parent_students ps JOIN parents p ON p.id=ps.parent_id WHERE ps.student_id=$1 AND ps.tenant_id=$2 ORDER BY ps.is_primary DESC,p.first_name`,[req.params.id,req.tenantId]),query(`SELECT e.*,y.name academic_year_name,c.name class_name,sec.name section_name FROM enrollments e LEFT JOIN academic_years y ON y.id=e.academic_year_id JOIN classes c ON c.id=e.class_id JOIN sections sec ON sec.id=e.section_id WHERE e.student_id=$1 AND e.tenant_id=$2 ORDER BY y.start_date DESC,e.start_date DESC`,[req.params.id,req.tenantId]),query('SELECT * FROM student_documents WHERE student_id=$1 AND tenant_id=$2 ORDER BY created_at DESC',[req.params.id,req.tenantId])]);respond(res,req,{student:s.rows[0],parents:parents.rows,enrollments:enrollments.rows,documents:documents.rows});}));
 

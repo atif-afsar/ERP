@@ -2,6 +2,8 @@ import {apiClient} from './api/apiClient';
 const base='/api/v1/students';const cfg=(tenantId:string)=>({tenantId});
 export const studentLifecycleService={
  list:(tenantId:string,params:Record<string,string|number|undefined>={})=>{const q=new URLSearchParams();Object.entries(params).forEach(([k,v])=>{if(v!==undefined&&v!=='')q.set(k,String(v))});return apiClient.request<any[]>(`${base}?${q}`,cfg(tenantId))},
+ inviteAccount:(tenantId:string,id:string,email:string)=>apiClient.request<any>(`${base}/${id}/invitation`,{method:'POST',body:{email},tenantId}),
+ linkAccount:(tenantId:string,id:string,email:string)=>apiClient.request<any>(`${base}/${id}/account-link`,{method:'POST',body:{email},tenantId}),
  get:(tenantId:string,id:string)=>apiClient.request<any>(`${base}/${id}`,cfg(tenantId)),
  admit:(tenantId:string,body:any)=>apiClient.request<any>(`${base}/admissions`,{method:'POST',body,tenantId}),
  update:(tenantId:string,id:string,body:any)=>apiClient.request<any>(`${base}/${id}`,{method:'PATCH',body,tenantId}),
