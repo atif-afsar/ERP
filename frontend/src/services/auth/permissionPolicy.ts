@@ -18,7 +18,7 @@ export const MODULE_ACCESS: Record<string, { view?: string[]; roles?: string[]; 
  inventory: {view:['inventory.view'],write:['inventory.manage']},library:{view:['library.view'],write:['library.manage','library.issue']},
  transport:{view:['transport.view'],write:['transport.manage']},hostel:{view:['hostel.view'],write:['hostel.manage']},mess:{view:['mess.view'],write:['mess.manage']},
  health:{view:['health.view'],prototype:true},exams:{view:['examinations.view'],write:['examinations.manage','exam_marks.manage']},
- results:{view:['exam_marks.view'],write:['exam_marks.manage']},timetable:{view:['timetable.view'],write:['timetable.manage']},
+ results:{roles:['PARENT','STUDENT'],view:['exam_marks.view'],write:['exam_marks.manage']},timetable:{view:['timetable.view'],write:['timetable.manage']},
  homework:{view:['homework.view'],prototype:true},communication:{view:['communications.view','communications.send'],write:['communications.send','communications.templates.manage']},
  crm:{view:['students.create'],prototype:true},reports:{view:['reports.view'],prototype:true},settings:{roles:['SUPER_ADMIN','TENANT_ADMIN'],view:['organization.view'],prototype:true},
  organization:{view:['users.view','roles.view'],write:['users.invite','users.manage','roles.manage']},'master-data':{view:['master_data.view'],write:['master_data.manage']},
@@ -30,6 +30,6 @@ export const MODULE_ACCESS: Record<string, { view?: string[]; roles?: string[]; 
 export function canOpenModule(user: PermissionUser, module: string): boolean {
  if (!user.id || user.status !== 'ACTIVE') return false;
  const rule=MODULE_ACCESS[module]; if (!rule) return false;
- if (rule.roles) return rule.roles.includes(user.role) || user.role==='SUPER_ADMIN';
+ if (rule.roles && (rule.roles.includes(user.role) || user.role==='SUPER_ADMIN')) return true;
  return !rule.view || rule.view.some(p=>hasPermission(user,p));
 }

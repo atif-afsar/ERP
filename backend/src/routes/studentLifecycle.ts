@@ -20,6 +20,8 @@ const respond=(res:Response,req:Request,data:any,status=200,meta?:any)=>res.stat
 const audit=(req:Request,action:string,entityId:string,details:Record<string,unknown>={},client?:any)=>writeAudit({tenantId:req.tenantId!,userId:req.user.id,action,module:'students',entityId,details,request:req},client);
 async function validatePlacement(client:any,tenantId:string,e:any){const r=await client.query(`SELECT 1 FROM academic_years y JOIN classes c ON c.id=$2 AND c.tenant_id=y.tenant_id JOIN sections s ON s.id=$3 AND s.class_id=c.id AND s.tenant_id=c.tenant_id WHERE y.id=$1 AND y.tenant_id=$4`,[e.academicYearId,e.classId,e.sectionId,tenantId]);if(!r.rowCount)throw new AppError('Academic year, class, and section must belong to this institution and each other.',422,'INVALID_PLACEMENT');}
 
+import { listStudentPublishedResults, getStudentExamReportCard } from '../services/studentResultsService.js';
+
 // A student may retrieve only their own identity and current enrollment.
 router.get('/self/id-card',asyncHandler(async(req,res)=>{
   if(req.user.role!=='STUDENT')throw new AppError('Student access required.',403,'FORBIDDEN');
@@ -32,6 +34,25 @@ router.get('/self/id-card',asyncHandler(async(req,res)=>{
   if(!result.rowCount)throw new AppError('Your account is not linked to a student record. Contact your institution administrator.',404,'STUDENT_NOT_LINKED');
   if(result.rowCount!==1)throw new AppError('Your student account has ambiguous identity links. Contact your institution administrator.',409,'STUDENT_LINK_AMBIGUOUS');
   respond(res,req,result.rows[0]);
+}));
+
+router.get('/self/results',asyncHandler(async(req,res)=>{
+  if(req.user.role!=='STUDENT')throw new AppError('Student access required.',403,'FORBIDDEN');
+  const result=await query(`SELECT s.id,s.admission_no,s.first_name,s.last_name,s.status FROM students s WHERE s.tenant_id=$1 AND s.user_id=$2 ORDER BY s.id LIMIT 2`,[req.tenantId,req.user.id]);
+  if(!result.rowCount)return respond(res,req,{linked:false,student:null,results:[]});
+  if(result.rowCount!==1)throw new AppError('Your student account has ambiguous identity links. Contact your institution administrator.',409,'STUDENT_LINK_AMBIGUOUS');
+  const student=result.rows[0];
+  const results=await listStudentPublishedResults(req.tenantId!,student.id);
+  respond(res,req,{linked:true,student,results});
+}));
+
+router.get('/self/results/:examId',asyncHandler(async(req,res)=>{
+  if(req.user.role!=='STUDENT')throw new AppError('Student access required.',403,'FORBIDDEN');
+  const result=await query(`SELECT s.id FROM students s WHERE s.tenant_id=$1 AND s.user_id=$2 ORDER BY s.id LIMIT 2`,[req.tenantId,req.user.id]);
+  if(!result.rowCount)throw new AppError('Your account is not linked to a student record. Contact your institution administrator.',404,'STUDENT_NOT_LINKED');
+  if(result.rowCount!==1)throw new AppError('Your student account has ambiguous identity links. Contact your institution administrator.',409,'STUDENT_LINK_AMBIGUOUS');
+  const reportCard=await getStudentExamReportCard(req.tenantId!,result.rows[0].id,req.params.examId);
+  respond(res,req,reportCard);
 }));
 
 router.get('/',requirePermission('student_lifecycle.view'),asyncHandler(async(req,res)=>{

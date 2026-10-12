@@ -80,6 +80,12 @@ router.post('/onboarding/accept', authLimiter, validateBody(onboardingSchema), a
         );
       }
     }
+    if (invitation.role_key === 'TEACHER') {
+      const linkedStaff=await client.query('SELECT id FROM staff WHERE tenant_id=$1 AND user_id=$2 FOR UPDATE',[invitation.tenant_id,user.id]);
+      if(linkedStaff.rowCount!==1)throw new AppError('Teacher invitation must resolve to one staff profile. Contact your institution administrator.',409,'TEACHER_LINK_UNAVAILABLE');
+      const created=await client.query('INSERT INTO teacher_profiles(staff_id,tenant_id) VALUES($1,$2) ON CONFLICT(staff_id) DO NOTHING RETURNING staff_id',[linkedStaff.rows[0].id,invitation.tenant_id]);
+      if(created.rowCount)await writeAudit({tenantId:invitation.tenant_id,userId:user.id,action:'TEACHER_PROFILE_CREATED',module:'staff',entityId:linkedStaff.rows[0].id,details:{invitationId:invitation.id},request:req},client);
+    }
     if (invitation.parent_id) {
       const linked = await client.query(
         `UPDATE parents SET user_id=$1,updated_at=NOW() WHERE id=$2 AND tenant_id=$3 AND user_id IS NULL RETURNING id`,

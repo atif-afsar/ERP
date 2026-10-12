@@ -27,6 +27,7 @@ const MessOperationsModule = React.lazy(() => import('./modules/mess/MessOperati
 const HealthModule = React.lazy(() => import('./modules/health/HealthModule').then(m => ({ default: m.HealthModule })));
 const ExamsModule = React.lazy(() => import('./modules/exams/ExamsModule').then(m => ({ default: m.ExamsModule })));
 const ExaminationAssessmentModule = React.lazy(() => import('./modules/examinations/ExaminationAssessmentModule').then(m => ({ default: m.ExaminationAssessmentModule })));
+const StudentParentResultsModule = React.lazy(() => import('./modules/examinations/StudentParentResultsModule').then(m => ({ default: m.StudentParentResultsModule })));
 const TimetableModule = React.lazy(() => import('./modules/timetable/TimetableModule').then(m => ({ default: m.TimetableModule })));
 const HomeworkModule = React.lazy(() => import('./modules/homework/HomeworkModule').then(m => ({ default: m.HomeworkModule })));
 const CommunicationCenterModule = React.lazy(() => import('./modules/communication/CommunicationCenterModule').then(m => ({ default: m.CommunicationCenterModule })));
@@ -301,6 +302,9 @@ const MainRouter: React.FC = () => {
         return <HealthModule />;
       case 'exams':
       case 'results':
+        if (currentUser.role === 'PARENT' || currentUser.role === 'STUDENT') {
+          return <StudentParentResultsModule />;
+        }
         return isFeatureEnabled('exams') ? (
           <ExaminationAssessmentModule initialTab={currentNav === 'results' ? 'results' : 'exams'} />
         ) : (

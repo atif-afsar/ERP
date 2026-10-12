@@ -130,10 +130,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeNav, onNavigate, isOpen,
       section: 'ACADEMICS',
     },
     {
-      id: 'exams',
-      label: isStudent ? 'My Report Card' : isParent ? "Children's Report Cards" : getLabel('examPlural'),
+      id: isParent || isStudent ? 'results' : 'exams',
+      label: isStudent ? 'My Results' : isParent ? "Children's Results" : getLabel('examPlural'),
       icon: Award,
-      show: isFeatureEnabled('exams') && currentUser.role !== 'ACCOUNTANT',
+      show: isFeatureEnabled('exams') && (isParent || isStudent || can('examinations.view')),
       section: 'ACADEMICS',
     },
     {

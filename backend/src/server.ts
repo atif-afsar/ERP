@@ -1,3 +1,4 @@
+import dashboardRoutes from './routes/dashboard.js';
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -34,6 +35,7 @@ import organizationRoutes from './routes/organization.js';
 import masterDataRoutes from './routes/masterData.js';
 import billingRoutes from './routes/billing.js';
 import adminBillingRoutes from './routes/adminBilling.js';
+import parentsRoutes from './routes/parents.js';
 import { config } from './config.js';
 import { requireAuth } from './middleware/auth.js';
 import { businessAccess } from './middleware/businessAccess.js';
@@ -140,8 +142,10 @@ apiRouter.use(requireAuth, businessAccess);
 
 apiRouter.use(enforceSubscription);
 
+apiRouter.use('/dashboard', dashboardRoutes);
 apiRouter.use('/tenants', tenantsRoutes);
 apiRouter.use('/students', studentsRoutes);
+apiRouter.use('/parents', parentsRoutes);
 apiRouter.use('/staff', staffRoutes);
 apiRouter.use('/hr', hrRoutes);
 apiRouter.use('/library', libraryRoutes);

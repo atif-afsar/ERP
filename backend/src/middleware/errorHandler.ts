@@ -50,6 +50,11 @@ const KNOWN_UNIQUE_CONSTRAINTS: Record<string, { code: string; message: string }
     code: 'PLAN_CODE_EXISTS',
     message: 'A subscription plan with this code already exists.',
   },
+  // Exam scope name
+  uq_exams_scope_name: {
+    code: 'DUPLICATE_EXAM_NAME',
+    message: 'An exam with this name already exists in this scope.',
+  },
 };
 
 export function errorHandler(

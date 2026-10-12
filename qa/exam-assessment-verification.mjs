@@ -20,10 +20,14 @@ const STUDENT_EMAIL = 'student-4425b960@rc.example.test';
 
 const RUN_ID = Math.floor(100000 + Math.random() * 900000).toString();
 const PREFIX = `QA-EXAM-${RUN_ID}`;
-const EVIDENCE_DIR = `C:\\Users\\asus\\.gemini\\antigravity-ide\\brain\\7efdc7de-fcbe-4b32-86ad-3479d9f1e61b\\evidence\\exam_assessment`;
+const EVIDENCE_DIR = path.resolve('qa/artifacts/exam-assessment-audit');
+const BRAIN_EVIDENCE_DIR = `C:\\Users\\asus\\.gemini\\antigravity-ide\\brain\\1f44ada5-603b-4940-8cdb-92e17756ecc9\\evidence\\exam_assessment`;
 
 if (!fs.existsSync(EVIDENCE_DIR)) {
   fs.mkdirSync(EVIDENCE_DIR, { recursive: true });
+}
+if (!fs.existsSync(BRAIN_EVIDENCE_DIR)) {
+  fs.mkdirSync(BRAIN_EVIDENCE_DIR, { recursive: true });
 }
 
 const client = new pg.Client({ connectionString: `postgresql://postgres:postgres@127.0.0.1:5432/${state.database}` });
@@ -345,7 +349,7 @@ async function run() {
       endTime: '12:00',
       maxMarks: 100,
       passMarks: 35,
-      room: 'Room 201',
+      room: `${PREFIX}-R1`,
       instructions: 'Calculators not permitted.'
     })
   });
@@ -363,7 +367,7 @@ async function run() {
       endTime: '12:00',
       maxMarks: 100,
       passMarks: 35,
-      room: 'Room 202',
+      room: `${PREFIX}-R2`,
       instructions: 'Bring lab kit.'
     })
   });
@@ -381,7 +385,7 @@ async function run() {
       endTime: '12:00',
       maxMarks: 100,
       passMarks: 35,
-      room: 'Room 201'
+      room: `${PREFIX}-R1`
     })
   });
   const timetableConflictDetected = dupSchedRes.status >= 400; // If accepted, timetable conflict detection is unimplemented
@@ -913,6 +917,12 @@ async function run() {
     path.join(EVIDENCE_DIR, 'exam_assessment_results.json'),
     JSON.stringify(results, null, 2)
   );
+  try {
+    fs.writeFileSync(
+      path.join(BRAIN_EVIDENCE_DIR, 'exam_assessment_results.json'),
+      JSON.stringify(results, null, 2)
+    );
+  } catch {}
 
   console.log('\n=== SUMMARY ===');
   console.log(results.summary);
