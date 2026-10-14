@@ -19,20 +19,28 @@ async function canViewAll(req: Request) {
   if (req.user.isSuperAdmin) return true;
   return Boolean((await query(`SELECT 1 FROM memberships m JOIN role_permissions rp ON rp.role_id=m.role_id JOIN permissions p ON p.id=rp.permission_id WHERE m.tenant_id=$1 AND m.user_id=$2 AND m.status='active' AND p.key='hr.view'`, [req.tenantId, req.user.id])).rowCount);
 }
-async function ownStaff(req: Request, client?: PoolClient) {
-  const sql = `SELECT id FROM staff WHERE tenant_id=$1 AND user_id=$2 AND status='ACTIVE'`;
-  const row = (await (client ? client.query(sql, [req.tenantId, req.user.id]) : query(sql, [req.tenantId, req.user.id]))).rows[0];
-  if (row) return row.id as string;
+async function ownStaff(req: Request, client?: PoolClient, requireActive = true) {
+  const run = (sql: string, params: any[]) => client ? client.query<any>(sql, params) : query<any>(sql, params);
+  const ensureEligible = (row: { id: string; status: string }) => {
+    if (requireActive && row.status !== 'ACTIVE') {
+      throw new AppError('Inactive staff members cannot submit leave requests.', 403, 'INACTIVE_STAFF');
+    }
+    return row.id;
+  };
+  const row = (await run(`SELECT id,status FROM staff WHERE tenant_id=$1 AND user_id=$2`, [req.tenantId, req.user.id])).rows[0];
+  if (row) return ensureEligible(row);
 
   // Check if unlinked staff profile matches the user's email
   const userRow = (await (client
     ? client.query(`SELECT email FROM users WHERE id=$1`, [req.user.id])
     : query(`SELECT email FROM users WHERE id=$1`, [req.user.id]))).rows[0];
   if (userRow?.email) {
-    const byEmail = (await (client
-      ? client.query(`SELECT id FROM staff WHERE tenant_id=$1 AND lower(email)=lower($2) AND status='ACTIVE'`, [req.tenantId, userRow.email])
-      : query(`SELECT id FROM staff WHERE tenant_id=$1 AND lower(email)=lower($2) AND status='ACTIVE'`, [req.tenantId, userRow.email]))).rows[0];
+    const byEmail = (await run(
+      `SELECT id,status FROM staff WHERE tenant_id=$1 AND lower(email)=lower($2) AND (user_id IS NULL OR user_id=$3) ORDER BY (user_id=$3) DESC LIMIT 1`,
+      [req.tenantId, userRow.email, req.user.id]
+    )).rows[0];
     if (byEmail) {
+      ensureEligible(byEmail);
       await (client
         ? client.query(`UPDATE staff SET user_id=$1, updated_at=NOW() WHERE id=$2 AND user_id IS NULL`, [req.user.id, byEmail.id])
         : query(`UPDATE staff SET user_id=$1, updated_at=NOW() WHERE id=$2 AND user_id IS NULL`, [req.user.id, byEmail.id]));
@@ -122,7 +130,7 @@ router.patch('/types/:id', requirePermission('hr.manage'), validateBody(z.object
   }); res.json({ data });
 }));
 router.get('/balances', readHr, asyncHandler(async (req, res) => {
-  const all = await canViewAll(req), staff = all ? null : await ownStaff(req);
+  const all = await canViewAll(req), staff = all ? null : await ownStaff(req, undefined, false);
   res.json({ data: (await query(`SELECT b.*,s.name staff_name,t.name leave_type_name,b.entitlement-b.used remaining FROM leave_balances b JOIN staff s ON s.id=b.staff_id AND s.tenant_id=b.tenant_id JOIN leave_types t ON t.id=b.leave_type_id AND t.tenant_id=b.tenant_id WHERE b.tenant_id=$1 AND ($2::uuid IS NULL OR b.staff_id=$2) ORDER BY b.year DESC,s.name,t.name`, [req.tenantId, staff])).rows });
 }));
 router.put('/balances', requirePermission('hr.manage'), validateBody(z.object({ staffId: uuid, leaveTypeId: uuid, year: z.number().int().min(2000).max(2200), entitlement: z.number().int().min(0).max(366) })), asyncHandler(async (req, res) => {
@@ -138,7 +146,7 @@ router.put('/balances', requirePermission('hr.manage'), validateBody(z.object({ 
   }); res.json({ data });
 }));
 router.get('/requests', readHr, asyncHandler(async (req, res) => {
-  const all = await canViewAll(req), staff = all ? null : await ownStaff(req);
+  const all = await canViewAll(req), staff = all ? null : await ownStaff(req, undefined, false);
   res.json({ data: (await query(`SELECT l.*,s.name staff_name,t.name leave_type_name FROM leave_requests l JOIN staff s ON s.id=l.staff_id AND s.tenant_id=l.tenant_id JOIN leave_types t ON t.id=l.leave_type_id AND t.tenant_id=l.tenant_id WHERE l.tenant_id=$1 AND ($2::uuid IS NULL OR l.staff_id=$2) ORDER BY l.created_at DESC`, [req.tenantId, staff])).rows });
 }));
 router.post('/requests', requirePermission('hr.leave.request'), validateBody(z.object({ leaveTypeId: uuid, startDate: date, endDate: date, reason: z.string().trim().min(3).max(2000) }).refine(b => b.endDate >= b.startDate && b.startDate.slice(0, 4) === b.endDate.slice(0, 4), 'Leave must have ordered dates within one year.')), asyncHandler(async (req, res) => {
@@ -180,8 +188,14 @@ router.post('/requests/:id/review', requirePermission('hr.leave.approve'), valid
         if (!balance || balance.entitlement - balance.used < l.days) throw new AppError('Insufficient leave balance.', 409, 'INSUFFICIENT_BALANCE');
         await c.query('UPDATE leave_balances SET used=used+$2 WHERE id=$1', [balance.id, l.days]);
       }
-      if ((await c.query(`SELECT 1 FROM staff_attendance WHERE tenant_id=$1 AND staff_id=$2 AND date BETWEEN $3 AND $4 AND status IN ('PRESENT','LATE')`, [req.tenantId, staff.id, l.start, l.finish])).rowCount) throw new AppError('Leave conflicts with recorded presence. Correct attendance before approval.', 409, 'ATTENDANCE_CONFLICT');
-      await c.query(`INSERT INTO staff_attendance(tenant_id,staff_id,date,status,leave_request_id,recorded_by) SELECT $1,$2,d::date,'LEAVE',$5,$6 FROM generate_series($3::date,$4::date,INTERVAL '1 day') d ON CONFLICT(tenant_id,staff_id,date) DO UPDATE SET status='LEAVE',leave_request_id=EXCLUDED.leave_request_id,recorded_by=EXCLUDED.recorded_by,updated_at=NOW()`, [req.tenantId, staff.id, l.start, l.finish, l.id, req.user.id]);
+      const existingAtt = (await c.query(`SELECT status FROM staff_attendance WHERE tenant_id=$1 AND staff_id=$2 AND date BETWEEN $3 AND $4 LIMIT 1`, [req.tenantId, staff.id, l.start, l.finish])).rows[0];
+      if (existingAtt) {
+        if (['PRESENT', 'LATE'].includes(existingAtt.status)) {
+          throw new AppError('Leave conflicts with recorded presence. Correct attendance before approval.', 409, 'ATTENDANCE_CONFLICT');
+        }
+        throw new AppError('Leave conflicts with existing recorded attendance. Correct attendance before approval.', 409, 'ATTENDANCE_CONFLICT');
+      }
+      await c.query(`INSERT INTO staff_attendance(tenant_id,staff_id,date,status,leave_request_id,recorded_by) SELECT $1,$2,d::date,'LEAVE',$5,$6 FROM generate_series($3::date,$4::date,INTERVAL '1 day') d`, [req.tenantId, staff.id, l.start, l.finish, l.id, req.user.id]);
     }
     const r = (await c.query('UPDATE leave_requests SET status=$3,review_note=$4,reviewed_by=$5,reviewed_at=NOW() WHERE id=$1 AND tenant_id=$2 RETURNING *', [l.id, req.tenantId, req.body.status, req.body.note, req.user.id])).rows[0];
     await audit(req, c, `LEAVE_${req.body.status}`, l.id, { days: l.days });
@@ -190,6 +204,49 @@ router.post('/requests/:id/review', requirePermission('hr.leave.approve'), valid
     }
     return r;
   }); res.json({ data });
+}));
+router.post('/requests/:id/revoke', requirePermission('hr.leave.approve'), validateBody(z.object({ reason: z.string().trim().min(3).max(2000) })), asyncHandler(async (req, res) => {
+  uuid.parse(req.params.id);
+  const b = req.body;
+  const data = await transaction(async c => {
+    const target = (await c.query('SELECT staff_id FROM leave_requests WHERE id=$1 AND tenant_id=$2', [req.params.id, req.tenantId])).rows[0];
+    if (!target) throw new AppError('Leave request not found.', 404, 'NOT_FOUND');
+    const staff = (await c.query('SELECT id,name,user_id,status FROM staff WHERE id=$1 AND tenant_id=$2 FOR UPDATE', [target.staff_id, req.tenantId])).rows[0];
+    if (!staff) throw new AppError('Staff member not found.', 404, 'NOT_FOUND');
+    if (staff.user_id === req.user.id) throw new AppError('You cannot review your own leave.', 403, 'SELF_REVIEW');
+    const l = (await c.query(`SELECT l.*,l.start_date::text AS start,l.end_date::text AS finish,(l.end_date-l.start_date+1)::int AS days,EXTRACT(YEAR FROM l.start_date)::int AS leave_year,t.paid FROM leave_requests l JOIN leave_types t ON t.id=l.leave_type_id AND t.tenant_id=l.tenant_id WHERE l.id=$1 AND l.tenant_id=$2 FOR UPDATE OF l`, [req.params.id, req.tenantId])).rows[0];
+    if (!l) throw new AppError('Leave request not found.', 404, 'NOT_FOUND');
+    if (l.status !== 'APPROVED') throw new AppError('Only approved leave requests can be revoked.', 409, 'INVALID_LEAVE_STATE');
+    let restoredDays = 0;
+    if (l.paid) {
+      const balance = (await c.query('SELECT * FROM leave_balances WHERE tenant_id=$1 AND staff_id=$2 AND leave_type_id=$3 AND year=$4 FOR UPDATE', [req.tenantId, staff.id, l.leave_type_id, l.leave_year])).rows[0];
+      if (!balance || balance.used < l.days) throw new AppError('Cannot reconcile leave balance for revocation.', 409, 'INVALID_LEAVE_STATE');
+      await c.query('UPDATE leave_balances SET used=used-$2 WHERE id=$1', [balance.id, l.days]);
+      restoredDays = l.days;
+    }
+    const attResult = await c.query(`DELETE FROM staff_attendance WHERE tenant_id=$1 AND staff_id=$2 AND leave_request_id=$3 AND status='LEAVE' RETURNING id`, [req.tenantId, staff.id, l.id]);
+    const removedAttendanceCount = attResult.rowCount || 0;
+    const r = (await c.query(`UPDATE leave_requests SET status='REVOKED', revoked_by=$3, revoked_at=NOW(), revocation_reason=$4 WHERE id=$1 AND tenant_id=$2 RETURNING *`, [l.id, req.tenantId, req.user.id, b.reason])).rows[0];
+    await audit(req, c, 'LEAVE_REVOKED', l.id, {
+      reason: b.reason,
+      days: l.days,
+      paid: Boolean(l.paid),
+      restoredDays,
+      removedAttendance: removedAttendanceCount
+    });
+    if (staff.user_id && (await c.query(`SELECT 1 FROM memberships WHERE tenant_id=$1 AND user_id=$2 AND status='active'`, [req.tenantId, staff.user_id])).rowCount) {
+      await enqueueNotification({
+        tenantId: req.tenantId!,
+        eventType: 'STAFF_LEAVE_REVOKED',
+        templateCode: 'STAFF_LEAVE_REVOKED',
+        sourceType: 'LEAVE_REQUEST',
+        sourceId: l.id,
+        payload: { name: staff.name, start_date: l.start, end_date: l.finish, reason: b.reason }
+      }, [{ userId: staff.user_id }], c);
+    }
+    return r;
+  });
+  res.json({ data });
 }));
 router.get('/attendance', requirePermission('hr.view'), asyncHandler(async (req, res) => {
   const day = date.parse(req.query.date || new Date().toISOString().slice(0, 10));

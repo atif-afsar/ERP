@@ -653,15 +653,26 @@ try {
   assert.equal(rApproveInactive.status, 409);
   assert.equal(rApproveInactive.body?.error?.code, 'INACTIVE_STAFF');
   // Inactive staff attempts to request new leave
+  const inactiveSnapshot = async () => (await db.query(`SELECT
+    (SELECT count(*)::int FROM staff WHERE tenant_id=$1 AND user_id=$2) staff_rows,
+    (SELECT count(*)::int FROM leave_requests WHERE tenant_id=$1 AND staff_id=$3) requests,
+    (SELECT count(*)::int FROM staff_attendance WHERE tenant_id=$1 AND staff_id=$3) attendance,
+    (SELECT COALESCE(sum(used),0)::int FROM leave_balances WHERE tenant_id=$1 AND staff_id=$3) balance_used,
+    (SELECT count(*)::int FROM audit_logs WHERE tenant_id=$1 AND user_id=$2 AND action='LEAVE_REQUESTED') request_audits`,
+    [tenantId, inactLogin.user.id, staffInactive.id])).rows[0];
+  const inactiveBefore = await inactiveSnapshot();
   const rRequestInactive = await raw('POST', '/hr/requests', inactLogin.token, {
     leaveTypeId: paidType.id,
     startDate: '2027-12-15',
     endDate: '2027-12-16',
     reason: 'Request while inactive'
   });
-  assert.ok([403, 409].includes(rRequestInactive.status), `Inactive staff request must be rejected with 403 or 409 (got ${rRequestInactive.status})`);
+  assert.equal(rRequestInactive.status, 403);
+  assert.equal(rRequestInactive.body?.error?.code, 'INACTIVE_STAFF');
+  assert.equal(rRequestInactive.body?.error?.message, 'Inactive staff members cannot submit leave requests.');
+  assert.deepEqual(await inactiveSnapshot(), inactiveBefore, 'Rejected inactive request must not create or change HR records');
   record('Permissions & Isolation', 'Inactive staff cannot request leave and pending leave cannot be approved', 'PASS',
-    `Approval of inactive staff returned 409 INACTIVE_STAFF; request attempt while inactive rejected with HTTP ${rRequestInactive.status}: ${JSON.stringify(rRequestInactive.body)}`);
+    `Approval returned 409 INACTIVE_STAFF; new request returned exact 403 INACTIVE_STAFF with no staff, request, attendance, balance, or audit side effects.`);
 
   // ==========================================================================
   // SECTION 8: HISTORY, AUDITS & NOTIFICATIONS

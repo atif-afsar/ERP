@@ -1,3 +1,4 @@
+import type { PoolClient } from 'pg';
 import { Router } from 'express';
 import { z } from 'zod';
 import { query, transaction } from '../db.js';
@@ -7,36 +8,90 @@ import { asyncHandler } from '../middleware/asyncHandler.js';
 import { validateBody } from '../middleware/validation.js';
 import { AppError } from '../middleware/errorHandler.js';
 import { id,text,state,validateId,logOperation,reference,operationError } from './operationsSupport.js';
+import { validateAndNormalizeIsbn } from '../services/isbnService.js';
+
+async function validateLibraryBorrower(c: PoolClient, tenantId: string, borrowerType: 'STUDENT' | 'STAFF', borrowerId: string) {
+  if (borrowerType === 'STAFF') {
+    const res = await c.query('SELECT id, status FROM staff WHERE tenant_id = $1 AND id = $2', [tenantId, borrowerId]);
+    if (!res.rowCount) throw new AppError('Referenced staff member not found in this institution.', 422, 'INVALID_REFERENCE');
+    if (res.rows[0].status !== 'ACTIVE') throw new AppError('Only active staff members can borrow library materials.', 422, 'INVALID_REFERENCE');
+  } else if (borrowerType === 'STUDENT') {
+    const res = await c.query('SELECT id, status FROM students WHERE tenant_id = $1 AND id = $2', [tenantId, borrowerId]);
+    if (!res.rowCount) throw new AppError('Referenced student not found in this institution.', 422, 'INVALID_REFERENCE');
+    if (res.rows[0].status !== 'ACTIVE') throw new AppError('Only active students can borrow library materials.', 422, 'INVALID_REFERENCE');
+  } else {
+    throw new AppError('Invalid borrower type.', 422, 'INVALID_REFERENCE');
+  }
+}
+
 const router=Router();router.use(tenantContext(true));
 router.get('/',requirePermission('library.view'),asyncHandler(async(req,res)=>{
   const t=req.tenantId;
   const [titles,categories,copies,loans,students,staff]=await Promise.all([
-    query(`SELECT b.id,b.title,b.author,b.isbn,b.lifecycle_status status,c.name category,COUNT(cp.id)::int total_copies,COUNT(cp.id) FILTER(WHERE b.lifecycle_status='ACTIVE' AND cp.status='ACTIVE' AND NOT EXISTS(SELECT 1 FROM library_loans l WHERE l.copy_id=cp.id AND l.status='ISSUED'))::int available_copies FROM library_books b LEFT JOIN library_categories c ON c.id=b.category_id AND c.tenant_id=b.tenant_id LEFT JOIN book_copies cp ON cp.book_id=b.id AND cp.tenant_id=b.tenant_id WHERE b.tenant_id=$1 GROUP BY b.id,c.name ORDER BY b.title`,[t]),
+    query(`SELECT b.id,b.title,b.author,COALESCE(b.isbn_normalized,b.isbn) isbn,b.isbn_normalized,b.lifecycle_status status,c.name category,COUNT(cp.id)::int total_copies,COUNT(cp.id) FILTER(WHERE b.lifecycle_status='ACTIVE' AND cp.status='ACTIVE' AND NOT EXISTS(SELECT 1 FROM library_loans l WHERE l.copy_id=cp.id AND l.status='ISSUED'))::int available_copies FROM library_books b LEFT JOIN library_categories c ON c.id=b.category_id AND c.tenant_id=b.tenant_id LEFT JOIN book_copies cp ON cp.book_id=b.id AND cp.tenant_id=b.tenant_id WHERE b.tenant_id=$1 GROUP BY b.id,c.name ORDER BY b.title`,[t]),
     query('SELECT * FROM library_categories WHERE tenant_id=$1 ORDER BY name',[t]),
-    query(`SELECT cp.*,b.title,CASE WHEN b.lifecycle_status<>'ACTIVE' THEN b.lifecycle_status WHEN cp.status='ACTIVE' AND EXISTS(SELECT 1 FROM library_loans l WHERE l.copy_id=cp.id AND l.status='ISSUED') THEN 'ISSUED' ELSE cp.status END availability FROM book_copies cp JOIN library_books b ON b.id=cp.book_id AND b.tenant_id=cp.tenant_id WHERE cp.tenant_id=$1 ORDER BY cp.accession_number`,[t]),
-    query(`SELECT l.*,b.title,cp.accession_number,COALESCE(s.first_name||' '||COALESCE(s.last_name,''),st.name) borrower,CASE WHEN l.status='ISSUED' AND l.due_on<CURRENT_DATE THEN 'OVERDUE' ELSE l.status END display_status FROM library_loans l JOIN book_copies cp ON cp.id=l.copy_id AND cp.tenant_id=l.tenant_id JOIN library_books b ON b.id=cp.book_id AND b.tenant_id=l.tenant_id LEFT JOIN students s ON s.id=l.student_id AND s.tenant_id=l.tenant_id LEFT JOIN staff st ON st.id=l.staff_id AND st.tenant_id=l.tenant_id WHERE l.tenant_id=$1 ORDER BY l.issued_on DESC`,[t]),
-    query(`SELECT id,first_name||' '||COALESCE(last_name,'') name FROM students WHERE tenant_id=$1 ORDER BY first_name`,[t]),query('SELECT id,name FROM staff WHERE tenant_id=$1 ORDER BY name',[t])
+    query(`SELECT cp.*,b.title,b.author,CASE WHEN EXISTS(SELECT 1 FROM library_loans l WHERE l.copy_id=cp.id AND l.status='ISSUED') THEN 'ISSUED' WHEN b.lifecycle_status<>'ACTIVE' THEN b.lifecycle_status ELSE cp.status END availability FROM book_copies cp JOIN library_books b ON b.id=cp.book_id AND b.tenant_id=cp.tenant_id WHERE cp.tenant_id=$1 ORDER BY cp.accession_number`,[t]),
+    query(`SELECT l.*,b.title,b.author,cp.accession_number,TRIM(COALESCE(NULLIF(TRIM(s.first_name||' '||COALESCE(s.last_name,'')),''),st.name,'Unknown Borrower')) borrower,CASE WHEN l.student_id IS NOT NULL THEN 'Student' ELSE 'Staff' END borrower_type,CASE WHEN l.status='ISSUED' AND l.due_on<CURRENT_DATE THEN 'OVERDUE' ELSE l.status END display_status FROM library_loans l JOIN book_copies cp ON cp.id=l.copy_id AND cp.tenant_id=l.tenant_id JOIN library_books b ON b.id=cp.book_id AND b.tenant_id=l.tenant_id LEFT JOIN students s ON s.id=l.student_id AND s.tenant_id=l.tenant_id LEFT JOIN staff st ON st.id=l.staff_id AND st.tenant_id=l.tenant_id WHERE l.tenant_id=$1 ORDER BY l.issued_on DESC`,[t]),
+    query(`SELECT id,first_name||' '||COALESCE(last_name,'') name FROM students WHERE tenant_id=$1 AND status='ACTIVE' ORDER BY first_name`,[t]),
+    query(`SELECT id,name FROM staff WHERE tenant_id=$1 AND status='ACTIVE' ORDER BY name`,[t])
   ]);res.json({data:{titles:titles.rows,categories:categories.rows,copies:copies.rows,loans:loans.rows,students:students.rows,staff:staff.rows}});
 }));
 router.post('/categories',requirePermission('library.manage'),validateBody(z.object({name:z.string().trim().min(1).max(100)})),asyncHandler(async(req,res)=>{
  const data=await transaction(async c=>{const r=(await c.query('INSERT INTO library_categories(tenant_id,name) VALUES($1,$2) RETURNING *',[req.tenantId,req.body.name])).rows[0];await logOperation(req,c,'library','LIBRARY_CATEGORY_CREATED',r.id);return r;});res.status(201).json({data});
 }));
-router.post('/titles',requirePermission('library.manage'),validateBody(z.object({title:text,author:text,isbn:z.string().max(50).optional(),categoryId:id})),asyncHandler(async(req,res)=>{
- const b=req.body;const data=await transaction(async c=>{
- if(!(await c.query('SELECT id FROM library_categories WHERE id=$1 AND tenant_id=$2',[b.categoryId,req.tenantId])).rowCount)throw new AppError('Category not found.',422,'INVALID_REFERENCE');
- const r=(await c.query(`INSERT INTO library_books(tenant_id,title,author,isbn,category_id,total_copies,available_copies) VALUES($1,$2,$3,$4,$5,0,0) RETURNING *`,[req.tenantId,b.title,b.author,b.isbn||null,b.categoryId])).rows[0];await logOperation(req,c,'library','LIBRARY_TITLE_CREATED',r.id);return r;});res.status(201).json({data});
+router.post('/titles',requirePermission('library.manage'),validateBody(z.object({title:text,author:text,isbn:z.unknown().optional(),categoryId:id})),asyncHandler(async(req,res)=>{
+ const b=req.body;
+ const isbnValidation=validateAndNormalizeIsbn(b.isbn);
+ if(!isbnValidation.isValid){
+  throw new AppError(isbnValidation.error||'A valid ISBN-10 or ISBN-13 is required.',422,'INVALID_ISBN');
+ }
+ const canonicalIsbn=isbnValidation.normalized;
+ const data=await transaction(async c=>{
+  if(!(await c.query('SELECT id FROM library_categories WHERE id=$1 AND tenant_id=$2',[b.categoryId,req.tenantId])).rowCount)throw new AppError('Category not found.',422,'INVALID_REFERENCE');
+  if(canonicalIsbn){
+   const existing=await c.query('SELECT id FROM library_books WHERE tenant_id=$1 AND isbn_normalized=$2 LIMIT 1',[req.tenantId,canonicalIsbn]);
+   if(existing.rowCount)throw new AppError('This ISBN already belongs to another title in this institution.',409,'ISBN_EXISTS');
+   const unresolved=await c.query('SELECT id FROM library_isbn_remediation WHERE tenant_id=$1 AND classification=$2 AND canonical_isbn=$3 LIMIT 1',[req.tenantId,'VALID_COLLISION',canonicalIsbn]);
+   if(unresolved.rowCount)throw new AppError('This ISBN already belongs to another title in this institution.',409,'ISBN_EXISTS');
+  }
+  let r;
+  try{
+   r=(await c.query(`INSERT INTO library_books(tenant_id,title,author,isbn,isbn_normalized,category_id,total_copies,available_copies) VALUES($1,$2,$3,$4,$5,$6,0,0) RETURNING *`,[req.tenantId,b.title,b.author,canonicalIsbn,canonicalIsbn,b.categoryId])).rows[0];
+  }catch(err:any){
+   if(err.code==='23505'&&err.constraint==='library_books_tenant_isbn_normalized_uidx'){
+    throw new AppError('This ISBN already belongs to another title in this institution.',409,'ISBN_EXISTS');
+   }
+   throw err;
+  }
+  await logOperation(req,c,'library','LIBRARY_TITLE_CREATED',r.id);
+  return r;
+ });
+ res.status(201).json({data});
 }));
 router.patch('/titles/:id',validateId,requirePermission('library.manage'),validateBody(z.object({status:state})),asyncHandler(async(req,res)=>{
- const data=await transaction(async c=>{const r=(await c.query('UPDATE library_books SET lifecycle_status=$3 WHERE id=$1 AND tenant_id=$2 RETURNING *',[req.params.id,req.tenantId,req.body.status])).rows[0];if(!r)throw new AppError('Title not found.',404,'NOT_FOUND');await logOperation(req,c,'library','LIBRARY_TITLE_UPDATED',r.id,req.body);return r;});res.json({data});
+ const data=await transaction(async c=>{
+  const title=(await c.query('SELECT id, lifecycle_status FROM library_books WHERE id=$1 AND tenant_id=$2 FOR UPDATE',[req.params.id,req.tenantId])).rows[0];
+  if(!title)throw new AppError('Title not found.',404,'NOT_FOUND');
+  if(req.body.status==='ARCHIVED'){
+   const active=(await c.query(`SELECT 1 FROM library_loans l JOIN book_copies cp ON cp.id=l.copy_id AND cp.tenant_id=l.tenant_id WHERE cp.book_id=$1 AND cp.tenant_id=$2 AND l.status='ISSUED' LIMIT 1`,[req.params.id,req.tenantId])).rowCount;
+   if(active)throw new AppError('Cannot archive title while active loans exist. All active loans must be resolved before archiving.',409,'ACTIVE_LOANS_EXIST');
+  }
+  const r=(await c.query('UPDATE library_books SET lifecycle_status=$3 WHERE id=$1 AND tenant_id=$2 RETURNING *',[req.params.id,req.tenantId,req.body.status])).rows[0];
+  await logOperation(req,c,'library','LIBRARY_TITLE_UPDATED',r.id,req.body);return r;
+ });res.json({data});
 }));
 router.post('/copies',requirePermission('library.manage'),validateBody(z.object({bookId:id,accessionNumber:z.string().trim().min(1).max(100)})),asyncHandler(async(req,res)=>{
  const data=await transaction(async c=>{if(!(await c.query(`SELECT id FROM library_books WHERE id=$1 AND tenant_id=$2 AND lifecycle_status='ACTIVE'`,[req.body.bookId,req.tenantId])).rowCount)throw new AppError('Active title not found.',422,'INVALID_REFERENCE');const r=(await c.query('INSERT INTO book_copies(tenant_id,book_id,accession_number) VALUES($1,$2,$3) RETURNING *',[req.tenantId,req.body.bookId,req.body.accessionNumber])).rows[0];await logOperation(req,c,'library','LIBRARY_COPY_CREATED',r.id);return r;});res.status(201).json({data});
 }));
 router.post('/loans',requirePermission('library.issue'),validateBody(z.object({copyId:id,borrowerType:z.enum(['STUDENT','STAFF']),borrowerId:id,issuedOn:z.string().date(),dueOn:z.string().date()}).refine(b=>b.dueOn>=b.issuedOn,'Due date precedes issue date.')),asyncHandler(async(req,res)=>{
  const b=req.body;const data=await transaction(async c=>{
- const cp=(await c.query(`SELECT cp.* FROM book_copies cp JOIN library_books b ON b.id=cp.book_id AND b.tenant_id=cp.tenant_id WHERE cp.id=$1 AND cp.tenant_id=$2 AND b.lifecycle_status='ACTIVE' FOR UPDATE OF cp`,[b.copyId,req.tenantId])).rows[0];
- if(!cp)throw new AppError('Copy not found.',422,'INVALID_REFERENCE');if(cp.status!=='ACTIVE'||(await c.query(`SELECT 1 FROM library_loans WHERE copy_id=$1 AND status='ISSUED'`,[cp.id])).rowCount)throw new AppError('Copy unavailable.',409,'COPY_UNAVAILABLE');
- await reference(c,b.borrowerType==='STUDENT'?'students':'staff',req.tenantId!,b.borrowerId);
+ const copyRef=(await c.query(`SELECT id, book_id, status FROM book_copies WHERE id=$1 AND tenant_id=$2`,[b.copyId,req.tenantId])).rows[0];
+ if(!copyRef)throw new AppError('Copy not found.',422,'INVALID_REFERENCE');
+ const book=(await c.query(`SELECT id, lifecycle_status FROM library_books WHERE id=$1 AND tenant_id=$2 FOR UPDATE`,[copyRef.book_id,req.tenantId])).rows[0];
+ if(!book||book.lifecycle_status!=='ACTIVE')throw new AppError('Copy unavailable.',409,'COPY_UNAVAILABLE');
+ const cp=(await c.query(`SELECT * FROM book_copies WHERE id=$1 AND tenant_id=$2 FOR UPDATE`,[b.copyId,req.tenantId])).rows[0];
+ if(cp.status!=='ACTIVE'||(await c.query(`SELECT 1 FROM library_loans WHERE copy_id=$1 AND status='ISSUED'`,[cp.id])).rowCount)throw new AppError('Copy unavailable.',409,'COPY_UNAVAILABLE');
+ await validateLibraryBorrower(c,req.tenantId!,b.borrowerType,b.borrowerId);
  const r=(await c.query('INSERT INTO library_loans(tenant_id,copy_id,student_id,staff_id,issued_on,due_on) VALUES($1,$2,$3,$4,$5,$6) RETURNING *',[req.tenantId,cp.id,b.borrowerType==='STUDENT'?b.borrowerId:null,b.borrowerType==='STAFF'?b.borrowerId:null,b.issuedOn,b.dueOn])).rows[0];await logOperation(req,c,'library','LIBRARY_COPY_ISSUED',r.id);return r;
  });res.status(201).json({data});
 }));

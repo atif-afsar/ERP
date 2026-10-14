@@ -19,7 +19,12 @@ export async function reference(c: PoolClient, table: 'students'|'staff'|'enroll
 }
 export function operationError(error: any, _req: Request, _res: Response, next: NextFunction) {
   if (error instanceof z.ZodError) return next(new AppError('Invalid record ID or query value.',422,'VALIDATION_ERROR'));
-  if (error.code==='23505') return next(new AppError('A conflicting record already exists.',409,'RECORD_CONFLICT'));
+  if (error.code==='23505') {
+    if (error.constraint === 'library_books_tenant_isbn_normalized_uidx') {
+      return next(new AppError('This ISBN already belongs to another title in this institution.',409,'ISBN_EXISTS'));
+    }
+    return next(new AppError('A conflicting record already exists.',409,'RECORD_CONFLICT'));
+  }
   if (error.code==='23503') return next(new AppError('Referenced record is not valid for this institution.',422,'INVALID_REFERENCE'));
   if (error.code==='23514') return next(new AppError('Record violates an operational constraint.',422,'VALIDATION_ERROR'));
   next(error);

@@ -55,6 +55,11 @@ const KNOWN_UNIQUE_CONSTRAINTS: Record<string, { code: string; message: string }
     code: 'DUPLICATE_EXAM_NAME',
     message: 'An exam with this name already exists in this scope.',
   },
+  // Library book ISBN
+  library_books_tenant_isbn_normalized_uidx: {
+    code: 'ISBN_EXISTS',
+    message: 'This ISBN already belongs to another title in this institution.',
+  },
 };
 
 export function errorHandler(

@@ -1,6 +1,6 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createHash } from 'node:crypto';
 import dotenv from 'dotenv';
 import pg from 'pg';
@@ -8,12 +8,12 @@ import pg from 'pg';
 const root = fileURLToPath(new URL('./', import.meta.url));
 dotenv.config({ path: path.join(root, '.env') });
 const directory = path.join(root, 'sql/migrations');
-const names = (await fs.readdir(directory)).filter(name => /^native_\d{4}_[a-z0-9_]+\.sql$/.test(name)).sort();
+const names = (await fs.readdir(directory)).filter(name => /^native_\d{4}_[a-z0-9_]+\.(sql|mjs|js)$/.test(name)).sort();
 const sources = [{ name: 'native_0001_baseline.sql', file: path.join(root, 'sql/001_schema.sql') },
   ...names.map(name => ({ name, file: path.join(directory, name) }))];
 const migrations = await Promise.all(sources.map(async ({ name, file }) => {
-  const sql = await fs.readFile(file, 'utf8');
-  return { name, sql, checksum: createHash('sha256').update(sql).digest('hex') };
+  const content = await fs.readFile(file, 'utf8');
+  return { name, file, sql: content, content, checksum: createHash('sha256').update(content).digest('hex') };
 }));
 if (!migrations.length) throw new Error('No native migrations found.');
 const command = process.argv[2] || 'status';
@@ -65,7 +65,13 @@ try {
       await client.query('BEGIN');
       try {
         await client.query('CREATE TABLE IF NOT EXISTS public.schema_migrations (name TEXT PRIMARY KEY, checksum TEXT NOT NULL, applied_at TIMESTAMPTZ NOT NULL DEFAULT NOW())');
-        await client.query(migration.sql);
+        if (migration.name.endsWith('.sql')) {
+          await client.query(migration.content);
+        } else {
+          const mod = await import(pathToFileURL(migration.file).href);
+          if (typeof mod.up !== 'function') throw new Error(`Migration ${migration.name} must export an async up(client) function.`);
+          await mod.up(client);
+        }
         await client.query('INSERT INTO public.schema_migrations (name, checksum) VALUES ($1, $2)', [migration.name, migration.checksum]);
         await client.query('COMMIT');
         console.log(`APPLIED ${migration.name}`);

@@ -28,7 +28,7 @@ The audit exercised end-to-end workflows:
 2. **[DEFECT-ONBOARD-002] Users & Access Teacher Invitations Bypass Staff & Teacher Profile Linkage (High Severity)**:
    When an administrator invites a user with role `TEACHER` via Users & Access (`POST /api/v1/organization/invitations`), the invitation contains `staff_id = NULL`. Upon onboarding acceptance (`POST /auth/onboarding/accept`), the system inserts a fallback row into `staff`, but **never** inserts into `teacher_profiles`. As a result, the teacher cannot be assigned to any subjects (`POST /api/v1/staff/assignments` requires `WHERE EXISTS(SELECT 1 FROM teacher_profiles WHERE staff_id = $2)`), is omitted from the UI dropdown in Academic Operations, and cannot be scheduled on the timetable.
 
----
+---cd
 
 ## 2. PASS / FAIL / BLOCKED Results Matrix
 
