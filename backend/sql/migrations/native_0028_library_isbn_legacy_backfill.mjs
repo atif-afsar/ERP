@@ -1,4 +1,4 @@
-import { validateAndNormalizeIsbn } from '../../src/services/isbnService.ts';
+import { validateAndNormalizeIsbn } from './lib/isbn_v1.mjs';
 
 /**
  * Classifies all existing rows in library_books where isbn is non-blank.
