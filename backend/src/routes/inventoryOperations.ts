@@ -546,6 +546,15 @@ router.post('/assets', requirePermission('assets.manage'), validateBody(z.object
     const clash = (await c.query('SELECT 1 FROM fixed_assets WHERE tenant_id = $1 AND asset_tag = $2', [req.tenantId, b.assetTag])).rowCount;
     if (clash) throw new AppError('An asset with this tag already exists in this institution.', 409, 'ASSET_TAG_EXISTS');
 
+    const normSerial = b.serialNumber && b.serialNumber.trim() ? b.serialNumber.trim().toUpperCase() : null;
+    if (normSerial) {
+      const serialClash = (await c.query(
+        'SELECT 1 FROM fixed_assets WHERE tenant_id = $1 AND UPPER(TRIM(serial_number)) = $2',
+        [req.tenantId, normSerial]
+      )).rowCount;
+      if (serialClash) throw new AppError('An asset with this serial number already exists in this institution.', 409, 'SERIAL_NUMBER_EXISTS');
+    }
+
     const r = (await c.query(
       `INSERT INTO fixed_assets(
          tenant_id, asset_tag, name, category_id, location_id, branch_id, vendor_id,
@@ -553,7 +562,7 @@ router.post('/assets', requirePermission('assets.manage'), validateBody(z.object
        ) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, 'AVAILABLE', $13) RETURNING *`,
       [
         req.tenantId, b.assetTag, b.name, b.categoryId, b.locationId || null, b.branchId || null, b.vendorId || null,
-        b.serialNumber || null, b.purchaseDate || null, b.purchaseCost, b.warrantyExpiry || null, b.condition, b.notes || null
+        normSerial, b.purchaseDate || null, b.purchaseCost, b.warrantyExpiry || null, b.condition, b.notes || null
       ]
     )).rows[0];
 
@@ -588,6 +597,18 @@ router.patch('/assets/:id', validateId, requirePermission('assets.manage'), vali
       throw new AppError('Branch not found.', 422, 'INVALID_REFERENCE');
     }
 
+    let normSerial: string | null = old.serial_number;
+    if (b.serialNumber !== undefined) {
+      normSerial = b.serialNumber && b.serialNumber.trim() ? b.serialNumber.trim().toUpperCase() : null;
+      if (normSerial) {
+        const serialClash = (await c.query(
+          'SELECT 1 FROM fixed_assets WHERE tenant_id = $1 AND UPPER(TRIM(serial_number)) = $2 AND id <> $3',
+          [req.tenantId, normSerial, old.id]
+        )).rowCount;
+        if (serialClash) throw new AppError('An asset with this serial number already exists in this institution.', 409, 'SERIAL_NUMBER_EXISTS');
+      }
+    }
+
     const r = (await c.query(
       `UPDATE fixed_assets SET
          name = $3, category_id = $4, location_id = $5, branch_id = $6,
@@ -599,7 +620,7 @@ router.patch('/assets/:id', validateId, requirePermission('assets.manage'), vali
         b.categoryId ?? old.category_id,
         b.locationId !== undefined ? b.locationId : old.location_id,
         b.branchId !== undefined ? b.branchId : old.branch_id,
-        b.serialNumber !== undefined ? b.serialNumber : old.serial_number,
+        normSerial,
         b.condition ?? old.condition,
         b.notes !== undefined ? b.notes : old.notes,
       ]
@@ -688,8 +709,20 @@ router.post('/assets/:id/maintenance-start', validateId, requirePermission('asse
   const data = await transaction(async c => {
     const asset = (await c.query('SELECT * FROM fixed_assets WHERE id = $1 AND tenant_id = $2 FOR UPDATE', [req.params.id, req.tenantId])).rows[0];
     if (!asset) throw new AppError('Asset not found.', 404, 'NOT_FOUND');
+    if (['DISPOSED', 'LOST'].includes(asset.status)) {
+      throw new AppError(`Cannot start maintenance for terminal asset in status ${asset.status}.`, 409, 'INVALID_ASSET_TRANSITION');
+    }
     if (!['AVAILABLE', 'DAMAGED'].includes(asset.status)) {
       throw new AppError(`Cannot start maintenance for asset in status ${asset.status}. Must be AVAILABLE or DAMAGED.`, 409, 'INVALID_ASSET_TRANSITION');
+    }
+
+    // Enforce at most one active maintenance record per asset
+    const activeMaint = (await c.query(
+      `SELECT 1 FROM asset_maintenance_records WHERE asset_id = $1 AND tenant_id = $2 AND status IN ('SCHEDULED', 'IN_PROGRESS')`,
+      [asset.id, req.tenantId]
+    )).rowCount;
+    if (activeMaint) {
+      throw new AppError('An active maintenance workflow already exists for this asset.', 409, 'ACTIVE_MAINTENANCE_EXISTS');
     }
 
     const updated = (await c.query(
@@ -721,8 +754,20 @@ router.post('/assets/:id/maintenance-complete', validateId, requirePermission('a
   const data = await transaction(async c => {
     const asset = (await c.query('SELECT * FROM fixed_assets WHERE id = $1 AND tenant_id = $2 FOR UPDATE', [req.params.id, req.tenantId])).rows[0];
     if (!asset) throw new AppError('Asset not found.', 404, 'NOT_FOUND');
+    if (asset.status === 'DISPOSED') {
+      throw new AppError('Cannot complete maintenance on a disposed asset.', 409, 'ASSET_DISPOSED');
+    }
     if (asset.status !== 'UNDER_MAINTENANCE') {
       throw new AppError(`Cannot complete maintenance for asset in status ${asset.status}. Asset must be UNDER_MAINTENANCE.`, 409, 'INVALID_ASSET_TRANSITION');
+    }
+
+    // Lock exact active maintenance record
+    const maintRecord = (await c.query(
+      `SELECT * FROM asset_maintenance_records WHERE asset_id = $1 AND tenant_id = $2 AND status IN ('SCHEDULED', 'IN_PROGRESS') FOR UPDATE`,
+      [asset.id, req.tenantId]
+    )).rows[0];
+    if (!maintRecord) {
+      throw new AppError('No active maintenance record found for this asset.', 409, 'NO_ACTIVE_MAINTENANCE');
     }
 
     const finalStatus = b.failed ? 'DAMAGED' : 'AVAILABLE';
@@ -731,8 +776,8 @@ router.post('/assets/:id/maintenance-complete', validateId, requirePermission('a
     await c.query(
       `UPDATE asset_maintenance_records
        SET status = 'COMPLETED', completion_date = CURRENT_DATE, cost = $3, outcome = $4
-       WHERE asset_id = $1 AND tenant_id = $2 AND status = 'IN_PROGRESS'`,
-      [asset.id, req.tenantId, b.cost, b.outcome]
+       WHERE id = $1 AND tenant_id = $2`,
+      [maintRecord.id, req.tenantId, b.cost, b.outcome]
     );
 
     const updated = (await c.query(
@@ -761,6 +806,15 @@ router.post('/assets/:id/dispose', validateId, requirePermission('assets.dispose
       throw new AppError('Cannot dispose an assigned asset. Return asset from custodian first.', 409, 'INVALID_ASSET_TRANSITION');
     }
 
+    // Atomically close any active maintenance record associated with this asset
+    await c.query(
+      `UPDATE asset_maintenance_records
+       SET status = 'CANCELLED', outcome = 'TERMINATED_BY_DISPOSAL', completion_date = CURRENT_DATE,
+           details = details || ' [Terminated by asset disposal]', notes = COALESCE(notes || ' | ', '') || 'Terminated by asset disposal'
+       WHERE asset_id = $1 AND tenant_id = $2 AND status IN ('SCHEDULED', 'IN_PROGRESS')`,
+      [asset.id, req.tenantId]
+    );
+
     const updated = (await c.query(
       `UPDATE fixed_assets
        SET status = 'DISPOSED', custodian_id = NULL, disposal_date = CURRENT_DATE, disposal_reason = $3, updated_at = NOW()
@@ -773,6 +827,7 @@ router.post('/assets/:id/dispose', validateId, requirePermission('assets.dispose
   });
   res.json({ data });
 }));
+
 
 // Asset Mark Lost
 router.post('/assets/:id/lost', validateId, requirePermission('assets.manage'), validateBody(z.object({

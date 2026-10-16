@@ -60,6 +60,11 @@ const KNOWN_UNIQUE_CONSTRAINTS: Record<string, { code: string; message: string }
     code: 'ISBN_EXISTS',
     message: 'This ISBN already belongs to another title in this institution.',
   },
+  // QR session active scope
+  uq_qr_session_active_scope: {
+    code: 'SESSION_CONFLICT',
+    message: 'An active QR attendance session already exists for this scope. Close it first before creating a new session.',
+  },
 };
 
 export function errorHandler(

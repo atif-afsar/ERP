@@ -66,7 +66,8 @@ const forms: OperationForm[] = [
       { name: 'driverId', label: 'Staff driver', type: 'select', source: 'staff' },
       { name: 'licenseNumber', label: 'Driving license number', optional: true },
       { name: 'licenseExpiry', label: 'License expiry date', type: 'date', optional: true },
-      { name: 'startDate', label: 'Assignment start date', type: 'date', optional: true }
+      { name: 'startDate', label: 'Assignment start date', type: 'date', optional: true },
+      { name: 'endDate', label: 'Assignment end date', type: 'date', optional: true }
     ]
   },
 
@@ -83,6 +84,39 @@ const forms: OperationForm[] = [
       { name: 'direction', label: 'Service direction', type: 'select', options: ['TWO_WAY', 'PICKUP', 'DROP'] },
       { name: 'branchId', label: 'Branch', type: 'select', source: 'branches', optional: true }
     ]
+  },
+  {
+    title: 'Schedule vehicle-route operational service',
+    tab: 'Routes & Stops',
+    path: '/route-assignments',
+    permission: 'transport.assign',
+    fields: [
+      { name: 'routeId', label: 'Active route', type: 'select', source: 'routes', filter: (r: any) => r.status === 'ACTIVE' },
+      { name: 'vehicleId', label: 'Fleet vehicle', type: 'select', source: 'vehicles', filter: (v: any) => v.status === 'ACTIVE' },
+      { name: 'driverId', label: 'Operating driver', type: 'select', source: 'staff', optional: true },
+      { name: 'daysOfWeekStr', label: 'Operating weekdays (comma separated 1-7, e.g. 1,2,3,4,5)', helperText: 'Enter 1 (Mon) through 7 (Sun). At least one day required.', defaultValue: () => '1,2,3,4,5' },
+      { name: 'effectiveFrom', label: 'Effective from date', type: 'date' },
+      { name: 'effectiveTo', label: 'Effective to date', type: 'date', optional: true },
+      { name: 'serviceStartTime', label: 'Service start time (HH:MM)', defaultValue: () => '07:00' },
+      { name: 'serviceEndTime', label: 'Service end time (HH:MM)', defaultValue: () => '09:00' }
+    ],
+    transform: (b: any) => {
+      const parts = String(b.daysOfWeekStr || '1,2,3,4,5')
+        .split(',')
+        .map((s: string) => Number(s.trim()))
+        .filter((n: number) => !isNaN(n) && n >= 1 && n <= 7);
+      const unique = Array.from(new Set<number>(parts)).sort((x, y) => x - y);
+      return {
+        routeId: b.routeId,
+        vehicleId: b.vehicleId,
+        driverId: b.driverId || null,
+        effectiveFrom: b.effectiveFrom,
+        effectiveTo: b.effectiveTo || null,
+        serviceStartTime: b.serviceStartTime,
+        serviceEndTime: b.serviceEndTime,
+        daysOfWeek: unique.length > 0 ? unique : [1, 2, 3, 4, 5]
+      };
+    }
   },
   {
     title: 'Update route vehicle and status',
@@ -112,14 +146,54 @@ const forms: OperationForm[] = [
 
   // --- TAB: Student Assignments ---
   {
-    title: 'Assign student to transport route',
+    title: 'Assign student to operational route schedule',
     tab: 'Student Assignments',
     path: '/assignments',
     permission: 'transport.assign',
     fields: [
+      {
+        name: 'routeAssignmentId',
+        label: 'Operational route schedule',
+        type: 'select',
+        source: 'routeAssignments',
+        filter: (ra: any) => ra.status === 'ACTIVE',
+        renderOption: (ra: any) => `${ra.route_name} · ${ra.vehicle_number} (${ra.service_start_time?.slice(0,5)}-${ra.service_end_time?.slice(0,5)}) [${(ra.vehicle_capacity || 0) - (ra.student_count || 0)} seats left]`,
+        renderDetail: (ra: any) => (
+          <div className="text-xs bg-slate-50 p-2 rounded border border-slate-200 mt-1 space-y-1">
+            <div><strong>Route:</strong> {ra.route_name} ({ra.route_code || 'No code'}) · <strong>Direction:</strong> {ra.route_direction || 'TWO_WAY'}</div>
+            <div><strong>Vehicle:</strong> {ra.vehicle_number} (Capacity: {ra.vehicle_capacity} seats) · <strong>Driver:</strong> {ra.driver_name || 'Unassigned'}</div>
+            <div><strong>Schedule:</strong> {ra.service_start_time?.slice(0,5)} - {ra.service_end_time?.slice(0,5)} · Days: [{Array.isArray(ra.days_of_week) ? ra.days_of_week.join(', ') : ra.days_of_week}]</div>
+            <div><strong>Current Occupancy:</strong> {ra.student_count || 0} / {ra.vehicle_capacity || 0} seats ({((ra.vehicle_capacity || 0) - (ra.student_count || 0))} seats remaining)</div>
+          </div>
+        )
+      },
       { name: 'enrollmentId', label: 'Enrolled student', type: 'select', source: 'enrollments' },
-      { name: 'routeId', label: 'Active route', type: 'select', source: 'routes', filter: (r: any) => r.status === 'ACTIVE' },
-      { name: 'stopId', label: 'Pickup / drop stop', type: 'select', source: 'stops' }
+      {
+        name: 'pickupStopId',
+        label: 'Pickup stop',
+        type: 'select',
+        source: 'stops',
+        filter: (s: any, data: any, val?: any) => {
+          if (!val?.routeAssignmentId) return false;
+          const selected = (data?.routeAssignments || []).find((ra: any) => String(ra.id) === String(val.routeAssignmentId));
+          return selected ? String(s.route_id) === String(selected.route_id) : false;
+        },
+        renderOption: (s: any) => `Stop #${s.sequence}: ${s.name}`
+      },
+      {
+        name: 'dropStopId',
+        label: 'Drop stop (Required)',
+        type: 'select',
+        source: 'stops',
+        filter: (s: any, data: any, val?: any) => {
+          if (!val?.routeAssignmentId) return false;
+          const selected = (data?.routeAssignments || []).find((ra: any) => String(ra.id) === String(val.routeAssignmentId));
+          return selected ? String(s.route_id) === String(selected.route_id) : false;
+        },
+        renderOption: (s: any) => `Stop #${s.sequence}: ${s.name}`
+      },
+      { name: 'effectiveFrom', label: 'Effective start date', type: 'date', optional: true },
+      { name: 'effectiveTo', label: 'Effective end date (optional)', type: 'date', optional: true }
     ]
   },
 
@@ -222,10 +296,9 @@ const tables: OperationTable[] = [
     action: {
       label: 'Retire Vehicle',
       permission: 'transport.manage',
-      method: 'PATCH',
-      path: (r: any) => `/vehicles/${r.id}`,
-      body: () => ({ status: 'RETIRED' }),
-      show: (r: any) => r.status !== 'RETIRED' && r.occupancy === 0
+      method: 'POST',
+      path: (r: any) => `/vehicles/${r.id}/retire`,
+      show: (r: any) => r.status !== 'RETIRED'
     }
   },
   {
@@ -272,6 +345,27 @@ const tables: OperationTable[] = [
     }
   },
   {
+    title: 'Operational Route Schedules & Vehicle Assignments',
+    tab: 'Routes & Stops',
+    source: 'routeAssignments',
+    columns: {
+      route_name: 'Route',
+      vehicle_number: 'Vehicle',
+      driver_name: 'Driver',
+      service_start_time: 'Start Time',
+      service_end_time: 'End Time',
+      effective_from: 'Effective From',
+      effective_to: 'Effective To',
+      status: 'Status'
+    },
+    action: {
+      label: 'End Schedule',
+      permission: 'transport.assign',
+      path: (r: any) => `/route-assignments/${r.id}/end`,
+      show: (r: any) => r.status === 'ACTIVE'
+    }
+  },
+  {
     title: 'Ordered Route Stops',
     tab: 'Routes & Stops',
     source: 'stops',
@@ -291,15 +385,20 @@ const tables: OperationTable[] = [
       student_name: 'Student Name',
       admission_no: 'Admission No',
       route_name: 'Route',
-      stop_name: 'Designated Stop',
-      assigned_at: 'Assignment Date',
-      ended_at: 'Ended Date'
+      vehicle_number: 'Vehicle',
+      pickup_stop_name: 'Pickup Stop',
+      drop_stop_name: 'Drop Stop',
+      service_start_time: 'Time',
+      effective_from: 'Effective From',
+      effective_to: 'Effective To',
+      integrity_status: 'Record State',
+      status: 'Status'
     },
     action: {
       label: 'End Transport',
       permission: 'transport.assign',
       path: (r: any) => `/assignments/${r.id}/end`,
-      show: (r: any) => !r.ended_at
+      show: (r: any) => r.status === 'ACTIVE' || !r.ended_at
     }
   },
 

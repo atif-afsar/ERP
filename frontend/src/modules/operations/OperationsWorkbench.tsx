@@ -14,7 +14,7 @@ export type Field = {
   min?: number;
   max?: number;
   optional?: boolean;
-  filter?: (item: any, data?: any) => boolean;
+  filter?: (item: any, data?: any, formValues?: Record<string, string>) => boolean;
   renderOption?: (item: any, data?: any) => string;
   renderDetail?: (item: any, data?: any) => React.ReactNode;
   defaultValue?: (data: any) => string | number;
@@ -173,11 +173,12 @@ export const OperationsWorkbench: React.FC<{
       {visibleForms.length > 0 && (
         <div className="grid lg:grid-cols-2 gap-4">
           {visibleForms.map(f => {
+            const currentForm = formValues[f.title] || {};
             const isFormDisabled = f.fields.some(field => {
               if (field.type !== 'select' || field.optional) return false;
               if (field.options && field.options.length > 0) return false;
               const raw = data[field.source || ''] || [];
-              const filtered = field.filter ? raw.filter((x: any) => field.filter!(x, data)) : raw;
+              const filtered = field.filter ? raw.filter((x: any) => field.filter!(x, data, currentForm)) : raw;
               return filtered.length === 0;
             });
 
@@ -192,7 +193,7 @@ export const OperationsWorkbench: React.FC<{
 
                     if (field.type === 'select') {
                       const rawItems = data[field.source || ''] || [];
-                      const items = field.filter ? rawItems.filter((x: any) => field.filter!(x, data)) : rawItems;
+                      const items = field.filter ? rawItems.filter((x: any) => field.filter!(x, data, currentForm)) : rawItems;
                       const isFieldEmpty = !field.options && items.length === 0;
                       const selectedItem = items.find((x: any) => String(x.id) === String(currentVal));
 

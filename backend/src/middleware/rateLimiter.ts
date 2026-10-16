@@ -6,7 +6,7 @@ import { Request, Response } from 'express';
 
 export const globalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 1000, // Limit each IP to 1000 requests per windowMs
+  max: process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test' ? 50000 : 1000, // Allow high throughput in development/test
   skip: () => process.env.NODE_ENV === 'test',
   standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
   legacyHeaders: false, // Disable the `X-RateLimit-*` headers

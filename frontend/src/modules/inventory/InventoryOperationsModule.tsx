@@ -134,7 +134,7 @@ const forms: OperationForm[] = [
       { name: 'locationId', label: 'Placement location', type: 'select', source: 'locations', optional: true },
       { name: 'branchId', label: 'Branch', type: 'select', source: 'branches', optional: true },
       { name: 'vendorId', label: 'Supplier / Vendor', type: 'select', source: 'vendors', optional: true },
-      { name: 'serialNumber', label: 'Manufacturer serial number', optional: true },
+      { name: 'serialNumber', label: 'Manufacturer serial number', optional: true, helperText: 'Optional unique serial number. Whitespace trimmed, uppercase normalized, unique per institution.' },
       { name: 'purchaseDate', label: 'Purchase date', type: 'date', optional: true },
       { name: 'purchaseCost', label: 'Acquisition cost', type: 'number', min: 0, optional: true },
       { name: 'warrantyExpiry', label: 'Warranty expiry date', type: 'date', optional: true },
@@ -214,7 +214,7 @@ const forms: OperationForm[] = [
     permission: 'assets.dispose',
     fields: [
       { name: 'id', label: 'Asset to dispose', type: 'select', source: 'assets', filter: (a: any) => a.status !== 'DISPOSED' && a.status !== 'ASSIGNED' },
-      { name: 'reason', label: 'Authorized disposal reason / scrap justification' }
+      { name: 'reason', label: 'Authorized disposal reason / scrap justification', helperText: 'Terminal action. If this asset is currently UNDER_MAINTENANCE, its active maintenance record will be atomically closed (TERMINATED_BY_DISPOSAL).' }
     ],
     transform: (b: any) => ({ reason: b.reason })
   },
@@ -362,6 +362,7 @@ const tables: OperationTable[] = [
     columns: {
       asset_tag: 'Asset Tag',
       name: 'Asset Name',
+      serial_number: 'Serial Number',
       category_name: 'Category',
       status: 'Lifecycle Status',
       condition: 'Condition',

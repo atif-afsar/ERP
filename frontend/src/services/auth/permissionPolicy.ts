@@ -10,7 +10,7 @@ export const MODULE_ACCESS: Record<string, { view?: string[]; roles?: string[]; 
  'students/new': {view:['student_lifecycle.manage'],write:['student_lifecycle.manage']},
  staff: {view:['staff.view'],write:['staff.manage','teacher_accounts.manage']},
  hr: {view:['hr.view','hr.leave.request'],write:['hr.manage','hr.leave.approve','hr.leave.request']},
- academics: {view:['master_data.view'],prototype:true}, attendance: {view:['attendance.view'],write:['attendance.manage']},
+ academics: {view:['master_data.view'],prototype:true}, attendance: {roles:['PARENT','STUDENT'],view:['attendance.view'],write:['attendance.manage']},
  'attendance/mark': {view:['attendance.manage'],write:['attendance.manage']},
  fees: {view:['fee_management.view'],write:['fee_management.manage','payment_settings.manage','payment_proofs.submit','payment_proofs.verify']},
  'fees/new': {view:['fee_management.manage'],write:['fee_management.manage']},
