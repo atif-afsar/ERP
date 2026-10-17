@@ -101,8 +101,84 @@ router.get('/roster', requirePermission('attendance.view'), asyncHandler(async (
   });
 }));
 
-// GET /api/v1/attendance (List records for date)
-router.get('/', requirePermission('attendance.view'), asyncHandler(async (req: Request, res: Response) => {
+// GET /api/v1/attendance (List records for date or by studentId)
+router.get('/', asyncHandler(async (req: Request, res: Response) => {
+  const studentId = req.query.studentId as string;
+  if (studentId) {
+    if (req.user.role === 'STUDENT') {
+      const student = (await query(
+        `SELECT id FROM students WHERE user_id = $1 AND tenant_id = $2`,
+        [req.user.id, req.tenantId]
+      )).rows[0];
+      if (!student || student.id !== studentId) {
+        throw new AppError('Access to other students attendance is forbidden.', 403, 'FORBIDDEN');
+      }
+    } else if (req.user.role === 'PARENT') {
+      const linked = (await query(
+        `SELECT 1 FROM parent_students ps
+         JOIN parents p ON p.id = ps.parent_id AND p.tenant_id = ps.tenant_id
+         WHERE ps.student_id = $1 AND ps.tenant_id = $2 AND p.user_id = $3`,
+        [studentId, req.tenantId, req.user.id]
+      )).rowCount;
+      if (!linked) {
+        throw new AppError('This student is not linked to your parent account.', 403, 'STUDENT_SCOPE_DENIED');
+      }
+    } else if (req.user.role !== 'TENANT_ADMIN' && !req.user.isSuperAdmin) {
+      const hasView = (await query(
+        `SELECT 1 FROM memberships m
+         JOIN role_permissions rp ON rp.role_id = m.role_id
+         JOIN permissions p ON p.id = rp.permission_id
+         WHERE m.user_id = $1 AND m.tenant_id = $2 AND m.status = 'active' AND p.key = 'attendance.view'`,
+        [req.user.id, req.tenantId]
+      )).rowCount;
+      if (!hasView) {
+        throw new AppError('Permission attendance.view required.', 403, 'FORBIDDEN');
+      }
+    }
+
+    const startDate = req.query.startDate as string;
+    const endDate = req.query.endDate as string;
+    let sql = `
+      SELECT a.id, a.attendance_date, a.status, a.remarks, a.created_at,
+             c.name as class_name, sec.name as section_name
+      FROM attendance_records a
+      JOIN enrollments e ON e.id = a.enrollment_id AND e.tenant_id = a.tenant_id
+      JOIN classes c ON c.id = e.class_id AND c.tenant_id = a.tenant_id
+      JOIN sections sec ON sec.id = a.section_id AND sec.tenant_id = a.tenant_id
+      WHERE a.tenant_id = $1 AND a.student_id = $2`;
+    const params: any[] = [req.tenantId, studentId];
+    if (startDate) {
+      params.push(startDate);
+      sql += ` AND a.attendance_date >= $${params.length}`;
+    }
+    if (endDate) {
+      params.push(endDate);
+      sql += ` AND a.attendance_date <= $${params.length}`;
+    }
+    sql += ` ORDER BY a.attendance_date DESC LIMIT 365`;
+    const records = (await query(sql, params)).rows;
+    return res.json({
+      data: records,
+      meta: { total: records.length },
+      requestId: req.id,
+      timestamp: new Date().toISOString()
+    });
+  }
+
+  // General scope listing requires attendance.view
+  if (req.user.role !== 'TENANT_ADMIN' && !req.user.isSuperAdmin) {
+    const hasView = (await query(
+      `SELECT 1 FROM memberships m
+       JOIN role_permissions rp ON rp.role_id = m.role_id
+       JOIN permissions p ON p.id = rp.permission_id
+       WHERE m.user_id = $1 AND m.tenant_id = $2 AND m.status = 'active' AND p.key = 'attendance.view'`,
+      [req.user.id, req.tenantId]
+    )).rowCount;
+    if (!hasView) {
+      throw new AppError('Permission attendance.view required.', 403, 'FORBIDDEN');
+    }
+  }
+
   const f = parseFilters(req);
   await requireTeachingScope(req, f.academicYearId, f.classId, f.sectionId);
 
@@ -134,8 +210,8 @@ router.get('/', requirePermission('attendance.view'), asyncHandler(async (req: R
   });
 }));
 
-// POST /api/v1/attendance/bulk
-router.post('/bulk', requirePermission('attendance.manage'), validateBody(attendanceBulkSchema), asyncHandler(async (req: Request, res: Response) => {
+// POST /api/v1/attendance/bulk and /api/v1/attendance/mark
+router.post(['/bulk', '/mark'], requirePermission('attendance.manage'), validateBody(attendanceBulkSchema), asyncHandler(async (req: Request, res: Response) => {
   const b = req.body;
   await requireTeachingScope(req, b.academicYearId, b.classId, b.sectionId);
 
@@ -162,7 +238,7 @@ router.post('/bulk', requirePermission('attendance.manage'), validateBody(attend
 
     if (valid.rowCount !== new Set(ids).size) {
       throw new AppError(
-        'Every attendance record must reference an active enrollment in the selected academic year, class, and section.',
+        'Every attendance record must reference an active enrollment in the selected class and section.',
         422,
         'INVALID_ENROLLMENT'
       );

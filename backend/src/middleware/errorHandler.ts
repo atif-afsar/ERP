@@ -77,8 +77,12 @@ export function errorHandler(
   let code = err.code || 'INTERNAL_SERVER_ERROR';
   let message = err.message || 'An unexpected internal error occurred.';
 
-  // Intercept PostgreSQL unique constraint violation (SQLSTATE 23505)
-  if (err.code === '23505') {
+  // Intercept payload too large errors from express body-parser
+  if (err.type === 'entity.too.large' || statusCode === 413) {
+    statusCode = 413;
+    code = 'PAYLOAD_TOO_LARGE';
+    message = 'Uploaded document exceeds the allowable payload size limit (5MB file / 10MB payload). Please upload a smaller image or compressed PDF.';
+  } else if (err.code === '23505') {
     statusCode = 409;
     const constraint = err.constraint ? KNOWN_UNIQUE_CONSTRAINTS[err.constraint] : null;
     if (constraint) {

@@ -78,14 +78,14 @@ const corsOptions: cors.CorsOptions = {
 
 app.use(cors(corsOptions));
 app.use(express.json({ 
-  limit: '2mb',
+  limit: '10mb',
   verify: (req: any, res, buf) => {
     if (req.originalUrl.includes('/webhooks/razorpay')) {
       req.rawBody = buf;
     }
   }
 }));
-app.use(express.urlencoded({ extended: true, limit: '2mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(requestIdMiddleware);
 
 if (config.nodeEnv !== 'test') {

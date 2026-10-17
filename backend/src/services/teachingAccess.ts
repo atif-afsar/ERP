@@ -41,10 +41,9 @@ export async function requireTeachingScope(
      JOIN teacher_profiles tp ON tp.staff_id = s.id AND tp.tenant_id = s.tenant_id
      JOIN teacher_subject_assignments a ON a.teacher_id = s.id AND a.tenant_id = s.tenant_id
      WHERE s.tenant_id = $1 
-       AND s.user_id = $2 
+       AND s.user_id=$2 
        AND s.status = 'ACTIVE' 
-       AND a.academic_year_id = $3 
-       AND a.class_id = $4
+       AND a.academic_year_id=$3 AND a.class_id=$4
        AND (a.section_id IS NULL OR a.section_id = $5) 
        AND ($6::uuid IS NULL OR a.subject_id = $6) 
      LIMIT 1`,

@@ -28,8 +28,22 @@ export const MODULE_ACCESS: Record<string, { view?: string[]; roles?: string[]; 
  'saas-billing':{roles:['TENANT_ADMIN','SUPER_ADMIN']}
 };
 export function canOpenModule(user: PermissionUser, module: string): boolean {
- if (!user.id || user.status !== 'ACTIVE') return false;
- const rule=MODULE_ACCESS[module]; if (!rule) return false;
- if (rule.roles && (rule.roles.includes(user.role) || user.role==='SUPER_ADMIN')) return true;
- return !rule.view || rule.view.some(p=>hasPermission(user,p));
+  if (!user.id || user.status !== 'ACTIVE') return false;
+  const rule = MODULE_ACCESS[module];
+  if (!rule) return false;
+  if (user.role === 'SUPER_ADMIN') return true;
+
+  const matchesRole = rule.roles ? rule.roles.includes(user.role) : false;
+  const matchesPermission = rule.view && rule.view.length > 0 ? rule.view.some(p => hasPermission(user, p)) : false;
+
+  if (rule.roles && (!rule.view || rule.view.length === 0)) {
+    return matchesRole;
+  }
+  if (!rule.roles && rule.view && rule.view.length > 0) {
+    return matchesPermission;
+  }
+  if (rule.roles && rule.view && rule.view.length > 0) {
+    return matchesRole || matchesPermission;
+  }
+  return true;
 }

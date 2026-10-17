@@ -255,114 +255,122 @@ const MainRouter: React.FC = () => {
       );
     }
 
-    switch (currentNav) {
-      case 'dashboard':
-      case 'superadmin-dashboard':
-        return isSuperAdmin ? (
-          <SuperAdminModule />
-        ) : (
-          <DashboardModule
-            onNavigate={(nav) => navigateTo(nav)}
-            onOpenAi={() => setIsAiModalOpen(true)}
-          />
-        );
-      case 'students':
-        return <StudentLifecycleModule />;
-      case 'staff':
-        return <AcademicOperationsModule initialTab="staff" />;
-      case 'hr':
-        return <HrOperationsModule />;
-      case 'academics':
-        return <AcademicsModule />;
-      case 'attendance':
-        return isFeatureEnabled('attendance') ? (
-          <AcademicOperationsModule initialTab="attendance" />
-        ) : (
-          <UnauthorizedCard permission="attendance.view" onBackToDashboard={() => navigateTo('dashboard')} />
-        );
-      case 'fees':
-        return isFeatureEnabled('fees') ? (
-          <FeeManagementModule />
-        ) : (
-          <UnauthorizedCard permission="fees.view" onBackToDashboard={() => navigateTo('dashboard')} />
-        );
-      case 'finance':
-        return <FinanceModule />;
-      case 'inventory':
-        return <InventoryOperationsModule />;
-      case 'library':
-        return <LibraryOperationsModule />;
-      case 'transport':
-        return <TransportOperationsModule />;
-      case 'hostel':
-        return <HostelOperationsModule />;
-      case 'mess':
-        return <MessOperationsModule />;
-      case 'health':
-        return <HealthModule />;
-      case 'exams':
-      case 'results':
-        if (currentUser.role === 'PARENT' || currentUser.role === 'STUDENT') {
-          return <StudentParentResultsModule />;
-        }
-        return isFeatureEnabled('exams') ? (
-          <ExaminationAssessmentModule initialTab={currentNav === 'results' ? 'results' : 'exams'} />
-        ) : (
-          <UnauthorizedCard permission="exams.view" onBackToDashboard={() => navigateTo('dashboard')} />
-        );
-      case 'timetable':
-        return isFeatureEnabled('timetable') ? (
-          <AcademicOperationsModule initialTab="timetable" />
-        ) : (
-          <UnauthorizedCard permission="timetable.view" onBackToDashboard={() => navigateTo('dashboard')} />
-        );
-      case 'homework':
-        return isFeatureEnabled('homework') ? (
-          <HomeworkModule />
-        ) : (
-          <UnauthorizedCard permission="homework.view" onBackToDashboard={() => navigateTo('dashboard')} />
-        );
-      case 'communication':
-        return isFeatureEnabled('communication') ? (
-          <CommunicationCenterModule />
-        ) : (
-          <UnauthorizedCard permission="communication.send" onBackToDashboard={() => navigateTo('dashboard')} />
-        );
-      case 'crm':
-        return isFeatureEnabled('inquiryCrm') ? (
-          <CrmModule />
-        ) : (
-          <UnauthorizedCard permission="students.create" onBackToDashboard={() => navigateTo('dashboard')} />
-        );
-      case 'reports':
-        return <ReportsModule />;
-      case 'api-docs':
-        return <ApiExplorerModule />;
-      case 'schema':
-        return <SchemaExplorerModule />;
-      case 'roles-matrix':
-        return <RolesMatrixModule />;
-      case 'settings':
-      case 'superadmin-features':
-        return <SettingsModule />;
-      case 'superadmin-tenants':
-        return <TenantManagementModule />;
-      case 'superadmin-plans':
-        return <SuperAdminSaaSModule />;
-      case 'organization':
-        return <OrganizationModule />;
-      case 'saas-billing':
-        return <SaaSBillingModule />;
-      case 'master-data':
-        return <SchoolMasterDataModule />;
-      default:
-        return (
-          <NotFoundView
-            attemptedRoute={activeModule}
-            onBackToDashboard={() => navigateTo('app/dashboard')}
-          />
-        );
+    const moduleNode = (() => {
+      switch (currentNav) {
+        case 'dashboard':
+        case 'superadmin-dashboard':
+          return isSuperAdmin ? (
+            <SuperAdminModule />
+          ) : (
+            <DashboardModule
+              onNavigate={(nav) => navigateTo(nav)}
+              onOpenAi={() => setIsAiModalOpen(true)}
+            />
+          );
+        case 'students':
+          return <StudentLifecycleModule />;
+        case 'staff':
+          return <AcademicOperationsModule initialTab="staff" />;
+        case 'hr':
+          return <HrOperationsModule />;
+        case 'academics':
+          return <AcademicsModule />;
+        case 'attendance':
+          return isFeatureEnabled('attendance') ? (
+            <AcademicOperationsModule initialTab="attendance" />
+          ) : (
+            <UnauthorizedCard permission="attendance.view" onBackToDashboard={() => navigateTo('dashboard')} />
+          );
+        case 'fees':
+          return isFeatureEnabled('fees') ? (
+            <FeeManagementModule />
+          ) : (
+            <UnauthorizedCard permission="fees.view" onBackToDashboard={() => navigateTo('dashboard')} />
+          );
+        case 'finance':
+          return <FinanceModule />;
+        case 'inventory':
+          return <InventoryOperationsModule />;
+        case 'library':
+          return <LibraryOperationsModule />;
+        case 'transport':
+          return <TransportOperationsModule />;
+        case 'hostel':
+          return <HostelOperationsModule />;
+        case 'mess':
+          return <MessOperationsModule />;
+        case 'health':
+          return <HealthModule />;
+        case 'exams':
+        case 'results':
+          if (currentUser.role === 'PARENT' || currentUser.role === 'STUDENT') {
+            return <StudentParentResultsModule />;
+          }
+          return isFeatureEnabled('exams') ? (
+            <ExaminationAssessmentModule initialTab={currentNav === 'results' ? 'results' : 'exams'} />
+          ) : (
+            <UnauthorizedCard permission="exams.view" onBackToDashboard={() => navigateTo('dashboard')} />
+          );
+        case 'timetable':
+          return isFeatureEnabled('timetable') ? (
+            <AcademicOperationsModule initialTab="timetable" />
+          ) : (
+            <UnauthorizedCard permission="timetable.view" onBackToDashboard={() => navigateTo('dashboard')} />
+          );
+        case 'homework':
+          return isFeatureEnabled('homework') ? (
+            <HomeworkModule />
+          ) : (
+            <UnauthorizedCard permission="homework.view" onBackToDashboard={() => navigateTo('dashboard')} />
+          );
+        case 'communication':
+          return isFeatureEnabled('communication') ? (
+            <CommunicationCenterModule />
+          ) : (
+            <UnauthorizedCard permission="communication.send" onBackToDashboard={() => navigateTo('dashboard')} />
+          );
+        case 'crm':
+          return isFeatureEnabled('inquiryCrm') ? (
+            <CrmModule />
+          ) : (
+            <UnauthorizedCard permission="students.create" onBackToDashboard={() => navigateTo('dashboard')} />
+          );
+        case 'reports':
+          return <ReportsModule />;
+        case 'api-docs':
+          return <ApiExplorerModule />;
+        case 'schema':
+          return <SchemaExplorerModule />;
+        case 'roles-matrix':
+          return <RolesMatrixModule />;
+        case 'settings':
+        case 'superadmin-features':
+          return <SettingsModule />;
+        case 'superadmin-tenants':
+          return <TenantManagementModule />;
+        case 'superadmin-plans':
+          return <SuperAdminSaaSModule />;
+        case 'organization':
+          return <OrganizationModule />;
+        case 'saas-billing':
+          return <SaaSBillingModule />;
+        case 'master-data':
+          return <SchoolMasterDataModule />;
+        default:
+          return (
+            <NotFoundView
+              attemptedRoute={activeModule}
+              onBackToDashboard={() => navigateTo('app/dashboard')}
+            />
+          );
+      }
+    })();
+
+    if (READ_ONLY_MODULES.has(currentNav)) {
+      return <ReadOnlyModule>{moduleNode}</ReadOnlyModule>;
     }
+
+    return moduleNode;
   };
 
   const renderPageContent = () => {

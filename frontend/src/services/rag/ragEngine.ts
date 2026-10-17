@@ -9,15 +9,7 @@ import {
 } from './ragTypes';
 import { DEFAULT_CAMPUS_DOCUMENTS } from './defaultCampusDocs';
 
-// Active Gemini API key from environment
-const RAW_GEMINI_KEY = (import.meta as any).env?.VITE_GEMINI_API_KEY || '';
-// Check if the key looks like a valid Google AI Studio key (starts with AIzaSy)
-const IS_VALID_GEMINI_KEY = Boolean(
-  RAW_GEMINI_KEY && 
-  typeof RAW_GEMINI_KEY === 'string' && 
-  RAW_GEMINI_KEY.startsWith('AIzaSy') && 
-  RAW_GEMINI_KEY.length >= 35
-);
+// Local Grounded Vector Engine (Client-side secrets removed; server-side proxy retained for Phase 8)
 
 // In-memory runtime state
 let activeDocuments: KnowledgeDocument[] = [];
@@ -152,45 +144,8 @@ function cosineSimilarity(vecA: number[], vecB: number[]): number {
 /**
  * Fetch vector embedding from Google Gemini Embedding API (if valid key is configured)
  */
-async function fetchGeminiEmbedding(text: string): Promise<number[] | null> {
-  if (!IS_VALID_GEMINI_KEY) return null;
-
-  const cacheKey = text.slice(0, 150);
-  if (embeddingsCache.has(cacheKey)) {
-    return embeddingsCache.get(cacheKey)!;
-  }
-
-  try {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 3500);
-
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:embedContent?key=${RAW_GEMINI_KEY}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: 'models/gemini-embedding-001',
-          content: { parts: [{ text: text.slice(0, 2000) }] }
-        }),
-        signal: controller.signal
-      }
-    );
-
-    clearTimeout(timer);
-
-    if (res.ok) {
-      const data = await res.json();
-      const values: number[] = data?.embedding?.values;
-      if (Array.isArray(values) && values.length > 0) {
-        embeddingsCache.set(cacheKey, values);
-        return values;
-      }
-    }
-  } catch (err) {
-    // Graceful fallback to local retrieval
-  }
-
+async function fetchGeminiEmbedding(_text: string): Promise<number[] | null> {
+  // Client-side API calls disabled; server-side embedding proxy retained for Phase 8
   return null;
 }
 
@@ -387,61 +342,7 @@ export async function executeRagQuery(
 
   const genStartTime = Date.now();
 
-  // 2. Cloud Gemini Generation (if valid API key is present)
-  if (IS_VALID_GEMINI_KEY && topResults.length > 0) {
-    const contextSnippets = topResults
-      .map((r, i) => `[DOCUMENT ${i + 1}: ${r.chunk.documentTitle} (${r.chunk.category.toUpperCase()})]\n${r.chunk.content}`)
-      .join('\n\n---\n\n');
 
-    try {
-      const systemInstruction = `You are EduNexus AI Copilot, the intelligent fact-grounded assistant for EduNexus ERP (School & Coaching Management SaaS).
-Ground your answer strictly in the campus documents below. Structure with clean markdown (### headers, bullet points). Keep under 180 words.
-Active Role: ${userRole.toUpperCase()}
-
-CAMPUS DOCUMENTS:
-${contextSnippets}`;
-
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), 6000);
-
-      const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${RAW_GEMINI_KEY}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            systemInstruction: { parts: [{ text: systemInstruction }] },
-            contents: [{ parts: [{ text: query }] }],
-            generationConfig: {
-              temperature: 0.2,
-              maxOutputTokens: 500
-            }
-          }),
-          signal: controller.signal
-        }
-      );
-
-      clearTimeout(timer);
-
-      if (res.ok) {
-        const data = await res.json();
-        const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (rawText && typeof rawText === 'string') {
-          return {
-            reply: rawText,
-            citations,
-            grounded: citations.length > 0,
-            modelUsed: 'Gemini 1.5 Flash (AI Grounded)',
-            retrievalLatencyMs,
-            generationLatencyMs: Date.now() - genStartTime,
-            usedRole: userRole
-          };
-        }
-      }
-    } catch (e) {
-      // Graceful fallback to local grounded synthesizer
-    }
-  }
 
   // 3. Grounded Local Synthesizer
   const localGroundedReply = synthesizeGroundedResponse(topResults, userRole);
