@@ -18,6 +18,12 @@ test('Database-Backed Fee Integration Test', async (t) => {
   const adminId = randomUUID(); 
   
   await query(`INSERT INTO tenants (id, name, slug, tenant_type) VALUES ($1, 'Integration Test School', $2, 'school')`, [tenantId, `ITS-${tenantId}`]);
+
+  const incomeId = randomUUID();
+  await query(`INSERT INTO finance_accounts (id, tenant_id, code, name, account_type, is_active) VALUES ($1, $2, 'INC-FEE', 'Fee Income', 'INCOME', true)`, [incomeId, tenantId]);
+  const assetId = randomUUID();
+  await query(`INSERT INTO finance_accounts (id, tenant_id, code, name, account_type, is_active) VALUES ($1, $2, 'ASSET-CASH', 'Cash Box', 'ASSET', true)`, [assetId, tenantId]);
+  await query(`INSERT INTO finance_cash_bank_accounts (id, tenant_id, ledger_account_id, type, display_name, is_active) VALUES ($1, $2, $3, 'CASH', 'Main Cash Box', true)`, [randomUUID(), tenantId, assetId]);
   
   await query(`INSERT INTO users (id, email, password_hash) VALUES ($1, $2, 'hash')`, [adminId, `admin-${adminId}@test.com`]);
   await query(`INSERT INTO profiles (id, display_name, first_name, last_name) VALUES ($1, 'Admin User', 'Admin', 'User')`, [adminId]);

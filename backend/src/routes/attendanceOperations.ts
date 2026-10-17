@@ -285,8 +285,7 @@ router.post(['/bulk', '/mark'], requirePermission('attendance.manage'), validate
                   eventType: 'ATTENDANCE_ABSENT',
                   templateCode: 'ATTENDANCE_ABSENT',
                   tenantId: req.tenantId!,
-                  sourceType: 'ATTENDANCE_RECORD',
-                  sourceId,
+                  sourceType:'ATTENDANCE_RECORD',sourceId:r.rows[0].id,
                   payload: { student_name: studentName, date: b.date },
                   priority: 'HIGH'
                 },

@@ -238,7 +238,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeNav, onNavigate, isOpen,
       id: 'reports',
       label: 'Analytics & Reports',
       icon: FileSpreadsheet,
-      show: false,
+      show: can('fee_reports.view') || can('student_lifecycle.view') || can('attendance.view') || can('examinations.view') || ['TENANT_ADMIN', 'ACCOUNTANT', 'PRINCIPAL'].includes(currentUser?.role || ''),
       section: 'ADMINISTRATION',
     },
     {

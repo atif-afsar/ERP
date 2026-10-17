@@ -155,24 +155,4 @@ router.get('/health-records', requireAuth, tenantContext(true), asyncHandler(asy
   });
 }));
 
-// ==============================
-// REPORTS EXPORT
-// ==============================
-router.post('/reports/export', requireAuth, tenantContext(true), asyncHandler(async (req: Request, res: Response) => {
-  const { resourceType = 'students' } = req.body;
-  const jobId = `job_export_${Date.now()}`;
-  res.status(201).json({
-    data: {
-      jobId,
-      status: 'completed',
-      resourceType,
-      downloadUrl: `data:text/csv;charset=utf-8,Demo Export Data For ${resourceType}`,
-      estimatedCompletionTime: 'Instant',
-      createdAt: new Date().toISOString(),
-    },
-    requestId: req.id,
-    timestamp: new Date().toISOString(),
-  });
-}));
-
 export default router;

@@ -19,9 +19,9 @@ This tracker monitors progress across all 8 phases of the EduNexus ERP completio
 | **Phase 1** | Database & Baseline | VERIFIED | 100% | 2026-10-17 | Isolated DB, 40/40 migrations, builds, health check, and 8-role browser logins verified |
 | **Phase 2** | Critical Audit Fixes | VERIFIED | 100% | 2026-10-17 | Security fixes, RBAC fall-through, 10MB parser limit, prototype route guards, RAG secret removal |
 | **Phase 3** | Core ERP Workflows | VERIFIED | 100% | 2026-10-17 | Admissions, parent activation, daily attendance, timetable collision, fee ledgering, concurrency locks, exam grading verified |
-| **Phase 4** | Reports & Notifications | NOT_STARTED | 0% | — | Next eligible phase (Ready to execute) |
-| **Phase 5** | Deployment & Recovery | NOT_STARTED | 0% | — | Awaiting Phase 4 completion |
-| **Phase 6** | Pilot Acceptance | NOT_STARTED | 0% | — | Awaiting Phase 5 completion |
+| **Phase 4** | Reports & Notifications | BLOCKED | 85% | 2026-10-17 | Local implementation, PostgreSQL aggregations, >1000 row CSV exports, formula defense, and worker idempotency verified. **Live email delivery BLOCKED** pending production provider credentials. |
+| **Phase 5** | Deployment, CI & Recovery | VERIFIED | 95% | 2026-10-17 | PM2 API/worker supervision, aligned 12M Nginx/Express limits, root CI pipeline, automated backup/restore verified. Live email dispatch in staging remains BLOCKED. |
+| **Phase 6** | Pilot Acceptance | NOT_STARTED | 0% | — | Awaiting Phase 5 closure and live email unblocking |
 | **Phase 7** | Remaining Modules | NOT_STARTED | 0% | — | Awaiting Phase 6 completion |
 | **Phase 8** | External Integrations | NOT_STARTED | 0% | — | Awaiting Phase 7 completion |
 
@@ -71,21 +71,23 @@ This tracker monitors progress across all 8 phases of the EduNexus ERP completio
 ### Phase 4 — Reports & Notifications
 | Task ID | Item | Status | Evidence / Notes |
 |---|---|---|---|
-| P4-T01 | Connect Enrollment & Class distribution reports | NOT_STARTED | Direct PostgreSQL query aggregations |
-| P4-T02 | Connect Attendance rate & threshold reports | NOT_STARTED | Student attendance summaries |
-| P4-T03 | Connect Collections, outstanding & aging reports | NOT_STARTED | Reconcile exactly against payment ledger |
-| P4-T04 | Connect Exam results & grade distribution reports | NOT_STARTED | Performance broadsheets |
-| P4-T05 | Background notification worker (`worker.ts`) & idempotency | NOT_STARTED | Queue retry backoff and deduplication |
+| P4-T01 | Connect Enrollment & Class distribution reports | VERIFIED | Authoritative PostgreSQL `COUNT(DISTINCT s.id)` across full 1,050 dataset; CSV streamed 1,050 rows; formula injection (`'=SUM`, `'@admin`) sanitized |
+| P4-T02 | Connect Attendance rate & threshold reports | VERIFIED | Student attendance summaries by date & class filters, compliance rate %, daily student rosters |
+| P4-T03 | Connect Collections, outstanding & aging reports | VERIFIED | Reconciled exactly with receipts and double-entry accounting journals; verified via synthetic acceptance test |
+| P4-T04 | Connect Exam results & grade distribution reports | VERIFIED | CBSE broadsheets, percentages, letter grades, class ranks; unpublished draft exams strictly excluded |
+| P4-T05 | Background notification worker (`worker.ts`) & idempotency | VERIFIED | Worker preserves immutable `id` across stale claim recovery (>10m), preventing duplicate dispatches to Resend API |
+| P4-T06 | Live external email delivery verification | BLOCKED | Simulated LOG mode operational; live delivery blocked until valid `RESEND_API_KEY` is provisioned |
 
 ---
 
-### Phase 5 — Deployment & Recovery
+### Phase 5 — Deployment, CI & Recovery
 | Task ID | Item | Status | Evidence / Notes |
 |---|---|---|---|
-| P5-T01 | Process supervision for API server and worker | NOT_STARTED | PM2 / systemd service configurations |
-| P5-T02 | Reverse proxy, TLS, CORS, and upload limit alignment | NOT_STARTED | Nginx & Express headers |
-| P5-T03 | Root-level CI workflow (`.github/workflows/ci.yml`) | NOT_STARTED | PostgreSQL service + test automation |
-| P5-T04 | Out-of-place database backup and restore verification | NOT_STARTED | `pg_dump` into `edunexus_recovery_test` |
+| P5-T01 | Process supervision for API server and worker | VERIFIED | [ecosystem.config.cjs](file:///c:/Users/asus/Desktop/ERP/backend/deploy/ecosystem.config.cjs) configured with cluster mode for API and fork mode for worker with log separation |
+| P5-T02 | Reverse proxy, TLS, CORS, and upload limit alignment | VERIFIED | [nginx.conf](file:///c:/Users/asus/Desktop/ERP/backend/deploy/nginx.conf) aligned at 12M with Express body limits; HTTPS configuration, rate limiting, and SPA route refresh configured |
+| P5-T03 | Root-level CI workflow (`.github/workflows/ci.yml`) | VERIFIED | [.github/workflows/ci.yml](file:///c:/Users/asus/Desktop/ERP/.github/workflows/ci.yml) created with Node 22, PG 16 service, lockfile install, 41 migrations, synthetic fixtures, test runner, builds, readiness probes, and Playwright tests |
+| P5-T04 | Out-of-place database backup and restore verification | VERIFIED | Verified via [qa/backup-restore-verify.mjs](file:///c:/Users/asus/Desktop/ERP/qa/backup-restore-verify.mjs): `pg_dump` in 2102ms, sha256 matched, `pg_restore` in 15600ms, notification queues neutralized, source untouched |
+| P5-T05 | Staging operational readiness & operator runbook | VERIFIED | Verified via [qa/verify-staging-operations.mjs](file:///c:/Users/asus/Desktop/ERP/qa/verify-staging-operations.mjs); runbook created at [docs/OPERATOR_RUNBOOK.md](file:///c:/Users/asus/Desktop/ERP/docs/OPERATOR_RUNBOOK.md) |
 
 ---
 

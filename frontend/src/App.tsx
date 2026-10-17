@@ -54,7 +54,7 @@ import { SuperAdminShell } from './modules/superadmin/SuperAdminShell';
 const READ_ONLY_MODULES = new Set([
   'academics',
   'health', 'homework',
-  'crm', 'reports', 'settings', 'roles-matrix', 'superadmin-features',
+  'crm', 'settings', 'roles-matrix', 'superadmin-features',
 ]);
 
 const ReadOnlyModule: React.FC<{ children: React.ReactNode }> = ({ children }) => (

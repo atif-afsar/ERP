@@ -29,6 +29,7 @@ import homeworkRoutes from './routes/homework.js';
 import timetableRoutes from './routes/timetableOperations.js';
 import communicationRoutes from './routes/communication.js';
 import notificationRoutes from './routes/notifications.js';
+import reportsRoutes from './routes/reports.js';
 import auxiliaryRoutes from './routes/auxiliary.js';
 import auditRoutes from './routes/audit.js';
 import organizationRoutes from './routes/organization.js';
@@ -78,14 +79,14 @@ const corsOptions: cors.CorsOptions = {
 
 app.use(cors(corsOptions));
 app.use(express.json({ 
-  limit: '10mb',
+  limit: '12mb',
   verify: (req: any, res, buf) => {
     if (req.originalUrl.includes('/webhooks/razorpay')) {
       req.rawBody = buf;
     }
   }
 }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '12mb' }));
 app.use(requestIdMiddleware);
 
 if (config.nodeEnv !== 'test') {
@@ -165,6 +166,7 @@ apiRouter.use('/communication', communicationRoutes);
 apiRouter.use('/audit', auditRoutes);
 apiRouter.use('/organization', organizationRoutes);
 apiRouter.use('/master-data', masterDataRoutes);
+apiRouter.use('/reports', reportsRoutes);
 apiRouter.use('/', auxiliaryRoutes);
 
 app.use('/api/v1', apiRouter);

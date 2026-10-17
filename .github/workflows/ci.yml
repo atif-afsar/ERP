@@ -1,0 +1,185 @@
+name: Continuous Integration & Acceptance
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    name: Build, Migrate, Verify & Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: edunexus_erp
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      NODE_ENV: test
+      PORT: 5000
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/edunexus_erp
+      JWT_SECRET: super_secure_ci_jwt_secret_key_edunexus_2026_ci_runner_testing_token
+      JWT_EXPIRES_IN: 1d
+      JWT_ISSUER: edunexus-api
+      JWT_AUDIENCE: edunexus-web
+      FRONTEND_URL: http://127.0.0.1:5173
+      APP_PUBLIC_URL: http://127.0.0.1:5173
+      CORS_ORIGIN: http://127.0.0.1:5173
+      LOG_LEVEL: debug
+      EMAIL_DELIVERY_MODE: LOG
+      EMAIL_PROVIDER: RESEND
+      EMAIL_FROM_NAME: EduNexus CI
+      EMAIL_FROM_ADDRESS: notifications@example.invalid
+      VITE_API_URL: http://127.0.0.1:5000/api/v1
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22 LTS
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Install Dependencies from Lockfile
+        run: npm ci
+
+      - name: Apply Database Migrations (Native 0001 through 0041)
+        run: |
+          cd backend
+          node migrate.mjs up
+
+      - name: Verify PostgreSQL Schema Integrity
+        run: |
+          cd backend
+          node verify-db.mjs
+
+      - name: Seed Deterministic Synthetic Fixtures
+        run: node qa/seed-ci-fixtures.mjs
+
+      - name: Run Backend Integration & Unit Suites
+        run: |
+          cd backend
+          node --import tsx --test \
+            tests/api.test.mjs \
+            tests/auth-middleware.test.mjs \
+            tests/academic-operations-schema.test.mjs \
+            tests/examination-assessment.test.mjs \
+            tests/fee-management.test.mjs \
+            tests/fee-parent-portal.test.mjs \
+            tests/finance.test.mjs \
+            tests/saas-billing.test.mjs \
+            tests/hr-operations-integration.test.mjs \
+            tests/communication-notifications.test.mjs \
+            tests/transport-operations-integration.test.mjs \
+            tests/inventory-operations-integration.test.mjs \
+            tests/library-operations-integration.test.mjs \
+            tests/hostel-mess-operations-integration.test.mjs
+
+      - name: Verify Report Completeness & Authorization Guard
+        run: node --import tsx qa/verify-phase4-completeness.mjs
+
+      - name: Build Backend Workspace
+        run: npm run build:backend
+
+      - name: Build Frontend Workspace
+        run: npm run build:frontend
+
+      - name: Launch Application & Verification Services
+        run: |
+          # Start Backend Server in background
+          node backend/dist/server.js > /tmp/edunexus-api.log 2>&1 &
+          echo $! > /tmp/edunexus-api.pid
+
+          # Start Notification Worker in background
+          node backend/dist/worker.js > /tmp/edunexus-worker.log 2>&1 &
+          echo $! > /tmp/edunexus-worker.pid
+
+          # Start Frontend SPA Preview in background
+          npm run preview:frontend -- --port 5173 --host 127.0.0.1 > /tmp/edunexus-frontend.log 2>&1 &
+          echo $! > /tmp/edunexus-frontend.pid
+
+      - name: Wait for API Readiness (/health)
+        run: |
+          timeout=30
+          until curl -s -f http://127.0.0.1:5000/health | grep -q '"status":"healthy"'; do
+            sleep 1
+            timeout=$((timeout - 1))
+            if [ $timeout -le 0 ]; then
+              echo "Error: Backend failed to reach healthy state within 30 seconds"
+              cat /tmp/edunexus-api.log
+              exit 1
+            fi
+          done
+          echo "✔ Backend is healthy and connected to database."
+
+      - name: Wait for Frontend Readiness
+        run: |
+          timeout=30
+          until curl -s -f http://127.0.0.1:5173 > /dev/null; do
+            sleep 1
+            timeout=$((timeout - 1))
+            if [ $timeout -le 0 ]; then
+              echo "Error: Frontend preview server failed to start within 30 seconds"
+              cat /tmp/edunexus-frontend.log
+              exit 1
+            fi
+          done
+          echo "✔ Frontend preview server is responding."
+
+      - name: Install Playwright System Dependencies
+        run: |
+          cd frontend
+          npx playwright install --with-deps chromium
+
+      - name: Execute End-to-End Browser Acceptance Tests
+        run: |
+          cd frontend
+          npx playwright test
+        env:
+          CI: true
+          PLAYWRIGHT_BASE_URL: http://127.0.0.1:5173
+
+      - name: Collect & Sanitize CI Logs and Artifacts
+        if: always()
+        run: |
+          mkdir -p ci-artifacts/logs
+          # Copy logs and ensure no secrets or bearer tokens are present
+          if [ -f /tmp/edunexus-api.log ]; then
+            sed -E 's/(Authorization: Bearer )[A-Za-z0-9._-]+/\1[REDACTED]/g' /tmp/edunexus-api.log > ci-artifacts/logs/api.log
+          fi
+          if [ -f /tmp/edunexus-worker.log ]; then
+            cat /tmp/edunexus-worker.log > ci-artifacts/logs/worker.log
+          fi
+          if [ -f /tmp/edunexus-frontend.log ]; then
+            cat /tmp/edunexus-frontend.log > ci-artifacts/logs/frontend.log
+          fi
+          if [ -d frontend/playwright-report ]; then
+            cp -r frontend/playwright-report ci-artifacts/playwright-report
+          fi
+
+      - name: Upload Test Results & Sanitized Artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ci-artifacts-${{ github.sha }}
+          path: ci-artifacts/
+          retention-days: 14

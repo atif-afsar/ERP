@@ -857,9 +857,11 @@ router.post('/stops', requirePermission('transport.manage'), validateBody(z.obje
 // ---------------------------------------------------------------------------
 router.post('/assignments', requirePermission('transport.assign'), validateBody(z.object({
   enrollmentId: id,
-  routeAssignmentId: id,
-  pickupStopId: id,
-  dropStopId: id,
+  routeAssignmentId: id.optional(),
+  routeId: id.optional(),
+  pickupStopId: id.optional(),
+  dropStopId: id.optional(),
+  stopId: id.optional(),
   effectiveFrom: z.string().date().optional(),
   effectiveTo: z.string().date().optional().nullable(),
 })), asyncHandler(async (req, res) => {
@@ -871,10 +873,33 @@ router.post('/assignments', requirePermission('transport.assign'), validateBody(
   }
 
   const data = await transaction(async c => {
+    let resolvedTraId = b.routeAssignmentId;
+    if (!resolvedTraId && b.routeId) {
+      const existingTra = (await c.query(
+        `SELECT id FROM transport_route_assignments WHERE route_id = $1 AND tenant_id = $2 AND status = 'ACTIVE' ORDER BY created_at DESC LIMIT 1`,
+        [b.routeId, req.tenantId]
+      )).rows[0];
+      if (existingTra) {
+        resolvedTraId = existingTra.id;
+      } else {
+        const rRow = (await c.query(`SELECT vehicle_id FROM transport_routes WHERE id = $1 AND tenant_id = $2`, [b.routeId, req.tenantId])).rows[0];
+        if (!rRow) throw new AppError('Route not found.', 422, 'INVALID_REFERENCE');
+        if (!rRow.vehicle_id) throw new AppError('Route must have an assigned vehicle.', 422, 'INVALID_REFERENCE');
+        const vRow = (await c.query(`SELECT driver_id FROM transport_vehicles WHERE id = $1 AND tenant_id = $2`, [rRow.vehicle_id, req.tenantId])).rows[0];
+        const newTra = (await c.query(
+          `INSERT INTO transport_route_assignments (tenant_id, route_id, vehicle_id, driver_id, service_start_time, service_end_time, effective_from, status)
+           VALUES ($1, $2, $3, $4, '07:00', '16:00', CURRENT_DATE, 'ACTIVE') RETURNING id`,
+          [req.tenantId, b.routeId, rRow.vehicle_id, vRow?.driver_id || null]
+        )).rows[0];
+        resolvedTraId = newTra.id;
+      }
+    }
+    if (!resolvedTraId) throw new AppError('routeAssignmentId or routeId required.', 422, 'VALIDATION_ERROR');
+
     // 1. Initial unlocked read of operational route assignment to identify vehicle_id and route_id
     const initialTra = (await c.query(
       `SELECT id, tenant_id, vehicle_id, route_id, status FROM transport_route_assignments WHERE id = $1 AND tenant_id = $2`,
-      [b.routeAssignmentId, req.tenantId]
+      [resolvedTraId, req.tenantId]
     )).rows[0];
     if (!initialTra) throw new AppError('Operational route schedule not found.', 404, 'NOT_FOUND');
     if (initialTra.status !== 'ACTIVE') {
@@ -894,7 +919,7 @@ router.post('/assignments', requirePermission('transport.assign'), validateBody(
     // 3. Lock route assignment second and re-read all authoritative fields
     const tra = (await c.query(
       `SELECT * FROM transport_route_assignments WHERE id = $1 AND tenant_id = $2 FOR UPDATE`,
-      [b.routeAssignmentId, req.tenantId]
+      [resolvedTraId, req.tenantId]
     )).rows[0];
     if (!tra) throw new AppError('Operational route schedule not found.', 404, 'NOT_FOUND');
     if (tra.vehicle_id !== v.id) {
@@ -952,9 +977,20 @@ router.post('/assignments', requirePermission('transport.assign'), validateBody(
     }
 
     // 7. Verify stops belong to derived route & tenant
+    const pickupId = b.pickupStopId || b.stopId;
+    let dropId = b.dropStopId;
+    if (!dropId && b.stopId) {
+      const nextStop = (await c.query(
+        'SELECT id FROM route_stops WHERE route_id = $1 AND tenant_id = $2 AND sequence > (SELECT sequence FROM route_stops WHERE id = $3) ORDER BY sequence ASC LIMIT 1',
+        [route.id, req.tenantId, pickupId]
+      )).rows[0];
+      dropId = nextStop ? nextStop.id : pickupId;
+    }
+    if (!pickupId || !dropId) throw new AppError('Pickup and drop stop IDs required.', 422, 'VALIDATION_ERROR');
+
     const pickupStop = (await c.query(
       'SELECT id, sequence, route_id FROM route_stops WHERE id = $1 AND route_id = $2 AND tenant_id = $3',
-      [b.pickupStopId, route.id, req.tenantId]
+      [pickupId, route.id, req.tenantId]
     )).rows[0];
     if (!pickupStop) {
       throw new AppError('Pickup stop does not belong to the selected route schedule.', 422, 'INVALID_ROUTE_STOP');
@@ -962,18 +998,18 @@ router.post('/assignments', requirePermission('transport.assign'), validateBody(
 
     const dropStop = (await c.query(
       'SELECT id, sequence, route_id FROM route_stops WHERE id = $1 AND route_id = $2 AND tenant_id = $3',
-      [b.dropStopId, route.id, req.tenantId]
+      [dropId, route.id, req.tenantId]
     )).rows[0];
     if (!dropStop) {
       throw new AppError('Drop stop does not belong to the selected route schedule.', 422, 'INVALID_ROUTE_STOP');
     }
 
-    if (pickupStop.id === dropStop.id) {
+    if (b.dropStopId && b.pickupStopId && pickupStop.id === dropStop.id) {
       throw new AppError('Pickup stop and drop stop must be distinct stops.', 422, 'INVALID_STOP_SEQUENCE');
     }
 
     // Direction and sequence enforcement
-    if (dropStop.sequence <= pickupStop.sequence) {
+    if (b.dropStopId && b.pickupStopId && dropStop.sequence <= pickupStop.sequence) {
       throw new AppError('Drop stop sequence must follow pickup stop sequence on this route.', 422, 'INVALID_STOP_SEQUENCE');
     }
 

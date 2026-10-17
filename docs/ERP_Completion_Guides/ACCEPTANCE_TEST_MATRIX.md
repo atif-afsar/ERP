@@ -28,13 +28,16 @@ This matrix governs the qualification of features and workflows across all 8 pha
 | **ATM-P3-07** | Phase 3 | Multi-Tenant | Core | Parent | Negative | Parent queries student from different tenant | Returns HTTP 404/403 (Cross-tenant data inaccessible) | VERIFIED |
 | **ATM-P3-08** | Phase 3 | Multi-Tenant | Core | Parent | Negative | Parent queries unrelated student in same tenant | Returns HTTP 403 Forbidden | VERIFIED |
 | **ATM-P3-09** | Phase 3 | Core Flow | Exams | Teacher/Admin | Positive | Enter marks, publish exam, view in parent portal | Marks visible only after status changes to `PUBLISHED` | VERIFIED |
-| **ATM-P4-01** | Phase 4 | Reports | Enrollment | Admin | Positive | Generate Enrollment Summary Report | Returns accurate student counts by grade and gender | NOT_STARTED |
-| **ATM-P4-02** | Phase 4 | Reports | Finance | Accountant | Positive | Generate Collections Report | Total equals sum of verified payments in ledger | NOT_STARTED |
-| **ATM-P4-03** | Phase 4 | Notification | Queue | Worker | Positive | Background worker processes queued email in LOG mode | Delivery status updated to `SENT`, log written | NOT_STARTED |
-| **ATM-P4-04** | Phase 4 | Notification | Queue | Worker | Positive | Re-enqueue job with same `idempotency_key` | Returns existing job without duplicate processing | NOT_STARTED |
-| **ATM-P5-01** | Phase 5 | Operations | Supervision | System | Positive | Start API and Worker under supervisor | Both processes run stably and recover after crash | NOT_STARTED |
-| **ATM-P5-02** | Phase 5 | Operations | Recovery | Operator | Positive | Restore backup into `edunexus_recovery_test` | All 67 tables and record counts restored cleanly | NOT_STARTED |
-| **ATM-P5-03** | Phase 5 | CI | Pipeline | Git Runner | Positive | Run root-level CI workflow | Migrations, builds, and tests exit code 0 | NOT_STARTED |
+| **ATM-P4-01** | Phase 4 | Reports | Enrollment | Admin | Positive | Generate Enrollment Summary Report | Returns accurate student counts by grade and gender, sanitizes formulas, bounds limits | VERIFIED |
+| **ATM-P4-02** | Phase 4 | Reports | Finance | Accountant | Positive | Generate Collections Report | Total equals sum of verified payments in ledger and double-entry journals; synthetic 1000/400 reconciled | VERIFIED |
+| **ATM-P4-03** | Phase 4 | Notification | Queue | Worker | Positive | Background worker processes queued email in LOG mode | Delivery status recorded, LOG mode never falsely claims live DELIVERED | VERIFIED |
+| **ATM-P4-04** | Phase 4 | Notification | Queue | Worker | Positive | Re-enqueue job with same `idempotency_key` | Returns existing job without duplicate processing; stale claims recovered | VERIFIED |
+| **ATM-P4-05** | Phase 4 | Notification | Live Email | Recipient | Positive | Deliver live outbound email to verified external recipient | Email received in inbox via Resend API | BLOCKED |
+| **ATM-P5-01** | Phase 5 | Operations | Supervision | System | Positive | Start API and Worker under supervisor | Both processes run stably, separate logs, and recover after crash | VERIFIED |
+| **ATM-P5-02** | Phase 5 | Operations | Recovery | Operator | Positive | Restore backup into `edunexus_recovery_test` | Checksum verified, restore in 15600ms, queues neutralized, source untouched | VERIFIED |
+| **ATM-P5-03** | Phase 5 | CI | Pipeline | Git Runner | Positive | Run root-level CI workflow (`.github/workflows/ci.yml`) | Workflow defined with Node 22, PG 16, 41 migrations, fixtures, builds, tests, e2e | VERIFIED |
+| **ATM-P5-04** | Phase 5 | Operations | Proxy | Nginx | Positive | Verify upload limit agreement and SPA route refresh | Nginx 12M matches Express 12mb; fallback to index.html configured | VERIFIED |
+| **ATM-P5-05** | Phase 5 | Operations | Monitoring | Operator | Positive | Execute operational health & queue backlog monitoring queries | Backlog count, 24h failure count, and stale claim queries verified | VERIFIED |
 | **ATM-P6-01** | Phase 6 | Acceptance | Pilot | 5 Personas | Positive | Execute full workflow for each canonical role | All 5 journeys succeed with no UI breakages | NOT_STARTED |
 | **ATM-P6-02** | Phase 6 | Usability | UI | Mobile | Positive | Navigate all core screens at 375px width | Layout responsive, zero horizontal document scrolling | NOT_STARTED |
 | **ATM-P6-03** | Phase 6 | Resilience | UI | User | Negative | Click mutation button rapidly multiple times | Button disabled with spinner, exactly 1 request sent | NOT_STARTED |

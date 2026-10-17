@@ -17,7 +17,7 @@ const read: Record<string, string[]> = {
   audit: ['TENANT_ADMIN'], inventory: ['TENANT_ADMIN','STAFF'],
   library: ['TENANT_ADMIN','STAFF'], hostel: ['TENANT_ADMIN','STAFF'],
   mess: ['TENANT_ADMIN','STAFF'], transport: ['TENANT_ADMIN','STAFF'],
-  'health-records': ['TENANT_ADMIN','STAFF'], reports: ['TENANT_ADMIN','ACCOUNTANT'],
+  'health-records': ['TENANT_ADMIN','STAFF'], reports: ['TENANT_ADMIN','ACCOUNTANT','BRANCH_HEAD','TEACHER'],
   organization: ['TENANT_ADMIN'],
   parents: ['PARENT', 'TENANT_ADMIN'],
 };
@@ -29,13 +29,13 @@ const write: Record<string, string[]> = {
   homework: ['TENANT_ADMIN','TEACHER'], timetable: ['TENANT_ADMIN'],
   communication: ['TENANT_ADMIN','STAFF'], audit: ['TENANT_ADMIN'],
   inventory: ['TENANT_ADMIN','STAFF'], library: ['TENANT_ADMIN','STAFF'],
-  reports: ['TENANT_ADMIN','ACCOUNTANT'],
+  reports: ['TENANT_ADMIN','ACCOUNTANT','BRANCH_HEAD'],
   organization: ['TENANT_ADMIN'],
 };
 export function businessAccess(req: Request, res: Response, next: NextFunction) {
   const module = req.path.split('/').filter(Boolean)[0];
   // These modules enforce database-backed permissions at the route level.
-  if (['dashboard','communication','organization','audit','master-data','students','staff','attendance','timetable','exams','fees','hr','library','inventory','transport','hostel','mess','parents'].includes(module)) return next();
+  if (['dashboard','communication','organization','audit','master-data','students','staff','attendance','timetable','exams','fees','hr','library','inventory','transport','hostel','mess','parents','reports'].includes(module)) return next();
   const allowed = (['GET','HEAD'].includes(req.method) ? read : write)[module];
   if (!allowed) return next(new AppError('Endpoint not found.', 404, 'NOT_FOUND'));
   requireRole(...allowed)(req, res, next);

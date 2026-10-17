@@ -22,7 +22,8 @@ async function finish(job:any,status:'SENT'|'FAILED',provider:string,messageId:s
   await transaction(async client=>{
     await client.query(`INSERT INTO notification_deliveries(tenant_id,notification_id,recipient,channel,status,sent_at,recipient_id,job_id,provider,attempt_count,provider_message_id,last_error,failed_at,next_retry_at) VALUES($1,$2,$3,$4,$5::varchar,$6,$7,$8,$9,$10,$11,$12,$13,CASE WHEN $5::varchar='FAILED' THEN NOW()+($14||' minutes')::interval ELSE NULL END)`,[job.tenant_id,job.notification_id,job.external_email||job.user_id,job.channel,status,status==='SENT'?new Date():null,job.recipient_id,job.id,provider,attempt,messageId,error,status==='FAILED'?new Date():null,String(delay)]);
     await client.query(`UPDATE notification_jobs SET status=$1::varchar,attempts=$2,last_error=$3,sent_at=CASE WHEN $1::varchar='SENT' THEN NOW() ELSE sent_at END,next_attempt_at=CASE WHEN $1::varchar='QUEUED' THEN NOW()+($4||' minutes')::interval ELSE next_attempt_at END,locked_at=NULL,locked_by=NULL,updated_at=NOW() WHERE id=$5 AND status='PROCESSING'`,[finalStatus,attempt,error,String(delay),job.id]);
-    await client.query(`UPDATE notification_recipients SET status=CASE WHEN $1::varchar='SENT' THEN 'DELIVERED' WHEN $1::varchar='FAILED' THEN 'FAILED' ELSE status END WHERE id=$2`,[finalStatus,job.recipient_id]);
+    const isActuallyDelivered = status === 'SENT' && (job.channel === 'IN_APP' || provider !== 'LOG');
+    await client.query(`UPDATE notification_recipients SET status=CASE WHEN $1::boolean THEN 'DELIVERED' WHEN $2::varchar='FAILED' THEN 'FAILED' ELSE status END WHERE id=$3`,[isActuallyDelivered,finalStatus,job.recipient_id]);
   });
 }
 
