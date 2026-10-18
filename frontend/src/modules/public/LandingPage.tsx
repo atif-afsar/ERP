@@ -32,17 +32,29 @@ import { PublicFooter } from './PublicFooter';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { EduNexusHero } from '../../components/ui/edunexus-hero';
+import { InstituteOnboardingModal } from '../../components/public/InstituteOnboardingModal';
 
 interface LandingPageProps {
   onNavigate: (route: string) => void;
   subRoute?: string;
+  autoOpenPlan?: boolean;
 }
 
-export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate, subRoute }) => {
+export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate, subRoute, autoOpenPlan }) => {
   const [activeSolutionTab, setActiveSolutionTab] = useState<'school' | 'coaching'>(
     subRoute?.includes('coaching') ? 'coaching' : 'school'
   );
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
+  const [onboardingPlan, setOnboardingPlan] = useState<{
+    code: string;
+    name: string;
+    price: number;
+    period: string;
+  } | null>(
+    autoOpenPlan || subRoute === 'signup'
+      ? { code: 'GROWTH_MONTHLY', name: 'Campus Pro', price: 4999, period: 'month' }
+      : null
+  );
 
   const faqs = [
     {
@@ -89,7 +101,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate, subRoute }
         subtitle="The unified operating platform built for modern K-12 Schools and Competitive Coaching Academies. Seamlessly manage admissions, QR gate attendance, CBSE report cards, test series ranks, and online fees in one place."
         primaryAction={{
           label: "Get Started",
-          onClick: () => onNavigate('signup'),
+          onClick: () => setOnboardingPlan({ code: 'GROWTH_MONTHLY', name: 'Campus Pro', price: 4999, period: 'month' }),
         }}
         socialProof={{
           avatars: [
@@ -661,7 +673,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate, subRoute }
             <Button
               variant="outline"
               className="w-full text-xs font-bold py-3 rounded-full"
-              onClick={() => onNavigate('signup')}
+              onClick={() => setOnboardingPlan({ code: 'STARTER_MONTHLY', name: 'Starter Academy', price: 1999, period: 'month' })}
             >
               Choose Starter
             </Button>
@@ -707,7 +719,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate, subRoute }
             <Button
               variant="primary"
               className="w-full text-xs font-bold py-3 rounded-full bg-emerald-600 hover:bg-emerald-500 shadow-lg shadow-emerald-600/25"
-              onClick={() => onNavigate('signup')}
+              onClick={() => setOnboardingPlan({ code: 'GROWTH_MONTHLY', name: 'Campus Pro', price: 4999, period: 'month' })}
             >
               Start 14-Day Free Trial
             </Button>
@@ -750,7 +762,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate, subRoute }
             <Button
               variant="outline"
               className="w-full text-xs font-bold py-3 rounded-full"
-              onClick={() => onNavigate('signup')}
+              onClick={() => setOnboardingPlan({ code: 'ENTERPRISE_YEARLY', name: 'Institutional Trust', price: 9999, period: 'month' })}
             >
               Contact Enterprise
             </Button>
@@ -815,7 +827,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate, subRoute }
             </p>
             <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-4">
               <button
-                onClick={() => onNavigate('signup')}
+                onClick={() => setOnboardingPlan({ code: 'GROWTH_MONTHLY', name: 'Campus Pro', price: 4999, period: 'month' })}
                 className="w-full sm:w-auto px-8 py-3.5 rounded-full bg-white text-emerald-900 text-sm font-extrabold hover:bg-emerald-50 transition-all hover:scale-105 active:scale-95 shadow-lg shadow-black/10"
               >
                 Launch Your Campus Free
@@ -836,6 +848,16 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate, subRoute }
 
       {/* 9. Footer */}
       <PublicFooter onNavigate={onNavigate} />
+
+      {/* Onboarding Questionnaire & Payment Modal */}
+      {onboardingPlan && (
+        <InstituteOnboardingModal
+          isOpen={!!onboardingPlan}
+          selectedPlan={onboardingPlan}
+          onClose={() => setOnboardingPlan(null)}
+          onSuccessLoginRedirect={() => onNavigate('login')}
+        />
+      )}
     </div>
   );
 };

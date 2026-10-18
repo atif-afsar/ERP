@@ -382,7 +382,7 @@ const MainRouter: React.FC = () => {
     // 2. SELF-ONBOARDING WIZARD (Docs 63 & 65)
     if (routeState.path === 'signup' || routeState.path === 'onboarding') {
       if (routeState.path === 'onboarding') return <OwnerOnboardingView initialToken={routeState.query.token} onComplete={() => navigateTo('login')} />;
-      return <LoginView onLoginSuccess={() => navigateTo('app/dashboard')} />;
+      return <LandingPage onNavigate={navigateTo} subRoute="signup" autoOpenPlan={true} />;
     }
 
     // 3. AUTHENTICATION & LOGIN (Doc 63)

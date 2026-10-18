@@ -63,13 +63,16 @@ async function main() {
     );
 
     // 3. Ensure super admin role exists
-    const superAdminRoleId = '11111111-1111-1111-1111-111111111111';
-    await client.query(
-      `INSERT INTO roles (id, name, key, description, is_system_role)
-       VALUES ($1, 'Super Administrator', 'SUPER_ADMIN', 'Platform owner with full system access', true)
-       ON CONFLICT (id) DO NOTHING`,
-      [superAdminRoleId]
-    );
+    let roleRes = await client.query(`SELECT id FROM roles WHERE key = 'SUPER_ADMIN' AND tenant_id IS NULL LIMIT 1`);
+    let superAdminRoleId = roleRes.rows[0]?.id;
+    if (!superAdminRoleId) {
+      const insertRole = await client.query(
+        `INSERT INTO roles (name, key, description, is_system_role)
+         VALUES ('Super Administrator', 'SUPER_ADMIN', 'Platform owner with full system access', true)
+         RETURNING id`
+      );
+      superAdminRoleId = insertRole.rows[0].id;
+    }
 
     // 4. Ensure demo tenant exists
     const tenantRes = await client.query('SELECT id FROM tenants LIMIT 1');

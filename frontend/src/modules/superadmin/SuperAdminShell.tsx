@@ -16,6 +16,7 @@ import { useAuth } from '../../context/AuthContext';
 import { storage } from '../../services/storageService';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
+import { SuperAdminSaaSModule } from './SuperAdminSaaSModule';
 
 interface SuperAdminShellProps {
   onNavigate: (route: string) => void;
@@ -234,24 +235,7 @@ export const SuperAdminShell: React.FC<SuperAdminShellProps> = ({ onNavigate, ac
           {/* TAB: Subscriptions */}
           {activeTab === 'subscriptions' && (
             <div className="space-y-4 animate-fade-in">
-              <h3 className="text-lg font-bold text-slate-900">SaaS Subscription Plans</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="p-5 bg-white border border-slate-200 rounded-xl space-y-2 shadow-xs">
-                  <h4 className="font-bold text-slate-900 text-sm">Starter Academy</h4>
-                  <p className="text-2xl font-bold text-amber-600">₹1,999<span className="text-xs text-slate-500">/mo</span></p>
-                  <p className="text-xs text-slate-500">Up to 300 students per campus.</p>
-                </div>
-                <div className="p-5 bg-white border-2 border-amber-400 rounded-xl space-y-2 shadow-xs">
-                  <h4 className="font-bold text-slate-900 text-sm">Campus Pro</h4>
-                  <p className="text-2xl font-bold text-amber-600">₹4,999<span className="text-xs text-slate-500">/mo</span></p>
-                  <p className="text-xs text-slate-500">Up to 1,500 students with Online Fees.</p>
-                </div>
-                <div className="p-5 bg-white border border-slate-200 rounded-xl space-y-2 shadow-xs">
-                  <h4 className="font-bold text-slate-900 text-sm">Institutional Trust</h4>
-                  <p className="text-2xl font-bold text-amber-600">₹9,999<span className="text-xs text-slate-500">/mo</span></p>
-                  <p className="text-xs text-slate-500">Unlimited students & multi-campus RLS.</p>
-                </div>
-              </div>
+              <SuperAdminSaaSModule />
             </div>
           )}
 

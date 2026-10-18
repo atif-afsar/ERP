@@ -123,11 +123,24 @@ router.post('/signin', authLimiter, validateBody(signInSchema), asyncHandler(asy
      WHERE m.user_id = $1 AND m.status = 'active' AND (r.tenant_id IS NULL OR r.tenant_id = m.tenant_id)
      ORDER BY m.joined_at, m.id`, [user.id]);
   const choices = memberships.rows.filter(m => !req.body.tenantId || m.tenant_id === req.body.tenantId);
-  if (choices.length > 1) throw new AppError('Enter your institution ID to select a membership.', 409, 'TENANT_SELECTION_REQUIRED');
-  const membership = choices[0];
-  if (!membership) throw new AppError('No active institution membership.', 403, 'MEMBERSHIP_REQUIRED');
-  if (membership.role_key !== 'SUPER_ADMIN' && !['active', 'trial'].includes(membership.tenant_status))
-    throw new AppError('Institution access is suspended.', 403, 'TENANT_SUSPENDED');
+  if (!choices.length) throw new AppError('No active institution membership.', 403, 'MEMBERSHIP_REQUIRED');
+  let membership = choices[0];
+  if (choices.length > 1) {
+    const superAdminChoice = choices.find(m => m.role_key === 'SUPER_ADMIN');
+    if (superAdminChoice) {
+      membership = superAdminChoice;
+    } else {
+      membership = choices[0];
+    }
+  }
+  if (membership.role_key !== 'SUPER_ADMIN') {
+    if (membership.tenant_status === 'pending_approval') {
+      throw new AppError('Your institute subscription payment is awaiting Super Admin verification. You will be activated once approved.', 403, 'TENANT_PENDING_APPROVAL');
+    }
+    if (!['active', 'trial'].includes(membership.tenant_status)) {
+      throw new AppError('Institution access is suspended.', 403, 'TENANT_SUSPENDED');
+    }
+  }
   const permissionResult = await query(
     `SELECT p.key FROM memberships m JOIN role_permissions rp ON rp.role_id=m.role_id
      JOIN permissions p ON p.id=rp.permission_id WHERE m.user_id=$1 AND m.tenant_id=$2`, [user.id, membership.tenant_id]);

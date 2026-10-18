@@ -59,6 +59,18 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, redirectUr
           <Button type="submit" variant="primary" className="w-full" disabled={submitting} leftIcon={<LogIn className="w-4 h-4" />}>
             {submitting ? 'Signing in…' : 'Sign in'}
           </Button>
+
+          <div className="pt-3 border-t border-slate-100 text-center">
+            <p className="text-xs text-slate-500">
+              New school or coaching academy?{' '}
+              <a
+                href="#/signup"
+                className="text-emerald-700 font-bold hover:underline"
+              >
+                Choose a Plan & Subscribe
+              </a>
+            </p>
+          </div>
         </form>
       </div>
       <ForgotPasswordModal isOpen={forgotOpen} onClose={() => setForgotOpen(false)} />
