@@ -52,9 +52,7 @@ import { LandingPage } from './modules/public/LandingPage';
 import { SuperAdminShell } from './modules/superadmin/SuperAdminShell';
 
 const READ_ONLY_MODULES = new Set([
-  'academics',
-  'health', 'homework',
-  'crm', 'settings', 'roles-matrix', 'superadmin-features',
+  'settings', 'roles-matrix', 'superadmin-features',
 ]);
 
 const ReadOnlyModule: React.FC<{ children: React.ReactNode }> = ({ children }) => (
@@ -394,6 +392,8 @@ const MainRouter: React.FC = () => {
               const redirect = routeState.query.redirect;
               if (redirect && redirect.startsWith('/') && !redirect.includes('://')) {
                 navigateTo(redirect.slice(1));
+              } else if (isSuperAdmin) {
+                navigateTo('super-admin');
               } else {
                 navigateTo('app/dashboard');
               }

@@ -3,6 +3,7 @@ import { Router, Request, Response } from 'express';
 import { query } from '../db.js';
 import { requireAuth } from '../middleware/auth.js';
 import { tenantContext } from '../middleware/tenantContext.js';
+import { AppError } from '../middleware/errorHandler.js';
 
 const router = Router();
 
@@ -152,6 +153,39 @@ router.get('/health-records', requireAuth, tenantContext(true), asyncHandler(asy
     })),
     requestId: req.id,
     timestamp: new Date().toISOString(),
+  });
+}));
+
+router.post('/health-records', requireAuth, tenantContext(true), asyncHandler(async (req: Request, res: Response) => {
+  const { studentId, bloodGroup, allergies, medicalConditions, emergencyContact, emergencyPhone } = req.body;
+  if (!studentId) throw new AppError('studentId is required.', 422, 'VALIDATION_ERROR');
+
+  const existing = await query(
+    `SELECT id FROM health_records WHERE tenant_id = $1 AND student_id = $2`,
+    [req.tenantId, studentId]
+  );
+
+  let result;
+  if (existing.rowCount && existing.rowCount > 0) {
+    result = await query(
+      `UPDATE health_records 
+       SET blood_group = $1, allergies = $2, medical_conditions = $3, emergency_contact = $4, emergency_phone = $5
+       WHERE id = $6 RETURNING *`,
+      [bloodGroup || null, allergies || null, medicalConditions || null, emergencyContact || null, emergencyPhone || null, existing.rows[0].id]
+    );
+  } else {
+    result = await query(
+      `INSERT INTO health_records (tenant_id, student_id, blood_group, allergies, medical_conditions, emergency_contact, emergency_phone)
+       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+      [req.tenantId, studentId, bloodGroup || null, allergies || null, medicalConditions || null, emergencyContact || null, emergencyPhone || null]
+    );
+  }
+
+  res.status(201).json({
+    data: result.rows[0],
+    message: 'Health record saved successfully.',
+    requestId: req.id,
+    timestamp: new Date().toISOString()
   });
 }));
 

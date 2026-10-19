@@ -3,7 +3,7 @@ import type { Request } from 'express';
 import { query } from '../db.js';
 
 export interface AuditEvent {
-  tenantId: string;
+  tenantId?: string | null;
   userId?: string | null;
   action: string;
   module: string;

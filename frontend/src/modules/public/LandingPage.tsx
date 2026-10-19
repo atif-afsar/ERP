@@ -31,7 +31,7 @@ import {
 import { PublicFooter } from './PublicFooter';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
-import { EduNexusHero } from '../../components/ui/edunexus-hero';
+import SculptureHero from '../../components/ui/liquid-sculpture-hero';
 import { InstituteOnboardingModal } from '../../components/public/InstituteOnboardingModal';
 
 interface LandingPageProps {
@@ -81,38 +81,38 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate, subRoute, 
 
   return (
     <div className="min-h-screen bg-[#fafcfb] text-slate-900 flex flex-col antialiased selection:bg-emerald-500 selection:text-white">
-      {/* 1. MedTrackr-Inspired Hero with EduNexus ERP Branding */}
-      <EduNexusHero
-        navigation={[
-          { label: "Home", onClick: () => window.scrollTo({ top: 0, behavior: 'smooth' }) },
-          { label: "Products", onClick: () => { const el = document.getElementById('features'); el?.scrollIntoView({ behavior: 'smooth' }); } },
-          { label: "Resource", hasDropdown: true, onClick: () => { const el = document.getElementById('solutions'); el?.scrollIntoView({ behavior: 'smooth' }); } },
-          { label: "Pricing", onClick: () => { const el = document.getElementById('pricing'); el?.scrollIntoView({ behavior: 'smooth' }); } },
-          { label: "Company", onClick: () => { const el = document.getElementById('how-it-works'); el?.scrollIntoView({ behavior: 'smooth' }); } },
-        ]}
-        ctaButton={{
-          label: "Get a Demo",
-          onClick: () => onNavigate('login'),
-        }}
-        badgeText="AI-Powered Dual Engine Campus ERP"
-        headlinePart1="Empower Your School & Coaching To"
-        italicWord="Excel"
-        headlinePart2="Every Day"
-        subtitle="The unified operating platform built for modern K-12 Schools and Competitive Coaching Academies. Seamlessly manage admissions, QR gate attendance, CBSE report cards, test series ranks, and online fees in one place."
-        primaryAction={{
-          label: "Get Started",
+      {/* 1. Liquid GPGPU Particle Sculpture Hero with EduNexus ERP Branding */}
+      <SculptureHero
+        brand="EduNexus™"
+        eyebrow="Dual-Engine Autonomous Campus ERP"
+        headline={"Autonomous Campus Intelligence\nThat Answers Back."}
+        headlineAccent="Answers Back."
+        body="The unified operating system engineered for premier K-12 Schools and Competitive Coaching Academies. Seamlessly automate admissions, QR gate registers, double-entry fee ledgers, and CBSE broadsheets with fluid, GPU-accelerated precision."
+        primaryCta={{
+          label: "Start 14-Day Free Trial",
           onClick: () => setOnboardingPlan({ code: 'GROWTH_MONTHLY', name: 'Campus Pro', price: 4999, period: 'month' }),
         }}
-        socialProof={{
-          avatars: [
-            "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop&crop=faces",
-            "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=faces",
-            "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop&crop=faces",
-            "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop&crop=faces",
-          ],
-          text: "Trusted by 500+ schools & academies",
+        secondaryCta={{
+          label: "Explore Academic Solutions",
+          onClick: () => { const el = document.getElementById('solutions'); el?.scrollIntoView({ behavior: 'smooth' }); },
         }}
-        dashboardImage="/assets/edunexus_hero_dashboard.jpg"
+        navLinks={[
+          { label: "Solutions", onClick: () => { const el = document.getElementById('solutions'); el?.scrollIntoView({ behavior: 'smooth' }); } },
+          { label: "Features", onClick: () => { const el = document.getElementById('features'); el?.scrollIntoView({ behavior: 'smooth' }); } },
+          { label: "CBSE & Tests", onClick: () => { const el = document.getElementById('solutions'); el?.scrollIntoView({ behavior: 'smooth' }); } },
+          { label: "Pricing", onClick: () => { const el = document.getElementById('pricing'); el?.scrollIntoView({ behavior: 'smooth' }); } },
+        ]}
+        navCta={{
+          label: "Sign In",
+          onClick: () => onNavigate('login'),
+        }}
+        backdropText="EDUNEXUS"
+        interactive={true}
+        speed={1}
+        liquid={1.2}
+        turbulence={1.0}
+        streaks={true}
+        height="100svh"
       />
 
       {/* ------------------------------------------------------------- */}

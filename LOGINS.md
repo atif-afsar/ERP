@@ -2,6 +2,8 @@
 
 This document lists all pre-configured, active accounts available for manual testing across the EduNexus Multi-Tenant ERP platform.
 
+> ⚡ **Looking for startup commands?** See **[COMMANDS.md](file:///c:/Users/asus/Desktop/ERP/COMMANDS.md)** or double-click `start-all.bat` in the root folder.
+
 ---
 
 ## 🌐 Quick Access Links

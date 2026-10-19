@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
-import { BookOpen, Plus, Calendar, Clock, CheckCircle2, FileText, User, Award, ArrowUpRight, Search } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { BookOpen, Plus, Calendar, Clock, CheckCircle2, FileText, User, Award, ArrowUpRight, Search, Check, Send, X } from 'lucide-react';
 import { useTenant } from '../../context/TenantContext';
 import { useAuth } from '../../context/AuthContext';
 import { storage } from '../../services/storageService';
+import { homeworkService, HomeworkItem, HomeworkSubmission } from '../../services/homeworkService';
 import { Homework } from '../../types';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
@@ -11,7 +12,7 @@ import { Tabs } from '../../components/ui/Tabs';
 
 export const HomeworkModule: React.FC = () => {
   const { currentTenant, getLabel, isSchool, isCoaching } = useTenant();
-  const { can } = useAuth();
+  const { can, currentUser } = useAuth();
   const classes = storage.getClasses(currentTenant.id);
   const batches = storage.getBatches(currentTenant.id);
   const staff = storage.getStaff(currentTenant.id);
@@ -19,10 +20,18 @@ export const HomeworkModule: React.FC = () => {
   const [homeworkList, setHomeworkList] = useState<Homework[]>(() =>
     storage.getHomework(currentTenant.id)
   );
-
+  const [loading, setLoading] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [filterTab, setFilterTab] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Submissions State
+  const [selectedHw, setSelectedHw] = useState<Homework | null>(null);
+  const [submissions, setSubmissions] = useState<HomeworkSubmission[]>([]);
+  const [loadingSubmissions, setLoadingSubmissions] = useState(false);
+  const [gradingState, setGradingState] = useState<{ [key: string]: { marks: string; feedback: string } }>({});
+  const [solutionText, setSolutionText] = useState('');
+  const [submittingSolution, setSubmittingSolution] = useState(false);
 
   const [formData, setFormData] = useState({
     subject: 'Mathematics',
@@ -34,27 +43,125 @@ export const HomeworkModule: React.FC = () => {
     maxMarks: '25',
   });
 
-  const handleCreateHomework = (e: React.FormEvent) => {
+  // Load live homework from backend
+  const loadHomework = async () => {
+    try {
+      setLoading(true);
+      const res = await homeworkService.list(currentTenant.id);
+      if (res.data?.data && res.data.data.length > 0) {
+        const liveHw: Homework[] = res.data.data.map((h: HomeworkItem) => ({
+          id: h.id,
+          tenantId: h.tenantId,
+          groupId: h.classId,
+          groupName: h.className,
+          subject: h.subjectName,
+          title: h.title,
+          description: h.description,
+          assignedDate: h.createdAt?.split('T')[0] || new Date().toISOString().split('T')[0],
+          dueDate: h.dueDate?.split('T')[0] || h.dueDate,
+          teacherName: 'Faculty',
+          submissionsCount: h.submissionCount,
+          totalStudents: 40
+        }));
+        setHomeworkList(liveHw);
+      }
+    } catch {
+      // Keep existing storage fallback if offline
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadHomework();
+  }, [currentTenant.id]);
+
+  const handleOpenSubmissions = async (hw: Homework) => {
+    setSelectedHw(hw);
+    setSolutionText('');
+    try {
+      setLoadingSubmissions(true);
+      const res = await homeworkService.listSubmissions(hw.id, currentTenant.id);
+      if (res.data?.data) {
+        setSubmissions(res.data.data);
+      } else {
+        setSubmissions([]);
+      }
+    } catch {
+      setSubmissions([]);
+    } finally {
+      setLoadingSubmissions(false);
+    }
+  };
+
+  const handleGradeSubmission = async (subId: string) => {
+    const grade = gradingState[subId];
+    if (!grade) return;
+    try {
+      await homeworkService.grade(subId, {
+        marksObtained: grade.marks ? Number(grade.marks) : undefined,
+        feedback: grade.feedback || undefined
+      }, currentTenant.id);
+      if (selectedHw) handleOpenSubmissions(selectedHw);
+    } catch (err: any) {
+      alert(err.message || 'Failed to save grade');
+    }
+  };
+
+  const handleSubmitSolution = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedHw || !solutionText.trim()) return;
+    try {
+      setSubmittingSolution(true);
+      await homeworkService.submit(selectedHw.id, {
+        submissionText: solutionText.trim()
+      }, currentTenant.id);
+      setSolutionText('');
+      handleOpenSubmissions(selectedHw);
+      loadHomework();
+    } catch (err: any) {
+      alert(err.message || 'Submission failed');
+    } finally {
+      setSubmittingSolution(false);
+    }
+  };
+
+  const handleCreateHomework = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.title) return;
 
-    const newHw: Homework = {
-      id: `hw-${Date.now()}`,
-      tenantId: currentTenant.id,
-      groupId: formData.groupId,
-      groupName: formData.groupName,
-      subject: formData.subject,
-      title: formData.title,
-      description: formData.description,
-      assignedDate: new Date().toISOString().split('T')[0],
-      dueDate: formData.dueDate,
-      teacherName: staff[0]?.name || 'Senior Faculty',
-      submissionsCount: 0,
-      totalStudents: isSchool ? 40 : 45,
-    };
+    try {
+      // First try backend API
+      const matchedClass = classes.find(c => `${c.name} - Section A` === formData.groupName) || classes[0];
+      await homeworkService.create({
+        classId: matchedClass?.id || formData.groupId,
+        title: formData.title.trim(),
+        description: formData.description.trim() || undefined,
+        dueDate: formData.dueDate,
+        subjectId: undefined
+      }, currentTenant.id);
 
-    storage.saveHomework(newHw);
-    setHomeworkList(storage.getHomework(currentTenant.id));
+      await loadHomework();
+    } catch {
+      // Local fallback
+      const newHw: Homework = {
+        id: `hw-${Date.now()}`,
+        tenantId: currentTenant.id,
+        groupId: formData.groupId,
+        groupName: formData.groupName,
+        subject: formData.subject,
+        title: formData.title,
+        description: formData.description,
+        assignedDate: new Date().toISOString().split('T')[0],
+        dueDate: formData.dueDate,
+        teacherName: staff[0]?.name || 'Senior Faculty',
+        submissionsCount: 0,
+        totalStudents: isSchool ? 40 : 45,
+      };
+      storage.saveHomework(newHw);
+      setHomeworkList(storage.getHomework(currentTenant.id));
+    }
+
     setIsAddModalOpen(false);
     setFormData({
       subject: 'Mathematics',
@@ -172,7 +279,7 @@ export const HomeworkModule: React.FC = () => {
                   <div className="flex justify-between text-[11px] text-slate-400">
                     <span>Submission Status</span>
                     <span className="text-emerald-400 font-semibold">
-                      {hw.submissionsCount} / {hw.totalStudents} ({submissionPercent}%)
+                      {hw.submissionsCount} Submissions ({submissionPercent}%)
                     </span>
                   </div>
                   <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
@@ -188,16 +295,146 @@ export const HomeworkModule: React.FC = () => {
                     <User className="w-3.5 h-3.5 text-slate-400" />
                     <span>{hw.teacherName}</span>
                   </div>
-                  <div className="flex items-center gap-1 text-sky-400 font-medium cursor-pointer hover:underline">
-                    <span>View Submissions</span>
+                  <button
+                    onClick={() => handleOpenSubmissions(hw)}
+                    className="flex items-center gap-1 text-sky-400 font-medium hover:text-sky-300 transition-colors"
+                  >
+                    <span>View & Grade Submissions</span>
                     <ArrowUpRight className="w-3 h-3" />
-                  </div>
+                  </button>
                 </div>
               </div>
             );
           })
         )}
       </div>
+
+      {/* Modal: View & Grade Submissions */}
+      {selectedHw && (
+        <Modal
+          isOpen={!!selectedHw}
+          onClose={() => setSelectedHw(null)}
+          title={`Submissions: ${selectedHw.title}`}
+          subtitle={`${selectedHw.subject} • ${selectedHw.groupName} • Due: ${selectedHw.dueDate}`}
+          maxWidth="2xl"
+        >
+          <div className="space-y-6 text-xs text-slate-300">
+            {/* Quick Submit Section (For Students/Testing) */}
+            <form onSubmit={handleSubmitSolution} className="p-4 bg-slate-950/60 rounded-xl border border-slate-800 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-white text-xs flex items-center gap-1.5">
+                  <Send className="w-3.5 h-3.5 text-sky-400" /> Submit Student Solution / Answer
+                </span>
+                <span className="text-[10px] text-slate-400">Recorded with student ID</span>
+              </div>
+              <textarea
+                rows={2}
+                value={solutionText}
+                onChange={(e) => setSolutionText(e.target.value)}
+                placeholder="Type your solution explanation, answers, or notes..."
+                className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-white text-xs focus:outline-none focus:border-sky-500"
+              />
+              <div className="flex justify-end">
+                <Button variant="primary" size="sm" type="submit" disabled={submittingSolution || !solutionText.trim()}>
+                  {submittingSolution ? 'Submitting...' : 'Upload Submission'}
+                </Button>
+              </div>
+            </form>
+
+            {/* Submissions List */}
+            <div className="space-y-3">
+              <h4 className="font-bold text-white text-sm">
+                Student Submissions ({submissions.length})
+              </h4>
+
+              {loadingSubmissions ? (
+                <div className="p-8 text-center text-slate-400">Loading submissions...</div>
+              ) : submissions.length === 0 ? (
+                <div className="p-8 text-center text-slate-400 bg-slate-950/40 rounded-xl border border-slate-800/80">
+                  No submissions have been received yet for this task.
+                </div>
+              ) : (
+                <div className="space-y-3 max-h-[380px] overflow-y-auto pr-1">
+                  {submissions.map((sub) => {
+                    const currentMarks = gradingState[sub.id]?.marks ?? (sub.marksObtained !== null ? String(sub.marksObtained) : '');
+                    const currentFeedback = gradingState[sub.id]?.feedback ?? (sub.feedback || '');
+
+                    return (
+                      <div
+                        key={sub.id}
+                        className="p-4 bg-slate-900/90 border border-slate-800 rounded-xl space-y-3 hover:border-slate-700 transition-colors"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <span className="font-bold text-white text-xs">{sub.studentName}</span>
+                            <span className="text-slate-400 text-[11px] ml-2">Adm: {sub.admissionNo}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                              sub.status === 'graded'
+                                ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                                : sub.status === 'late'
+                                ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                                : 'bg-sky-500/20 text-sky-400 border border-sky-500/30'
+                            }`}>
+                              {sub.status.toUpperCase()}
+                            </span>
+                            <span className="text-[10px] text-slate-500">
+                              {new Date(sub.submittedAt).toLocaleDateString()}
+                            </span>
+                          </div>
+                        </div>
+
+                        {sub.submissionText && (
+                          <p className="text-slate-300 text-xs bg-slate-950/80 p-2.5 rounded-lg border border-slate-800">
+                            {sub.submissionText}
+                          </p>
+                        )}
+
+                        {/* Grading Inputs */}
+                        <div className="pt-2 border-t border-slate-800/80 grid grid-cols-1 sm:grid-cols-3 gap-2 items-center">
+                          <input
+                            type="number"
+                            placeholder="Marks / 25"
+                            value={currentMarks}
+                            onChange={(e) =>
+                              setGradingState({
+                                ...gradingState,
+                                [sub.id]: { marks: e.target.value, feedback: currentFeedback }
+                              })
+                            }
+                            className="px-2.5 py-1.5 bg-slate-950 border border-slate-700 rounded-lg text-white text-xs focus:outline-none focus:border-sky-500"
+                          />
+                          <input
+                            type="text"
+                            placeholder="Teacher feedback..."
+                            value={currentFeedback}
+                            onChange={(e) =>
+                              setGradingState({
+                                ...gradingState,
+                                [sub.id]: { marks: currentMarks, feedback: e.target.value }
+                              })
+                            }
+                            className="px-2.5 py-1.5 bg-slate-950 border border-slate-700 rounded-lg text-white text-xs focus:outline-none focus:border-sky-500"
+                          />
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => handleGradeSubmission(sub.id)}
+                            leftIcon={<Check className="w-3.5 h-3.5" />}
+                          >
+                            Save Grade
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+        </Modal>
+      )}
 
       {/* Modal: Create Homework */}
       <Modal

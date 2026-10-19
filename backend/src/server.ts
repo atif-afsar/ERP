@@ -37,6 +37,7 @@ import masterDataRoutes from './routes/masterData.js';
 import billingRoutes from './routes/billing.js';
 import adminBillingRoutes from './routes/adminBilling.js';
 import parentsRoutes from './routes/parents.js';
+import crmRoutes from './routes/crm.js';
 import { config } from './config.js';
 import { requireAuth } from './middleware/auth.js';
 import { businessAccess } from './middleware/businessAccess.js';
@@ -167,6 +168,7 @@ apiRouter.use('/audit', auditRoutes);
 apiRouter.use('/organization', organizationRoutes);
 apiRouter.use('/master-data', masterDataRoutes);
 apiRouter.use('/reports', reportsRoutes);
+apiRouter.use('/crm', crmRoutes);
 apiRouter.use('/', auxiliaryRoutes);
 
 app.use('/api/v1', apiRouter);
