@@ -246,9 +246,11 @@ export const InstituteOnboardingModal: React.FC<InstituteOnboardingModalProps> =
         {/* Header */}
         <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/80">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-xs">
-              <School className="w-5 h-5" />
-            </div>
+            <img
+              src="/logo.png"
+              alt="EduNexus"
+              className="w-10 h-10 rounded-xl object-contain shadow-xs border border-slate-200/80 p-0.5 bg-white shrink-0"
+            />
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="font-extrabold text-slate-900 text-base">Institute Onboarding & Subscription</h2>

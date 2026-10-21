@@ -1718,9 +1718,11 @@ export default function SculptureHero(props: SculptureHeroProps) {
       {showNav && (
         <nav ref={navRef} className="sh-nav" aria-label="Primary">
           <a className="sh-brand" href="#/">
-            <span className="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold text-sm shadow-md">
-              EN
-            </span>
+            <img
+              src="/logo.png"
+              alt="EduNexus"
+              className="w-8 h-8 rounded-xl object-contain shadow-md border border-slate-200/60 p-0.5 bg-white shrink-0"
+            />
             <span>{brand}</span>
           </a>
           <ul className="sh-links">
