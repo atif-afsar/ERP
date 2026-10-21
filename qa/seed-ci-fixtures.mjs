@@ -1,6 +1,7 @@
 import pg from 'pg';
 import bcrypt from 'bcryptjs';
-import { randomUUID } from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
 
 const dbUrl = process.env.DATABASE_URL || 'postgresql://postgres:postgres@127.0.0.1:5432/edunexus_erp';
 console.log(`=== Seeding Deterministic CI Fixtures ===\nTarget: ${dbUrl}`);
@@ -51,38 +52,77 @@ async function seed() {
       ON CONFLICT (id) DO NOTHING
     `, [secId, tenantId, classId]);
 
-    // 5. Create CI Administrator User
-    const adminId = '00000000-0000-0000-0000-000000000010';
-    const email = 'ci-admin@edunexus.example.test';
-    const hash = await bcrypt.hash('EduNexusCI2026!Pass', 10);
+    // 5. Query Roles
+    const rolesRes = await client.query(`
+      SELECT key, id FROM roles WHERE tenant_id IS NULL OR tenant_id = $1
+    `, [tenantId]);
+    const roleMap = Object.fromEntries(rolesRes.rows.map(r => [r.key, r.id]));
 
-    await client.query(`
-      INSERT INTO users (id, email, password_hash, status)
-      VALUES ($1, $2, $3, 'ACTIVE')
-      ON CONFLICT (id) DO UPDATE SET password_hash = EXCLUDED.password_hash, status = 'ACTIVE'
-    `, [adminId, email, hash]);
+    // 6. Helper to seed a user
+    const hash = await bcrypt.hash('Admin123!', 10);
+    const ciAdminHash = await bcrypt.hash('EduNexusCI2026!Pass', 10);
 
-    await client.query(`
-      INSERT INTO profiles (id, display_name, status)
-      VALUES ($1, 'CI System Administrator', 'active')
-      ON CONFLICT (id) DO NOTHING
-    `, [adminId]);
+    const usersToSeed = [
+      { id: '00000000-0000-0000-0000-000000000010', email: 'ci-admin@edunexus.example.test', name: 'CI System Administrator', roleKey: 'SUPER_ADMIN', hash: ciAdminHash },
+      { id: '00000000-0000-0000-0000-000000000011', email: 'admin@edunexus.app', name: 'CI School Admin', roleKey: 'TENANT_ADMIN', hash },
+      { id: '00000000-0000-0000-0000-000000000012', email: 'parent@edunexus.app', name: 'CI Parent User', roleKey: 'PARENT', hash },
+      { id: '00000000-0000-0000-0000-000000000013', email: 'accountant@edunexus.app', name: 'CI Accountant User', roleKey: 'ACCOUNTANT', hash },
+    ];
 
-    const roleRes = await client.query(`
-      SELECT id FROM roles WHERE key = 'SUPER_ADMIN' AND tenant_id IS NULL
-    `);
-    const superAdminRoleId = roleRes.rows[0]?.id;
-
-    if (superAdminRoleId) {
+    for (const u of usersToSeed) {
       await client.query(`
-        INSERT INTO memberships (tenant_id, user_id, role_id, status)
-        VALUES ($1, $2, $3, 'active')
-        ON CONFLICT (user_id, tenant_id) DO UPDATE SET status = 'active'
-      `, [tenantId, adminId, superAdminRoleId]);
+        INSERT INTO users (id, email, password_hash, status)
+        VALUES ($1, $2, $3, 'ACTIVE')
+        ON CONFLICT (id) DO UPDATE SET password_hash = EXCLUDED.password_hash, status = 'ACTIVE'
+      `, [u.id, u.email, u.hash]);
+
+      await client.query(`
+        INSERT INTO profiles (id, display_name, status)
+        VALUES ($1, $2, 'active')
+        ON CONFLICT (id) DO NOTHING
+      `, [u.id, u.name]);
+
+      const roleId = roleMap[u.roleKey];
+      if (roleId) {
+        await client.query(`
+          INSERT INTO memberships (tenant_id, user_id, role_id, status)
+          VALUES ($1, $2, $3, 'active')
+          ON CONFLICT (user_id, tenant_id) DO UPDATE SET status = 'active'
+        `, [tenantId, u.id, roleId]);
+      }
     }
+
+    // 7. Seed Student & Enrollment
+    const studentId = '00000000-0000-0000-0000-000000000020';
+    await client.query(`
+      INSERT INTO students (id, tenant_id, admission_number, first_name, last_name, qr_code, status)
+      VALUES ($1, $2, 'ADM-2026-0001', 'Aarav', 'Sharma', 'QR-00000000-0000-0000-0000-000000000020', 'active')
+      ON CONFLICT (id) DO NOTHING
+    `, [studentId, tenantId]);
+
+    await client.query(`
+      INSERT INTO enrollments (tenant_id, student_id, academic_year_id, class_id, section_id, roll_no, status, start_date)
+      VALUES ($1, $2, $3, $4, $5, '1', 'enrolled', CURRENT_DATE)
+      ON CONFLICT DO NOTHING
+    `, [tenantId, studentId, ayId, classId, secId]);
 
     await client.query('COMMIT');
     console.log('✔ Deterministic CI fixtures successfully seeded.');
+
+    // 8. Write state.json for E2E suites
+    const stateDir = path.resolve('qa/artifacts/rc');
+    fs.mkdirSync(stateDir, { recursive: true });
+    fs.writeFileSync(path.join(stateDir, 'state.json'), JSON.stringify({
+      password: 'Admin123!',
+      tenant: tenantId,
+      accounts: {
+        SUPER_ADMIN: { email: 'ci-admin@edunexus.example.test' },
+        TENANT_ADMIN: { email: 'admin@edunexus.app' },
+        PARENT: { email: 'parent@edunexus.app' },
+        ACCOUNTANT: { email: 'accountant@edunexus.app' },
+      }
+    }, null, 2));
+    console.log('✔ Generated qa/artifacts/rc/state.json for E2E suites.');
   } catch (err) {
     await client.query('ROLLBACK');
     console.error('Failed to seed CI fixtures:', err);

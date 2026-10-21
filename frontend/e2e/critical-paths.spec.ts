@@ -15,7 +15,7 @@ if (fs.existsSync(statePath)) {
   }
 }
 
-const BASE_URL = process.env.PLAYWRIGHT_TEST_BASE_URL || 'http://127.0.0.1:5191';
+const BASE_URL = process.env.PLAYWRIGHT_TEST_BASE_URL || process.env.PLAYWRIGHT_BASE_URL || 'http://127.0.0.1:5173';
 const API_URL = process.env.PLAYWRIGHT_API_URL || 'http://127.0.0.1:5111/api/v1';
 
 const ADMIN_EMAIL = testState?.accounts?.TENANT_ADMIN?.email || 'admin@edunexus.app';
