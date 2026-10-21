@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert';
-import { query } from '../dist/db.js';
+import { query } from '../src/db.js';
 import crypto from 'crypto';
-import { config } from '../dist/config.js';
-import { validateWebhookSignature, processWebhookEvent } from '../dist/services/razorpayService.js';
-import { getTenantSubscriptionState } from '../dist/services/subscriptionEntitlementService.js';
+import { config } from '../src/config.js';
+import { validateWebhookSignature, processWebhookEvent } from '../src/services/razorpayService.js';
+import { getTenantSubscriptionState } from '../src/services/subscriptionEntitlementService.js';
 
 test('SaaS Subscription Billing Test Suite', async (t) => {
   let tenantId;

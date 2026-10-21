@@ -78,7 +78,7 @@ jobs:
       - name: Run Backend Integration & Unit Suites
         run: |
           cd backend
-          node --import tsx --test \
+          node --import tsx --test --test-concurrency=1 \
             tests/api.test.mjs \
             tests/auth-middleware.test.mjs \
             tests/academic-operations-schema.test.mjs \
