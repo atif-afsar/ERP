@@ -33,8 +33,28 @@ export const authService = {
     catch (error: any) { return apiFailure(error, 'Unable to revoke the session.'); }
     finally { apiClient.setAuthToken(null); }
   },
-  async resetPassword(): Promise<ServiceResult<boolean>> {
-    return fail('NOT_FOUND', 'Password reset is not available yet. Contact an administrator.', null, 501);
+  async forgotPassword(email: string): Promise<ServiceResult<{ success: boolean; message: string }>> {
+    try {
+      const response = await apiClient.request<{ success: boolean; message: string }>('/api/v1/auth/forgot-password', {
+        method: 'POST',
+        body: { email: email.trim().toLowerCase() },
+      });
+      return ok(response.data || { success: true, message: 'Password reset instructions have been dispatched.' });
+    } catch (error: any) {
+      return apiFailure(error, 'Unable to process password reset request.');
+    }
+  },
+  async resetPassword(token: string, newPassword: string): Promise<ServiceResult<{ success: boolean; message: string }>> {
+    if (newPassword.length < 8) return fail('VALIDATION_ERROR', 'Password must be at least 8 characters long.', null, 422);
+    try {
+      const response = await apiClient.request<{ success: boolean; message: string }>('/api/v1/auth/reset-password', {
+        method: 'POST',
+        body: { token: token.trim(), password: newPassword },
+      });
+      return ok(response.data || { success: true, message: 'Password has been reset successfully.' });
+    } catch (error: any) {
+      return apiFailure(error, 'Unable to complete password reset.');
+    }
   },
   async updatePassword(oldPassword: string, newPassword: string): Promise<ServiceResult<boolean>> {
     if (newPassword.length < 8) return fail('VALIDATION_ERROR', 'Password must be at least 8 characters long.', null, 422);

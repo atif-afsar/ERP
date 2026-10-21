@@ -67,7 +67,7 @@ router.post('/plans', asyncHandler(async (req, res) => {
   );
 
   await writeAudit({
-    tenantId: null,
+    tenantId: req.user.tenantId || req.tenantId || '00000000-0000-0000-0000-000000000000',
     userId: req.user.id,
     action: 'SAAS_PLAN_CREATED',
     module: 'admin_billing',
@@ -99,7 +99,7 @@ router.patch('/plans/:id', asyncHandler(async (req, res) => {
   if (plan.rowCount === 0) throw new AppError('Plan not found', 404, 'NOT_FOUND');
   
   await writeAudit({
-    tenantId: null,
+    tenantId: req.user.tenantId || req.tenantId || '00000000-0000-0000-0000-000000000000',
     userId: req.user.id,
     action: 'SAAS_PLAN_UPDATED',
     module: 'admin_billing',
@@ -170,7 +170,7 @@ router.put('/payment-settings', asyncHandler(async (req, res) => {
   }
 
   await writeAudit({
-    tenantId: null,
+    tenantId: req.user.tenantId || req.tenantId || '00000000-0000-0000-0000-000000000000',
     userId: req.user.id,
     action: 'PLATFORM_PAYMENT_SETTINGS_UPDATED',
     module: 'admin_billing',

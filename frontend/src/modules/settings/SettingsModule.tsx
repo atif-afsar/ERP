@@ -129,9 +129,8 @@ export const SettingsModule: React.FC = () => {
 
   const featureList: { key: keyof TenantFeatureFlags; label: string; desc: string }[] = [
     { key: 'attendance', label: 'Attendance Management', desc: 'Daily roll call and attendance registers.' },
-    { key: 'qrAttendance', label: 'Smart QR Gate Scanner', desc: 'Live webcam & camera QR verification for fast check-in.' },
+    { key: 'qrAttendance', label: 'Smart QR Gate Scanner', desc: 'Live camera QR verification for fast check-in.' },
     { key: 'fees', label: 'Fee Management & Ledgers', desc: 'Fee structures, student ledgers, and installment tracking.' },
-    { key: 'onlinePayments', label: 'Razorpay Online Gateway', desc: 'Accept UPI, Cards, and NetBanking payments.' },
     { key: 'exams', label: 'Examinations & Grading', desc: 'Create exams, publish results, and track ranks.' },
     { key: 'reportCards', label: 'CBSE / State Report Cards', desc: 'Official printable report card generator.' },
     { key: 'testSeries', label: 'Competitive Test Series', desc: 'Mock tests, percentile calculations, and question analysis.' },
@@ -139,10 +138,7 @@ export const SettingsModule: React.FC = () => {
     { key: 'homework', label: 'Homework & Practice Sheets', desc: 'Publish daily practice sheets (DPP) and assignments.' },
     { key: 'timetable', label: 'Academic Timetable', desc: 'Weekly class schedule matrix and room bookings.' },
     { key: 'communication', label: 'Broadcast Notices', desc: 'Targeted announcements to parents, students, or staff.' },
-    { key: 'whatsappAlerts', label: 'WhatsApp Alert Triggers', desc: 'Direct WhatsApp deep-link parent notifications.' },
     { key: 'inquiryCrm', label: 'Admission CRM / Leads', desc: 'Track visitor inquiries and conversion pipeline.' },
-    { key: 'aiAssistant', label: 'AI WhatsApp & Portal Assistant', desc: 'Conversational assistant answering parent inquiries.' },
-    { key: 'aiReportSummary', label: 'AI Report Summarizer', desc: 'Auto-generates student academic performance narratives.' },
     { key: 'transport', label: 'Transport Management', desc: 'Bus routes, pickup stops, and vehicle tracking.' },
     { key: 'library', label: 'Library Management', desc: 'Book cataloging, issues, returns, and overdue fines.' },
     { key: 'hostel', label: 'Hostel & Dormitory', desc: 'Room allocation and mess fee tracking.' },
@@ -748,161 +744,46 @@ export const SettingsModule: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Gateway API Credentials */}
-            <div className="lg:col-span-2 glass-panel p-6 rounded-2xl border border-slate-800 space-y-5">
-              <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-                <div>
-                  <h3 className="font-bold text-slate-900 text-sm flex items-center gap-2">
-                    <CreditCard className="w-4 h-4 text-sky-400" />
-                    Merchant Gateway Credentials (Razorpay India)
-                  </h3>
-                  <p className="text-xs text-slate-400 mt-0.5">
-                    Enter API keys generated from your Razorpay Dashboard (Settings ➔ API Keys).
-                  </p>
-                </div>
-                {/* Environment Selector */}
-                <div className="flex items-center p-1 rounded-xl bg-slate-950 border border-slate-800 text-xs">
-                  <button
-                    type="button"
-                    onClick={() => setPaymentConfig({ ...paymentConfig, environment: 'TEST' })}
-                    className={`px-3 py-1 rounded-lg font-semibold transition-all ${
-                      paymentConfig.environment === 'TEST'
-                        ? 'bg-amber-500 text-slate-950 shadow-sm'
-                        : 'text-slate-400 hover:text-slate-900'
-                    }`}
-                  >
-                    Test Sandbox
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setPaymentConfig({ ...paymentConfig, environment: 'LIVE' })}
-                    className={`px-3 py-1 rounded-lg font-semibold transition-all ${
-                      paymentConfig.environment === 'LIVE'
-                        ? 'bg-emerald-500 text-slate-950 shadow-sm'
-                        : 'text-slate-400 hover:text-slate-900'
-                    }`}
-                  >
-                    Live Production
-                  </button>
-                </div>
+            {/* Manual Payment Architecture */}
+            <div className="lg:col-span-2 glass-panel p-6 rounded-2xl border border-slate-200 bg-white space-y-5">
+              <div className="border-b border-slate-100 pb-3">
+                <h3 className="font-bold text-slate-900 text-sm flex items-center gap-2">
+                  <CreditCard className="w-4 h-4 text-emerald-600" />
+                  Verified Manual Payment Architecture
+                </h3>
+                <p className="text-xs text-slate-500 mt-1">
+                  EduNexus operates on a zero-escrow, verified manual payment model. Direct online gateway capture is excluded to eliminate third-party processing fees, settlement delays, and chargeback exposure.
+                </p>
               </div>
 
-              <div className="grid grid-cols-1 gap-4 text-xs">
-                <div>
-                  <label className="block font-semibold text-slate-300 mb-1">
-                    Razorpay Key ID ({paymentConfig.environment === 'LIVE' ? 'rzp_live_...' : 'rzp_test_...'})
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={paymentConfig.razorpayKeyId || ''}
-                    onChange={(e) => setPaymentConfig({ ...paymentConfig, razorpayKeyId: e.target.value })}
-                    placeholder={paymentConfig.environment === 'LIVE' ? 'rzp_live_xxxxxxxxxxxxxxxx' : 'rzp_test_xxxxxxxxxxxxxxxx'}
-                    className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-slate-900 font-mono focus:border-sky-500 focus:outline-none"
-                  />
-                  <p className="text-[11px] text-slate-400 mt-1">
-                    Public Key used to render the client-side checkout popup for UPI, Cards & NetBanking.
-                  </p>
-                </div>
-
-                <div>
-                  <label className="block font-semibold text-slate-300 mb-1">
-                    Razorpay Key Secret (Private API Token)
-                  </label>
-                  <div className="relative">
-                    <input
-                      type={showSecretKey ? 'text' : 'password'}
-                      value={paymentConfig.razorpayKeySecret || ''}
-                      onChange={(e) => setPaymentConfig({ ...paymentConfig, razorpayKeySecret: e.target.value })}
-                      placeholder="Enter merchant secret key"
-                      className="w-full px-3 py-2 pr-10 rounded-xl bg-slate-950 border border-slate-800 text-slate-900 font-mono focus:border-sky-500 focus:outline-none"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowSecretKey(!showSecretKey)}
-                      className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-900"
-                    >
-                      {showSecretKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </button>
-                  </div>
-                  <p className="text-[11px] text-slate-400 mt-1">
-                    Private secret token stored encrypted for server-side order signature validation.
-                  </p>
-                </div>
-
-                <div>
-                  <label className="block font-semibold text-slate-300 mb-1">
-                    Webhook Secret Token (Optional)
-                  </label>
-                  <input
-                    type="text"
-                    value={paymentConfig.webhookSecret || ''}
-                    onChange={(e) => setPaymentConfig({ ...paymentConfig, webhookSecret: e.target.value })}
-                    placeholder="whsec_xxxxxxxxxxxxxxxxxxxxxx"
-                    className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-slate-900 font-mono focus:border-sky-500 focus:outline-none"
-                  />
-                  <p className="text-[11px] text-slate-400 mt-1">
-                    Used to verify incoming Razorpay webhook events (<code className="text-sky-300">payment.captured</code>).
-                  </p>
-                </div>
-              </div>
-
-              {/* Supported Payment Instruments */}
-              <div className="pt-4 border-t border-slate-800">
-                <span className="block font-bold text-slate-900 text-xs mb-3">Accepted Payment Channels</span>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  <label className="flex items-center gap-2 p-3 rounded-xl bg-slate-950/60 border border-slate-800 cursor-pointer text-xs">
-                    <input
-                      type="checkbox"
-                      checked={paymentConfig.allowUpi}
-                      onChange={(e) => setPaymentConfig({ ...paymentConfig, allowUpi: e.target.checked })}
-                      className="rounded text-sky-500"
-                    />
-                    <span className="text-slate-200 font-medium">Instant UPI</span>
-                  </label>
-
-                  <label className="flex items-center gap-2 p-3 rounded-xl bg-slate-950/60 border border-slate-800 cursor-pointer text-xs">
-                    <input
-                      type="checkbox"
-                      checked={paymentConfig.allowCards}
-                      onChange={(e) => setPaymentConfig({ ...paymentConfig, allowCards: e.target.checked })}
-                      className="rounded text-sky-500"
-                    />
-                    <span className="text-slate-200 font-medium">Cards (Visa/MC)</span>
-                  </label>
-
-                  <label className="flex items-center gap-2 p-3 rounded-xl bg-slate-950/60 border border-slate-800 cursor-pointer text-xs">
-                    <input
-                      type="checkbox"
-                      checked={paymentConfig.allowNetBanking}
-                      onChange={(e) => setPaymentConfig({ ...paymentConfig, allowNetBanking: e.target.checked })}
-                      className="rounded text-sky-500"
-                    />
-                    <span className="text-slate-200 font-medium">NetBanking</span>
-                  </label>
-
-                  <label className="flex items-center gap-2 p-3 rounded-xl bg-slate-950/60 border border-slate-800 cursor-pointer text-xs">
-                    <input
-                      type="checkbox"
-                      checked={paymentConfig.allowCashAtCounter}
-                      onChange={(e) => setPaymentConfig({ ...paymentConfig, allowCashAtCounter: e.target.checked })}
-                      className="rounded text-sky-500"
-                    />
-                    <span className="text-slate-200 font-medium">Counter Cash</span>
-                  </label>
-                </div>
+              <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs space-y-2">
+                <h4 className="font-bold flex items-center gap-1.5 text-emerald-800">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                  Supported Workflows in Production
+                </h4>
+                <ul className="list-disc pl-4 space-y-1.5 text-slate-700">
+                  <li>
+                    <strong>Parent Tuition Payments:</strong> Parents pay the school directly using school-provided QR codes or bank account details, submit the transaction reference and receipt proof in the portal. Authorized school administrators approve or reject submissions, instantly producing balanced accounting journals and official numbered receipts.
+                  </li>
+                  <li>
+                    <strong>Institution Subscription Payments:</strong> Institutions transfer plan fees to platform accounts, submit payment proofs, and Super Admins review and activate tenant access.
+                  </li>
+                  <li>
+                    <strong>School QR & Bank Setup:</strong> School administrators manage their institution's UPI ID, bank account, and payment QR code directly in <em>Fee Management &rarr; Settings</em>.
+                  </li>
+                </ul>
               </div>
             </div>
 
             {/* Direct Settlement Bank Details */}
-            <div className="glass-panel p-6 rounded-2xl border border-slate-800 space-y-4">
-              <div className="border-b border-slate-800 pb-3">
+            <div className="glass-panel p-6 rounded-2xl border border-slate-200 bg-white space-y-4">
+              <div className="border-b border-slate-100 pb-3">
                 <h3 className="font-bold text-slate-900 text-sm flex items-center gap-2">
-                  <Landmark className="w-4 h-4 text-emerald-400" />
-                  Direct Settlement Bank
+                  <Landmark className="w-4 h-4 text-emerald-600" />
+                  School Bank Account
                 </h3>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  Official account where Razorpay settles collected student tuition.
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Official account where parents transfer tuition and academic fees.
                 </p>
               </div>
 

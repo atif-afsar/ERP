@@ -52,6 +52,8 @@ export default {
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+        serif: ['"Instrument Serif"', '"Newsreader"', 'Georgia', 'serif'],
+        display: ['Outfit', 'sans-serif'],
       },
       boxShadow: {
         'glass': '0 8px 32px 0 rgba(31, 38, 135, 0.07)',

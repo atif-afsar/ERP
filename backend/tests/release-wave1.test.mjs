@@ -10,10 +10,6 @@ const rootDir = fs.existsSync(path.resolve('qa/artifacts/rc/state.json'))
   : path.resolve(process.cwd(), '..');
 dotenv.config({ path: path.resolve(rootDir, 'backend/.env') });
 const rcStatePath = path.resolve(rootDir, 'qa/artifacts/rc/state.json');
-const stateData = JSON.parse(fs.readFileSync(rcStatePath, 'utf8'));
-process.env.DATABASE_URL = `postgres://postgres:postgres@localhost:5432/${stateData.database}`;
-process.env.JWT_SECRET = process.env.JWT_SECRET || 'rc-local-only-secret-with-more-than-32-characters';
-process.env.FRONTEND_URL = process.env.FRONTEND_URL || 'http://127.0.0.1:5191';
 
 let pool, base, server, state, fixtures;
 let superAdminToken, tenantAdminToken, parentToken, otherTenantAdminToken;
@@ -39,19 +35,92 @@ const call = async (token, route, method = 'GET', body = null, headers = {}) => 
 };
 
 before(async () => {
+  assert.match(new URL(process.env.DATABASE_URL).pathname, /_test$/);
   ({ pool } = await import('../src/db.ts'));
-  state = JSON.parse(fs.readFileSync(rcStatePath, 'utf8'));
-  base = process.env.RC_API_URL || 'http://127.0.0.1:5111';
+  const bcrypt = (await import('bcryptjs')).default;
 
-  // Login as SUPER_ADMIN
+  if (process.env.RC_API_URL) {
+    base = process.env.RC_API_URL;
+  } else {
+    const { default: app } = await import('../src/server.ts');
+    server = app.listen(0, '127.0.0.1');
+    await new Promise(r => server.once('listening', r));
+    base = `http://127.0.0.1:${server.address().port}`;
+  }
+
+  let stateData = null;
+  if (fs.existsSync(rcStatePath)) {
+    try {
+      stateData = JSON.parse(fs.readFileSync(rcStatePath, 'utf8'));
+    } catch {}
+  }
+
+  const password = stateData?.password || 'Wave1!Password123';
+  const tag = randomUUID().slice(0, 8);
+  const hash = await bcrypt.hash(password, 10);
+
+  if (!stateData?.accounts?.TENANT_ADMIN || !stateData?.fixtures) {
+    await pool.query(`INSERT INTO tenants(id, name, slug, tenant_type, status) VALUES('00000000-0000-0000-0000-000000000000', 'Platform Administration', 'platform-admin-w1', 'school', 'active') ON CONFLICT (id) DO NOTHING`);
+    const saEmail = `super-w1-${tag}@test.local`;
+    const saUser = (await pool.query(`INSERT INTO users(email, password_hash, status) VALUES($1, $2, 'ACTIVE') RETURNING id`, [saEmail, hash])).rows[0];
+    await pool.query(`INSERT INTO profiles(id, display_name, status) VALUES($1, 'Super Admin', 'active') ON CONFLICT(id) DO NOTHING`, [saUser.id]);
+    await pool.query(`INSERT INTO memberships(user_id, tenant_id, role_id, status) SELECT $1, '00000000-0000-0000-0000-000000000000', id, 'active' FROM roles WHERE key='SUPER_ADMIN' AND tenant_id IS NULL`, [saUser.id]);
+
+    const tenantRes = (await pool.query(`INSERT INTO tenants(name, slug, tenant_type, status) VALUES($1, $2, 'school', 'active') RETURNING id`, [`Wave1 School ${tag}`, `w1-${tag}`])).rows[0];
+    tenantId = tenantRes.id;
+
+    const taEmail = `owner-w1-${tag}@test.local`;
+    const taUser = (await pool.query(`INSERT INTO users(email, password_hash, status) VALUES($1, $2, 'ACTIVE') RETURNING id`, [taEmail, hash])).rows[0];
+    await pool.query(`INSERT INTO profiles(id, display_name, status) VALUES($1, 'Wave1 Owner', 'active') ON CONFLICT(id) DO NOTHING`, [taUser.id]);
+    await pool.query(`INSERT INTO memberships(user_id, tenant_id, role_id, status) SELECT $1, $2, id, 'active' FROM roles WHERE key='TENANT_ADMIN' AND tenant_id IS NULL`, [taUser.id, tenantId]);
+
+    const yearRes = (await pool.query(`INSERT INTO academic_years(tenant_id, name, start_date, end_date, is_current, status) VALUES($1, $2, '2026-04-01', '2027-03-31', true, 'active') RETURNING id`, [tenantId, `Wave1 AY ${tag}`])).rows[0];
+    yearId = yearRes.id;
+    const classRes = (await pool.query(`INSERT INTO classes(tenant_id, academic_year_id, name, numeric_level) VALUES($1, $2, 'Grade 5', 5) RETURNING id`, [tenantId, yearId])).rows[0];
+    classId = classRes.id;
+    const secRes = (await pool.query(`INSERT INTO sections(tenant_id, class_id, name) VALUES($1, $2, 'Section A') RETURNING id`, [tenantId, classId])).rows[0];
+    sectionId = secRes.id;
+
+    const paEmail = `parent-w1-${tag}@test.local`;
+    const paUser = (await pool.query(`INSERT INTO users(email, password_hash, status) VALUES($1, $2, 'ACTIVE') RETURNING id`, [paEmail, hash])).rows[0];
+    await pool.query(`INSERT INTO profiles(id, display_name, status) VALUES($1, 'Wave1 Parent', 'active') ON CONFLICT(id) DO NOTHING`, [paUser.id]);
+    await pool.query(`INSERT INTO memberships(user_id, tenant_id, role_id, status) SELECT $1, $2, id, 'active' FROM roles WHERE key='PARENT' AND tenant_id IS NULL`, [paUser.id, tenantId]);
+    const parentRecord = (await pool.query(`INSERT INTO parents(tenant_id, user_id, first_name, last_name, email, phone) VALUES($1, $2, 'Parent', 'Wave1', $3, '9876543210') RETURNING id`, [tenantId, paUser.id, paEmail])).rows[0];
+
+    const studentRecord = (await pool.query(`INSERT INTO students(tenant_id, admission_no, first_name, last_name, gender, status) VALUES($1, $2, 'Student', 'Wave1', 'MALE', 'ACTIVE') RETURNING id`, [tenantId, `W1-${tag}`])).rows[0];
+    await pool.query(`INSERT INTO enrollments(tenant_id, student_id, academic_year_id, class_id, section_id, roll_no, status) VALUES($1, $2, $3, $4, $5, '1', 'enrolled')`, [tenantId, studentRecord.id, yearId, classId, sectionId]);
+    await pool.query(`INSERT INTO parent_students(tenant_id, parent_id, student_id, relationship_type) VALUES($1, $2, $3, 'Father')`, [tenantId, parentRecord.id, studentRecord.id]);
+
+    const otherRes = (await pool.query(`INSERT INTO tenants(name, slug, tenant_type, status) VALUES($1, $2, 'school', 'active') RETURNING id`, [`Wave1 Other School ${tag}`, `w1-other-${tag}`])).rows[0];
+
+    state = {
+      adminEmail: saEmail,
+      password,
+      tenant: tenantId,
+      otherTenant: otherRes.id,
+      accounts: {
+        SUPER_ADMIN: { email: saEmail },
+        TENANT_ADMIN: { email: taEmail },
+        PARENT: { email: paEmail }
+      },
+      fixtures: { year: yearId, class: classId, section: sectionId }
+    };
+  } else {
+    state = stateData;
+    tenantId = state.tenant;
+    fixtures = state.fixtures;
+    yearId = fixtures.year;
+    classId = fixtures.class;
+    sectionId = fixtures.section;
+  }
+
   const saRes = await call(null, '/auth/signin', 'POST', {
-    email: state.adminEmail,
+    email: state.adminEmail || state.accounts.SUPER_ADMIN.email,
     password: state.password,
   });
   assert.equal(saRes.status, 200, 'SUPER_ADMIN login succeeded');
   superAdminToken = saRes.data.token;
 
-  // Login as TENANT_ADMIN
   const taRes = await call(null, '/auth/signin', 'POST', {
     email: state.accounts.TENANT_ADMIN.email,
     password: state.password,
@@ -59,7 +128,6 @@ before(async () => {
   assert.equal(taRes.status, 200, 'TENANT_ADMIN login succeeded');
   tenantAdminToken = taRes.data.token;
 
-  // Login as PARENT
   const paRes = await call(null, '/auth/signin', 'POST', {
     email: state.accounts.PARENT.email,
     password: state.password,
@@ -67,18 +135,37 @@ before(async () => {
   assert.equal(paRes.status, 200, 'PARENT login succeeded');
   parentToken = paRes.data.token;
 
-  tenantId = state.tenant;
-  fixtures = state.fixtures;
-  yearId = fixtures.year;
-  classId = fixtures.class;
-  sectionId = fixtures.section;
+  let subjects = await call(tenantAdminToken, '/master-data/subjects');
+  if (!subjects.data?.length) {
+    const sub = await call(tenantAdminToken, '/master-data/subjects', 'POST', {
+      name: 'Mathematics',
+      code: `MATH_${tag.toUpperCase()}`,
+      isElective: false,
+      weeklyPeriods: 4,
+      passingMarks: 40,
+      maxMarks: 100
+    });
+    subjectId = sub.data.id;
+  } else {
+    subjectId = subjects.data[0].id;
+  }
 
-  // Fetch subject and grade scale
-  const subjects = await call(tenantAdminToken, '/master-data/subjects');
-  subjectId = subjects.data[0].id;
-
-  const scales = await call(tenantAdminToken, '/exams/grade-scales');
-  gradeScaleId = scales.data[0].id;
+  let scales = await call(tenantAdminToken, '/exams/grade-scales');
+  if (!scales.data?.length) {
+    const sc = await call(tenantAdminToken, '/exams/grade-scales', 'POST', {
+      name: `Scale-${tag}`,
+      bands: [
+        { grade: 'A', minPercentage: 90, maxPercentage: 100, gradePoint: 10 },
+        { grade: 'B', minPercentage: 75, maxPercentage: 89, gradePoint: 8 },
+        { grade: 'C', minPercentage: 60, maxPercentage: 74, gradePoint: 6 },
+        { grade: 'D', minPercentage: 40, maxPercentage: 59, gradePoint: 4 },
+        { grade: 'F', minPercentage: 0, maxPercentage: 39, gradePoint: 0 },
+      ],
+    });
+    gradeScaleId = sc.data.id;
+  } else {
+    gradeScaleId = scales.data[0].id;
+  }
 });
 
 after(async () => {
@@ -159,8 +246,8 @@ test('BUG-010: Exams with zero scheduled subjects or incomplete marks cannot be 
     sectionId: sectionId,
     gradeScaleId: gradeScaleId,
     term: 'TERM-WAVE1',
-    startDate: '2026-10-10',
-    endDate: '2026-10-11',
+    startDate: '2026-10-20',
+    endDate: '2026-10-21',
   });
   assert.equal(examRes.status, 201);
   const examId = examRes.data.id;
@@ -177,7 +264,7 @@ test('BUG-010: Exams with zero scheduled subjects or incomplete marks cannot be 
   // 3. Schedule a subject
   const schedRes = await call(tenantAdminToken, `/exams/${examId}/schedules`, 'POST', {
     subjectId,
-    examDate: '2026-10-10',
+    examDate: '2026-10-20',
     startTime: '09:00',
     endTime: '11:00',
     maxMarks: 100,

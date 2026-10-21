@@ -56,18 +56,17 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "https://checkout.razorpay.com"],
-      frameSrc: ["'self'", "https://checkout.razorpay.com"],
-      connectSrc: ["'self'", "https://api.razorpay.com"],
+      scriptSrc: ["'self'", "'unsafe-inline'"],
+      frameSrc: ["'self'"],
+      connectSrc: ["'self'"],
       imgSrc: ["'self'", "data:", "https://*"],
       styleSrc: ["'self'", "'unsafe-inline'"],
     },
   },
-  crossOriginEmbedderPolicy: false, // Prevents issues with external checkout frames
 }));
 app.use(globalLimiter);
 
-// Production-ready CORS: Restricts to Vercel FRONTEND_URL in production while permitting local dev
+// Production-ready CORS: Restricts to FRONTEND_URL in production while permitting local dev
 const corsOptions: cors.CorsOptions = {
   origin: (origin, callback) => {
     if (!origin || config.allowedOrigins.includes(origin)) return callback(null, true);
@@ -79,14 +78,7 @@ const corsOptions: cors.CorsOptions = {
 };
 
 app.use(cors(corsOptions));
-app.use(express.json({ 
-  limit: '12mb',
-  verify: (req: any, res, buf) => {
-    if (req.originalUrl.includes('/webhooks/razorpay')) {
-      req.rawBody = buf;
-    }
-  }
-}));
+app.use(express.json({ limit: '12mb' }));
 app.use(express.urlencoded({ extended: true, limit: '12mb' }));
 app.use(requestIdMiddleware);
 

@@ -60,7 +60,15 @@ test('SaaS Subscription Billing Test Suite', async (t) => {
     assert.strictEqual(state.isActive, false);
   });
 
+  await t.test('Webhook rejection when online gateway disabled', async () => {
+    assert.throws(
+      () => validateWebhookSignature(Buffer.from('payload'), 'sig', undefined),
+      /Webhook secret not configured or online gateway disabled/
+    );
+  });
+
   await t.test('Webhook processing: Valid Signature and Idempotency', async () => {
+    process.env.RAZORPAY_WEBHOOK_SECRET = 'test_secret';
     config.razorpayWebhookSecret = 'test_secret';
     
     const eventId = 'ev_' + crypto.randomBytes(8).toString('hex');
@@ -145,6 +153,7 @@ test('SaaS Subscription Billing Test Suite', async (t) => {
   });
 
   await t.test('Cleanup', async () => {
+    delete process.env.RAZORPAY_WEBHOOK_SECRET;
     await query(`DELETE FROM tenants WHERE id = $1`, [tenantId]);
     await query(`DELETE FROM subscription_plans WHERE id = $1`, [planId]);
   });

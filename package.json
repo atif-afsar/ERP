@@ -17,6 +17,7 @@
     "build:backend": "npm run build --workspace=backend",
     "start:backend": "npm run start --workspace=backend",
     "test:backend": "npm run test --workspace=backend",
+    "test:release": "node qa/run-release-audit.mjs",
     "db:up": "docker compose up -d",
     "db:down": "docker compose down"
   }

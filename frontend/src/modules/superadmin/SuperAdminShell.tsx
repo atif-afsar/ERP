@@ -16,7 +16,8 @@ import { useAuth } from '../../context/AuthContext';
 import { storage } from '../../services/storageService';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
-import { SuperAdminSaaSModule } from './SuperAdminSaaSModule';
+
+const SuperAdminSaaSModule = React.lazy(() => import('./SuperAdminSaaSModule').then(m => ({ default: m.SuperAdminSaaSModule })));
 
 interface SuperAdminShellProps {
   onNavigate: (route: string) => void;
@@ -235,7 +236,9 @@ export const SuperAdminShell: React.FC<SuperAdminShellProps> = ({ onNavigate, ac
           {/* TAB: Subscriptions */}
           {activeTab === 'subscriptions' && (
             <div className="space-y-4 animate-fade-in">
-              <SuperAdminSaaSModule />
+              <React.Suspense fallback={<div className="p-8 text-center text-xs text-slate-500">Loading SaaS subscriptions & platform settings...</div>}>
+                <SuperAdminSaaSModule />
+              </React.Suspense>
             </div>
           )}
 

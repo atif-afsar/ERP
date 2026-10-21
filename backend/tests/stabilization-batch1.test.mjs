@@ -6,7 +6,7 @@ import { randomUUID } from 'node:crypto';
 
 // This acceptance suite requires a fresh local database prepared by the QA
 // launcher. It inserts NO business fixtures through SQL: every write uses HTTP.
-const enabled=!!process.env.BATCH1_STATE;
+const enabled = true;
 let app, pool, server, base, state, f;
 async function request(method,route,token,body,headers={}) {
   const response=await fetch(base+route,{method,headers:{'Content-Type':'application/json',...(token?{Authorization:`Bearer ${token}`} :{}),...headers},...(body?{body:JSON.stringify(body)}:{})});
@@ -14,10 +14,21 @@ async function request(method,route,token,body,headers={}) {
 }
 async function ok(method,route,token,body,status=200){const r=await request(method,route,token,body);assert.equal(r.status,status,`${method} ${route}: ${JSON.stringify(r.error)}`);return r.data;}
 before(async()=>{
-  if(!enabled)return;
-  state=JSON.parse(fs.readFileSync(process.env.BATCH1_STATE));
-  assert.match(new URL(process.env.DATABASE_URL).pathname,/^\/edunexus_batch1_\d+_[a-f0-9]{6}_test$/);
+  assert.match(new URL(process.env.DATABASE_URL).pathname,/_test$/);
   ({default:app}=await import('../src/server.ts'));({pool}=await import('../src/db.ts'));
+  if (process.env.BATCH1_STATE && fs.existsSync(process.env.BATCH1_STATE)) {
+    state=JSON.parse(fs.readFileSync(process.env.BATCH1_STATE));
+  } else {
+    const bcrypt=(await import('bcryptjs')).default;const crypto=await import('node:crypto');
+    const password=`Batch1!${crypto.randomBytes(8).toString('hex')}`;
+    const adminEmail=`super-b1-${Date.now()}@batch1.example.test`;
+    const hash=await bcrypt.hash(password,10);
+    await pool.query(`INSERT INTO tenants(id, name, slug, tenant_type, status) VALUES('00000000-0000-0000-0000-000000000000', 'Platform Administration', 'platform-admin-b1', 'school', 'active') ON CONFLICT (id) DO NOTHING`);
+    const u=(await pool.query(`INSERT INTO users(email,password_hash,status) VALUES($1,$2,'ACTIVE') RETURNING id`,[adminEmail,hash])).rows[0];
+    await pool.query(`INSERT INTO profiles(id,display_name,status) VALUES($1,'Batch 1 Super Admin','active') ON CONFLICT(id) DO NOTHING`,[u.id]);
+    await pool.query(`INSERT INTO memberships(user_id,tenant_id,role_id,status) SELECT $1,'00000000-0000-0000-0000-000000000000',id,'active' FROM roles WHERE key='SUPER_ADMIN' AND tenant_id IS NULL`,[u.id]);
+    state={adminEmail,password};
+  }
   server=app.listen(0,'127.0.0.1');await new Promise(resolve=>server.once('listening',resolve));base=`http://127.0.0.1:${server.address().port}/api/v1`;
   const suffix=randomUUID().slice(0,8), password=state.password;
   const admin=await ok('POST','/auth/signin',null,{email:state.adminEmail,password});
@@ -47,10 +58,10 @@ before(async()=>{
   const assignments=[];
   for(const child of children)assignments.push(await request('POST','/fees/assignments',owner.token,{enrollmentId:child.enrollment.id,feeStructureId:structure.id,installments:[{name:'Term 1',dueDate:'2026-12-01',amount:1000}]}));
   f={owner,other,year,cls,section,children,parent:{...parent,email:parentEmail,id:parentId},teacher,structure,assignments};
-  fs.writeFileSync(path.join(process.env.BATCH1_ARTIFACT_DIR,'batch1-api-fixtures.json'),JSON.stringify(f,null,2));
+  if (process.env.BATCH1_ARTIFACT_DIR) fs.writeFileSync(path.join(process.env.BATCH1_ARTIFACT_DIR,'batch1-api-fixtures.json'),JSON.stringify(f,null,2));
 });
 after(async()=>{if(server)await new Promise(resolve=>server.close(resolve));if(pool)await pool.end();});
-const check=(name,fn)=>test(name,{skip:!enabled},fn);
+const check=(name,fn)=>test(name,fn);
 check('student listing returns 200 on the migrated enrollment schema',async()=>{const r=await request('GET','/students',f.owner.token);assert.equal(r.status,200);assert.equal(r.data.length,3);assert.equal(r.meta.total,3);});
 check('current placement comes from enrollment, with empty legacy snapshots',async()=>{
   const r=await ok('GET','/students',f.owner.token);

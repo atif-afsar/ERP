@@ -50,13 +50,18 @@
   }
 
   body {
-    @apply bg-[#f8fafc] text-slate-900 font-sans antialiased selection:bg-emerald-500 selection:text-white;
+    @apply bg-[#f8fafc] text-slate-900 font-sans antialiased;
     background-color: #f8fafc;
     color: #0f172a;
     font-feature-settings: "liga" 1, "calt" 1;
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+  }
+
+  ::selection {
+    background-color: #10b981;
+    color: #ffffff;
   }
 
   /* Ensure all text has proper contrast */
@@ -360,6 +365,119 @@
   }
   .ring-amber-500\/20 {
     --tw-ring-color: #f59e0b !important;
+  }
+}
+
+/*
+ * The application workspace intentionally normalizes legacy dark utility classes
+ * to a light enterprise theme above. Public marketing pages contain deliberate
+ * dark presentation surfaces, so restore their authored contrast within this
+ * isolated boundary instead of weakening the authenticated application theme.
+ */
+.public-landing [class*="bg-slate-950"] { background-color: #020617 !important; }
+.public-landing [class*="bg-slate-900"] { background-color: #0f172a !important; }
+.public-landing [class*="bg-slate-800"] { background-color: #1e293b !important; }
+.public-landing [class*="bg-slate-700"] { background-color: #334155 !important; }
+
+.public-landing [class*="bg-slate-7"][class*="text-white"],
+.public-landing [class*="bg-slate-8"][class*="text-white"],
+.public-landing [class*="bg-slate-9"][class*="text-white"] {
+  color: #ffffff !important;
+}
+
+.public-landing .landing-dark,
+.public-landing .landing-dark .text-white { color: #ffffff !important; }
+.public-landing .landing-dark .text-slate-100 { color: #f1f5f9 !important; }
+.public-landing .landing-dark .text-slate-200 { color: #e2e8f0 !important; }
+.public-landing .landing-dark .text-slate-300 { color: #cbd5e1 !important; }
+.public-landing .landing-dark .text-slate-400 { color: #94a3b8 !important; }
+.public-landing .landing-dark .text-slate-500 { color: #64748b !important; }
+.public-landing .landing-dark .text-emerald-400 { color: #34d399 !important; }
+
+.public-landing .landing-dark h1,
+.public-landing .landing-dark h2,
+.public-landing .landing-dark h3,
+.public-landing .landing-dark h4,
+.public-landing .landing-dark h5,
+.public-landing .landing-dark h6 { color: #ffffff !important; }
+.public-landing .landing-dark p { color: #cbd5e1 !important; }
+.public-landing .landing-dark button { color: #cbd5e1 !important; }
+.public-landing .landing-dark button[class~="bg-white"] { color: #0f172a !important; }
+
+.public-landing .landing-dark button:hover,
+.public-landing .landing-dark a:hover { color: #ffffff; }
+
+/* Minimal hero motion: calm, composited transforms with an accessible opt-out. */
+@keyframes landing-hero-drift {
+  from { transform: scale(1.015) translate3d(-0.35%, -0.25%, 0); }
+  to { transform: scale(1.035) translate3d(0.35%, 0.3%, 0); }
+}
+
+@keyframes landing-float-left {
+  0%, 100% { transform: translate3d(0, 0, 0) rotate(-7deg); }
+  50% { transform: translate3d(0, -9px, 0) rotate(-5.5deg); }
+}
+
+@keyframes landing-float-right {
+  0%, 100% { transform: translate3d(0, 0, 0) rotate(6deg); }
+  50% { transform: translate3d(0, 8px, 0) rotate(4.5deg); }
+}
+
+@keyframes landing-rise-in {
+  from { opacity: 0; transform: translate3d(0, 18px, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+
+@keyframes landing-bar-grow {
+  from { opacity: 0.35; transform: scaleY(0.08); }
+  to { opacity: 1; transform: scaleY(1); }
+}
+
+.public-landing .landing-hero-bg {
+  animation: landing-hero-drift 13s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+.public-landing .landing-float-card-left {
+  animation: landing-float-left 6.5s ease-in-out infinite;
+  will-change: transform;
+}
+
+.public-landing .landing-float-card-right {
+  animation: landing-float-right 7.5s ease-in-out 0.4s infinite;
+  will-change: transform;
+}
+
+.public-landing .landing-hero-copy {
+  animation: landing-rise-in 700ms cubic-bezier(.2,.75,.25,1) both;
+}
+
+.public-landing .landing-product-preview {
+  animation: landing-rise-in 780ms 160ms cubic-bezier(.2,.75,.25,1) both;
+}
+
+.public-landing .landing-chart-bar {
+  animation: landing-bar-grow 620ms cubic-bezier(.2,.75,.25,1) both;
+  transform-origin: center bottom;
+}
+
+@media (max-width: 639px) {
+  .public-landing .landing-hero-bg {
+    animation-duration: 18s;
+    background-size: 100% 100% !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .public-landing .landing-hero-bg,
+  .public-landing .landing-float-card,
+  .public-landing .landing-hero-copy,
+  .public-landing .landing-product-preview,
+  .public-landing .landing-chart-bar {
+    animation: none !important;
+    transform: none !important;
   }
 }
 

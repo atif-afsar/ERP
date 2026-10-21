@@ -7,13 +7,13 @@ import { enqueueNotification } from './notificationService.js';
 /**
  * Validates Razorpay Webhook signature using HMAC SHA256.
  */
-export function validateWebhookSignature(rawBody: Buffer, signature: string): boolean {
-  if (!config.razorpayWebhookSecret) {
-    throw new AppError('Webhook secret not configured', 500);
+export function validateWebhookSignature(rawBody: Buffer, signature: string, secret = process.env.RAZORPAY_WEBHOOK_SECRET): boolean {
+  if (!secret) {
+    throw new AppError('Webhook secret not configured or online gateway disabled', 500);
   }
   
   const expectedSignature = crypto
-    .createHmac('sha256', config.razorpayWebhookSecret)
+    .createHmac('sha256', secret)
     .update(rawBody)
     .digest('hex');
     

@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { createHash, randomUUID } from 'node:crypto';
+import { createHash, randomUUID, randomBytes } from 'node:crypto';
 import { z } from 'zod';
 import { query, transaction } from '../db.js';
 import { AppError } from '../middleware/errorHandler.js';
@@ -11,12 +11,22 @@ import { validateBody } from '../middleware/validation.js';
 import { config } from '../config.js';
 import { writeAudit } from '../services/auditService.js';
 import { enqueueNotification } from '../services/notificationService.js';
+import { authLimiter } from '../middleware/rateLimiter.js';
 
 const router = Router();
 const signInSchema = z.object({ email: z.string().email(), password: z.string().min(1), tenantId: z.string().uuid().optional() });
 const passwordSchema = z.object({ oldPassword: z.string().min(1), newPassword: z.string().min(8).max(72) });
 const onboardingSchema = z.object({ token: z.string().min(32), password: z.string().min(12).max(72)
   .regex(/[A-Z]/, 'Password requires an uppercase letter').regex(/[a-z]/, 'Password requires a lowercase letter').regex(/\d/, 'Password requires a number') });
+const forgotPasswordSchema = z.object({ email: z.string().email() });
+const resetPasswordSchema = z.object({
+  token: z.string().min(16),
+  password: z.string().min(8).max(72)
+    .regex(/[A-Z]/, 'Password requires an uppercase letter')
+    .regex(/[a-z]/, 'Password requires a lowercase letter')
+    .regex(/\d/, 'Password requires a number'),
+});
+
 export function createToken(user: { id: string; email: string; role: string; tenantId: string; version: number }) {
   return jwt.sign(user, config.jwtSecret, { algorithm: 'HS256', subject: user.id, jwtid: randomUUID(),
     issuer: config.jwtIssuer, audience: config.jwtAudience, expiresIn: config.jwtExpiresIn as any });
@@ -105,7 +115,161 @@ router.post('/onboarding/accept', authLimiter, validateBody(onboardingSchema), a
   });
   res.json({ data: { ...result, success: true }, requestId: req.id, timestamp: new Date().toISOString() });
 }));
-import { authLimiter } from '../middleware/rateLimiter.js';
+
+router.post('/forgot-password', authLimiter, validateBody(forgotPasswordSchema), asyncHandler(async (req: Request, res: Response) => {
+  const email = req.body.email.trim().toLowerCase();
+  const genericMessage = 'If an account matches our records, instructions to reset your password have been sent.';
+
+  const userResult = await query(
+    `SELECT u.id, u.email, u.status, p.display_name, m.tenant_id
+     FROM users u
+     LEFT JOIN profiles p ON p.id = u.id
+     LEFT JOIN memberships m ON m.user_id = u.id AND m.status = 'active'
+     WHERE LOWER(u.email) = $1
+     ORDER BY m.joined_at ASC LIMIT 1`,
+    [email]
+  );
+
+  const user = userResult.rows[0];
+  if (user && user.status === 'ACTIVE') {
+    const rawToken = randomBytes(32).toString('hex');
+    const tokenHash = createHash('sha256').update(rawToken).digest('hex');
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
+
+    await transaction(async client => {
+      await client.query(
+        `UPDATE password_reset_tokens SET used_at = NOW() WHERE user_id = $1 AND used_at IS NULL`,
+        [user.id]
+      );
+
+      await client.query(
+        `INSERT INTO password_reset_tokens (user_id, token_hash, expires_at, created_ip, user_agent)
+         VALUES ($1, $2, $3, $4, $5)`,
+        [user.id, tokenHash, expiresAt, req.ip || null, req.headers['user-agent'] || null]
+      );
+
+      const resetUrl = `${config.appPublicUrl}/#/reset-password?token=${rawToken}`;
+      const tenantId = user.tenant_id || null;
+
+      if (tenantId) {
+        await enqueueNotification(
+          {
+            tenantId,
+            eventType: 'PASSWORD_RESET',
+            templateCode: 'PASSWORD_RESET',
+            sourceType: 'SECURITY_EVENT',
+            sourceId: randomUUID(),
+            payload: {
+              name: user.display_name || user.email,
+              reset_url: resetUrl,
+            },
+            priority: 'HIGH',
+          },
+          [{ userId: user.id }],
+          client
+        );
+      }
+
+      await writeAudit(
+        {
+          tenantId,
+          userId: user.id,
+          action: 'PASSWORD_RESET_REQUESTED',
+          module: 'auth',
+          entityId: user.id,
+          details: { emailDomain: email.split('@')[1] },
+          request: req,
+        },
+        client
+      );
+    });
+  }
+
+  res.json({
+    data: { success: true, message: genericMessage },
+    requestId: req.id,
+    timestamp: new Date().toISOString(),
+  });
+}));
+
+router.post('/reset-password', authLimiter, validateBody(resetPasswordSchema), asyncHandler(async (req: Request, res: Response) => {
+  const { token, password } = req.body;
+  const tokenHash = createHash('sha256').update(token.trim()).digest('hex');
+  const passwordHash = await bcrypt.hash(password, 12);
+
+  await transaction(async client => {
+    const tokenResult = await client.query(
+      `SELECT prt.*, u.email, u.status as user_status
+       FROM password_reset_tokens prt
+       JOIN users u ON u.id = prt.user_id
+       WHERE prt.token_hash = $1 FOR UPDATE OF prt`,
+      [tokenHash]
+    );
+
+    const resetToken = tokenResult.rows[0];
+    if (!resetToken || resetToken.used_at || new Date(resetToken.expires_at) <= new Date()) {
+      throw new AppError('Password reset link is invalid or has expired. Please request a new one.', 400, 'RESET_TOKEN_INVALID');
+    }
+
+    if (resetToken.user_status !== 'ACTIVE') {
+      throw new AppError('Account is inactive.', 403, 'ACCOUNT_INACTIVE');
+    }
+
+    await client.query(
+      `UPDATE users SET password_hash = $1, auth_version = auth_version + 1, updated_at = NOW() WHERE id = $2`,
+      [passwordHash, resetToken.user_id]
+    );
+
+    await client.query(
+      `UPDATE password_reset_tokens SET used_at = NOW() WHERE id = $1`,
+      [resetToken.id]
+    );
+
+    await client.query(
+      `UPDATE password_reset_tokens SET used_at = NOW() WHERE user_id = $1 AND used_at IS NULL AND id != $2`,
+      [resetToken.user_id, resetToken.id]
+    );
+
+    const membershipRes = await client.query(
+      `SELECT tenant_id FROM memberships WHERE user_id = $1 AND status = 'active' ORDER BY joined_at ASC LIMIT 1`,
+      [resetToken.user_id]
+    );
+    const tenantId = membershipRes.rows[0]?.tenant_id || '00000000-0000-0000-0000-000000000000';
+
+    await enqueueNotification(
+      {
+        tenantId,
+        eventType: 'PASSWORD_CHANGED',
+        templateCode: 'PASSWORD_CHANGED',
+        sourceType: 'SECURITY_EVENT',
+        sourceId: randomUUID(),
+        payload: {},
+        priority: 'HIGH',
+      },
+      [{ userId: resetToken.user_id }],
+      client
+    );
+
+    await writeAudit(
+      {
+        tenantId,
+        userId: resetToken.user_id,
+        action: 'PASSWORD_RESET_COMPLETED',
+        module: 'auth',
+        entityId: resetToken.user_id,
+        details: { resetTokenId: resetToken.id },
+        request: req,
+      },
+      client
+    );
+  });
+
+  res.json({
+    data: { success: true, message: 'Password has been reset successfully. Please sign in with your new password.' },
+    requestId: req.id,
+    timestamp: new Date().toISOString(),
+  });
+}));
 
 router.post('/signin', authLimiter, validateBody(signInSchema), asyncHandler(async (req: Request, res: Response) => {
   const email = req.body.email.trim().toLowerCase();

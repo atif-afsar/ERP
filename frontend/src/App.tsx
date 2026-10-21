@@ -16,7 +16,6 @@ const DashboardModule = React.lazy(() => import('./modules/dashboard/DashboardMo
 const StudentLifecycleModule = React.lazy(() => import('./modules/students/StudentLifecycleModule').then(m => ({ default: m.StudentLifecycleModule })));
 const AcademicsModule = React.lazy(() => import('./modules/academics/AcademicsModule').then(m => ({ default: m.AcademicsModule })));
 const AttendanceModule = React.lazy(() => import('./modules/attendance/AttendanceModule').then(m => ({ default: m.AttendanceModule })));
-const FeesModule = React.lazy(() => import('./modules/fees/FeesModule').then(m => ({ default: m.FeesModule })));
 const FeeManagementModule = React.lazy(() => import('./modules/fees/FeeManagementModule').then(m => ({ default: m.FeeManagementModule })));
 const FinanceModule = React.lazy(() => import('./modules/finance/FinanceModule').then(m => ({ default: m.FinanceModule })));
 const InventoryOperationsModule = React.lazy(() => import('./modules/inventory/InventoryOperationsModule').then(m => ({ default: m.InventoryOperationsModule })));
@@ -454,13 +453,14 @@ const MainRouter: React.FC = () => {
     <>
       {renderPageContent()}
 
-      {/* Universal Floating AI Assistant Bot - accessible everywhere for anyone */}
-      <GlobalAiAssistantBot
-        onNavigate={navigateTo}
-        isOpen={isAiModalOpen}
-        onOpen={() => setIsAiModalOpen(true)}
-        onClose={() => setIsAiModalOpen(false)}
-      />
+      {!isPublicRoute && (
+        <GlobalAiAssistantBot
+          onNavigate={navigateTo}
+          isOpen={isAiModalOpen}
+          onOpen={() => setIsAiModalOpen(true)}
+          onClose={() => setIsAiModalOpen(false)}
+        />
+      )}
     </>
   );
 };
@@ -476,4 +476,5 @@ export function App() {
 }
 
 export default App;
+
 
