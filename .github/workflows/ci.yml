@@ -104,9 +104,11 @@ jobs:
         run: npm run build:frontend
 
       - name: Launch Application & Verification Services
+        env:
+          RC_STATE: "true"
         run: |
           # Start Backend Server in background
-          node backend/dist/server.js > /tmp/edunexus-api.log 2>&1 &
+          RC_STATE=true node backend/dist/server.js > /tmp/edunexus-api.log 2>&1 &
           echo $! > /tmp/edunexus-api.pid
 
           # Start Notification Worker in background
