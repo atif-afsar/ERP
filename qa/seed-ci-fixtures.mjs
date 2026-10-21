@@ -95,16 +95,17 @@ async function seed() {
     // 7. Seed Student & Enrollment
     const studentId = '00000000-0000-0000-0000-000000000020';
     await client.query(`
-      INSERT INTO students (id, tenant_id, admission_number, first_name, last_name, qr_code, status)
-      VALUES ($1, $2, 'ADM-2026-0001', 'Aarav', 'Sharma', 'QR-00000000-0000-0000-0000-000000000020', 'active')
+      INSERT INTO students (id, tenant_id, admission_no, first_name, last_name, gender, status, qr_code)
+      VALUES ($1, $2, 'ADM-2026-0001', 'Aarav', 'Sharma', 'MALE', 'ACTIVE', 'QR-00000000-0000-0000-0000-000000000020')
       ON CONFLICT (id) DO NOTHING
     `, [studentId, tenantId]);
 
+    const enrollmentId = '00000000-0000-0000-0000-000000000021';
     await client.query(`
-      INSERT INTO enrollments (tenant_id, student_id, academic_year_id, class_id, section_id, roll_no, status, start_date)
-      VALUES ($1, $2, $3, $4, $5, '1', 'enrolled', CURRENT_DATE)
+      INSERT INTO enrollments (id, tenant_id, student_id, academic_year_id, class_id, section_id, roll_no, status, start_date)
+      VALUES ($1, $2, $3, $4, $5, $6, '1', 'enrolled', CURRENT_DATE)
       ON CONFLICT DO NOTHING
-    `, [tenantId, studentId, ayId, classId, secId]);
+    `, [enrollmentId, tenantId, studentId, ayId, classId, secId]);
 
     await client.query('COMMIT');
     console.log('✔ Deterministic CI fixtures successfully seeded.');
