@@ -24,7 +24,8 @@ This document lists all pre-configured, active accounts available for manual tes
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | **Super Administrator** | Platform Super Admin | `admin@edunexus.com` | `EduNexus2026!Admin` | *Global Platform* | Tenant Onboarding, SaaS Proofs, QR Settings, Audit |
 | **Super Administrator (CI)** | CI System Admin | `ci-admin@edunexus.example.test` | `EduNexusCI2026!Pass` | *Global Platform* | Automated Testing & System Overrides |
-| **School Owner / Principal** | Dr. Arthur Mitchell | `schooladmin@ci-academy.test` | `EduNexus2026!School` | CI Automation Academy | All School Modules, SaaS Plan Subscription & QR Upload |
+| **School Owner / Principal** | Dr. Yasir Ali | `admin@yasiraliclasses.in` | `Admin@12345` | Yasir Ali International School | Full Academic & Finance Suite (Campus Pro) |
+| **School Owner / Principal (Demo)** | Dr. Arthur Mitchell | `schooladmin@ci-academy.test` | `EduNexus2026!School` | CI Automation Academy | All School Modules, SaaS Plan Subscription & QR Upload |
 | **Senior Teacher** | Prof. Sarah Jenkins | `teacher@ci-academy.test` | `EduNexus2026!Teacher` | CI Automation Academy | Attendance, Gradebook, Homework, Academics |
 | **Chief Accountant** | Robert Vance | `accountant@ci-academy.test` | `EduNexus2026!Account` | CI Automation Academy | Fee Structures, Payment Proofs, Receipts, Finance |
 | **Administrative Staff** | Emily Davis | `staff@ci-academy.test` | `EduNexus2026!Staff` | CI Automation Academy | Student Records, Library, Inventory, Transport |
