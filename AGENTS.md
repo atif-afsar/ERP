@@ -15,21 +15,22 @@ Last updated: 2026-10-22, after the V1 scope reduction.
 | Sidebar item | What it does |
 |---|---|
 | Dashboard | Key numbers per role |
-| Students | Admission, profile, parents, yearly enrollment, CSV import, parent/student logins, documents |
+| Students | Admission, profile, parents, yearly enrollment, Excel (.xlsx)/CSV import with flexible headers (unmatched columns kept in notes), parent/student logins, documents |
 | Attendance | Daily class roster, corrections with history, reports. **QR attendance for coaching plans only** (§7) |
 | Examinations | Grade scales, exams, schedules, marks entry, results, report cards, publish |
 | Timetable | Weekly slots with teacher/room clash check. Students see their own timetable |
 | Homework | Teachers post; parents and students see their own class's homework |
 | Fees | Structures, assignments, installments, concessions, UPI/bank settings, proof upload, approval, receipts, reminders |
 | Notices | Templates, in-app + email delivery, delivery log |
-| Staff | Staff records, teaching assignments, teacher invitations |
+| Staff & HR | Staff records, teaching assignments, teacher invitations, Excel/CSV staff import, **leave** (types, balances, request/approve/revoke), **staff attendance**, **payroll** (salary structures, monthly runs, payslips). Employees without `staff.view` see it as "My HR" (own leave + payslips) |
 | Reports | Student, attendance, fee and exam reports with CSV export |
 | School/Institute Setup | Profile, academic years, classes, sections, subjects, teacher assignments |
 | Users & Access | Invite users, fixed roles, activate/suspend, activity log |
 | Subscription | Plan, payment-proof upload, renew |
 
   The parent portal, student portal, teacher view, Super Admin console, and the public landing/pricing/sign-up pages are also in V1.
-- **Removed from V1 (planned for V2):** finance/accounting screens, HR leave and staff attendance, payroll, library, inventory, transport, hostel, mess, CRM, AI assistant, health records, custom roles, multiple branches, student ID card, and homework submissions/grading. Their code was **deleted from `main`**. The full pre-V1 code, including an unfinished Gemini AI assistant, is preserved on the local branch **`archive/full-erp-before-v1`** (commit `aaeea88`). Their **database tables still exist** (unused), so V2 can be restored without data migration.
+- **Staff & HR is back in V1 (owner's request, 2026-10-22):** leave and staff attendance were restored from the archive as `routes/hr.ts`; payroll was built new (migration 0048). The legacy `payroll_records` table is unused.
+- **Removed from V1 (planned for V2):** finance/accounting screens, library, inventory, transport, hostel, mess, CRM, AI assistant, health records, custom roles, multiple branches, student ID card, and homework submissions/grading. Their code was **deleted from `main`**. The full pre-V1 code, including an unfinished Gemini AI assistant, is preserved on the local branch **`archive/full-erp-before-v1`** (commit `aaeea88`). Their **database tables still exist** (unused), so V2 can be restored without data migration.
 - **Payments are manual by design.** Payers transfer by bank or UPI, upload proof (screenshot + UTR), and an admin approves. This applies to SaaS subscriptions (Super Admin approves; the subscription activates) and to school fees (accountant/owner approves; a payment, a receipt `REC-YYYY-XXXXXX` and balanced journal lines are created). There is no payment gateway. Do not add one unless asked.
 
 ## 2. Repository layout
@@ -130,6 +131,7 @@ npm run build                      # tsc + vite build for both
 | `/students` | `studentLifecycle.ts` | admissions, guardians, enrollments, documents, invitations, `self/results` |
 | `/parents` | `parents.ts` | parent portal: children, results |
 | `/staff` | `academicOperations.ts` | staff, teaching assignments, `teaching-context` (misleading filename) |
+| `/hr` | `hr.ts` | leave types/balances/requests, staff attendance (`PUT /attendance/bulk`), payroll (`/payroll/salaries`, `/payroll/runs` Draft→Finalized→Paid, `/payroll/my-payslips`). Permissions `hr.*`; loss of pay = ABSENT days + approved unpaid leave |
 | `/attendance/qr` | `qrAttendance.ts` | QR attendance v2, coaching plans only (§7). Mounted before `/attendance` |
 | `/attendance` | `attendanceOperations.ts` | roster, bulk mark, corrections, history, self/children, reports |
 | `/timetable` | `timetableOperations.ts` | CRUD with clash detection; `GET /self` for students |
@@ -166,11 +168,11 @@ npm run build                      # tsc + vite build for both
 
 - PostgreSQL 16, UUID PKs, `tenant_id` on business tables. Tables for V2 modules still exist but are unused.
 - Student model: a permanent `students` identity + yearly `enrollments` (class and section live on the enrollment) + `parents`/`parent_students`.
-- **Adding a migration:** create `backend/sql/migrations/native_00NN_snake_name.sql`. The next number is **0048**. Make it idempotent. **Never edit or delete an applied migration**: the runner stores checksums and refuses to start if one is missing (that's why `native_0046_ai_rag_assistant.sql` stays even though AI was removed).
+- **Adding a migration:** create `backend/sql/migrations/native_00NN_snake_name.sql`. The next number is **0049**. Make it idempotent. **Never edit or delete an applied migration**: the runner stores checksums and refuses to start if one is missing (that's why `native_0046_ai_rag_assistant.sql` stays even though AI was removed).
 
 ## 9. Testing & QA
 
-- `npm run test:backend` runs all suites against a recreated `edunexus_erp_test` (localhost only). Status 2026-10-22: **169/169 passing**. `resend-provider`'s "two competing workers" test can fail intermittently when other suites enqueue emails at the same time; CI runs with `--test-concurrency=1`.
+- `npm run test:backend` runs all suites against a recreated `edunexus_erp_test` (localhost only). Status 2026-10-22: **180/180 passing** with `--test-concurrency=1` (incl. `staff-hr-payroll.test.mjs`). `resend-provider`'s "two competing workers" test can fail intermittently when other suites enqueue emails at the same time; CI runs with `--test-concurrency=1`.
 - CI runs an explicit list of suites in `.github/workflows/ci.yml`. Add new suites there.
 - Frontend: `tsc` + `vite build` both pass. Playwright specs live in `frontend/e2e` and `frontend/tests` and may reference removed screens.
 - `qa/` scripts are one-offs from earlier phases. Several still target V2 modules; treat them as stale.

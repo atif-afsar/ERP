@@ -45,6 +45,15 @@ const KNOWN_UNIQUE_CONSTRAINTS: Record<string, { code: string; message: string }
     code: 'EMPLOYEE_ID_EXISTS',
     message: 'A staff member with this employee ID already exists.',
   },
+  // HR leave types and payroll
+  leave_types_tenant_id_name_key: {
+    code: 'LEAVE_TYPE_EXISTS',
+    message: 'A leave type with this name already exists.',
+  },
+  payroll_runs_tenant_id_year_month_key: {
+    code: 'PAYROLL_RUN_EXISTS',
+    message: 'A payroll run already exists for this month.',
+  },
   // SaaS plan code
   subscription_plans_code_key: {
     code: 'PLAN_CODE_EXISTS',

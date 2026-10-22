@@ -145,8 +145,15 @@ From the root directory, you can orchestrate tasks without changing directories:
 | `JWT_SECRET` | **Yes** | Strong random 32+ character key (e.g. `openssl rand -hex 32`) |
 | `JWT_EXPIRES_IN` | Optional | `7d` (Default token lifetime) |
 | `FRONTEND_URL` | **Yes** | `https://your-edunexus-erp.vercel.app` (Your production Vercel frontend URL) |
-| `CORS_ORIGIN` | Optional | Custom origin override or comma-separated list |
+| `CORS_ORIGIN` | Optional | Extra allowed origins, comma-separated (e.g. `https://edunexus.network`) |
+| `APP_PUBLIC_URL` | Recommended | Public site URL used in email links (password reset, invitations) |
 | `LOG_LEVEL` | Optional | `info` or `warn` |
+| `EMAIL_DELIVERY_MODE` | **Yes** | Must be `LIVE` when `NODE_ENV=production` (startup fails otherwise) |
+| `RESEND_API_KEY` | **Yes** | Resend API key (`re_…`) |
+| `EMAIL_FROM_ADDRESS` | **Yes** | Sender on a Resend-verified domain, e.g. `notifications@edunexus.network` |
+| `EMAIL_FROM_NAME` | Optional | Sender display name (default `EduNexus`) |
+
+Emails are sent only by the separate **worker** process (`dist/worker.js`). If the worker isn't running, notifications and emails stay queued in `notification_jobs`.
 
 ---
 
@@ -201,12 +208,12 @@ ALTER DATABASE edunexus_erp OWNER TO edunexus_user;
 \q
 ```
 
-Apply migrations and schema:
+Apply migrations (after creating `.env` in step 3). Always use the migration runner. It records checksums and applies `sql/001_schema.sql` plus every `sql/migrations/native_*` file in order. Don't run the SQL files by hand.
 ```bash
 # Clone or pull your repository on the VPS
 cd /var/www/edunexus/backend
-psql -U edunexus_user -d edunexus_erp -h 127.0.0.1 -f sql/001_schema.sql
-psql -U edunexus_user -d edunexus_erp -h 127.0.0.1 -f sql/002_seed.sql
+npm ci
+npm run db:migrate
 ```
 
 Create initial Super Admin user:
@@ -227,17 +234,25 @@ NODE_ENV=production
 DATABASE_URL=postgresql://edunexus_user:YOUR_STRONG_PASSWORD@127.0.0.1:5432/edunexus_erp
 JWT_SECRET=USE_A_STRONG_RANDOM_GENERATED_SECRET_KEY_HERE
 JWT_EXPIRES_IN=7d
-FRONTEND_URL=https://your-edunexus-erp.vercel.app
+FRONTEND_URL=https://www.edunexus.network
+CORS_ORIGIN=https://edunexus.network
+APP_PUBLIC_URL=https://www.edunexus.network
 LOG_LEVEL=info
+EMAIL_DELIVERY_MODE=LIVE
+RESEND_API_KEY=re_your_key
+EMAIL_FROM_NAME=EduNexus
+EMAIL_FROM_ADDRESS=notifications@edunexus.network
 ```
 
 ### 4. Build and Start Backend with PM2
 ```bash
-npm install --production=false
+npm ci
 npm run build
-pm2 start deploy/ecosystem.config.cjs --env production
+sudo mkdir -p /var/log/edunexus && sudo chown "$USER" /var/log/edunexus
+pm2 start deploy/ecosystem.config.cjs --env production   # starts edunexus-api (cluster) AND edunexus-worker (emails)
 pm2 save
 pm2 startup
+pm2 status   # both edunexus-api and edunexus-worker must be "online"
 ```
 
 Verify backend health locally:
@@ -312,6 +327,17 @@ Expected output:
   "environment": "production"
 }
 ```
+
+### Go-live checklist (edunexus.network)
+
+The frontend is on Vercel at `www.edunexus.network`. The API should live at `api.edunexus.network` on the VPS.
+
+1. **DNS:** add an `A` record `api.edunexus.network → <VPS IP>`.
+2. **VPS:** steps 1–6 above. In Nginx, use only the `/api/`, `/api/v1/auth/` and `/health` locations from `deploy/nginx.conf`, with `server_name api.edunexus.network`. The SPA `root`/`try_files` block isn't needed because Vercel serves the frontend. Then `sudo certbot --nginx -d api.edunexus.network`.
+3. **Check the API:** `curl https://api.edunexus.network/health` returns `"status":"healthy"`.
+4. **Vercel → Project → Settings → Environment Variables:** `VITE_API_URL=https://api.edunexus.network/api/v1` (Production), then **redeploy**. Vite bakes this in at build time. A Vercel build without an HTTPS `VITE_API_URL` now fails on purpose; before this change it shipped a site that called `http://localhost:5000`.
+5. **Email:** the domain `edunexus.network` is verified in Resend (DKIM `resend._domainkey`, SPF/MX on `send.`, DMARC). Use a sender on that domain. Test it with **Forgot password** once the reset flow is wired in the UI, or with any staff invitation, and watch `pm2 logs edunexus-worker` for `notification_job_sent`.
+6. **Secrets:** rotate every password in `LOGINS.md` and use a new `JWT_SECRET` on the server.
 
 ### Frontend Diagnostic Indicator
 Inside the EduNexus web application:

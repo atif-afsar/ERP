@@ -17,6 +17,7 @@ import {
   FileSpreadsheet,
   Building,
   Shield,
+  UserCheck,
   X
 } from 'lucide-react';
 import { canOpenModule } from '../../services/auth/permissionPolicy';
@@ -46,6 +47,7 @@ export const AppShell: React.FC<AppShellProps> = ({
     { id: 'timetable', label: 'Timetable', icon: Calendar, show: !isParent && currentUser.role !== 'ACCOUNTANT' },
     { id: 'homework', label: getLabel('homework'), icon: BookOpen },
     { id: 'communication', label: 'Notices', icon: MessageSquare, show: !isParent && !isStudent },
+    { id: 'staff', label: currentUser.permissions?.includes('staff.view') ? 'Staff & HR' : 'My HR', icon: UserCheck },
     { id: 'reports', label: 'Reports', icon: FileSpreadsheet },
     { id: 'master-data', label: isSchool ? 'School Setup' : 'Institute Setup', icon: Building },
     { id: 'organization', label: 'Users & Access', icon: Shield },
@@ -111,7 +113,7 @@ export const AppShell: React.FC<AppShellProps> = ({
           <span>Home</span>
         </button>
 
-        {!isStudent && !isParent && !isSuperAdmin && (
+        {!isSuperAdmin && canOpenModule(currentUser, 'students') && (
           <button
             onClick={() => onNavigate('students')}
             className={`flex flex-col items-center gap-1 p-1.5 rounded-lg text-[10px] transition-colors ${
@@ -123,25 +125,29 @@ export const AppShell: React.FC<AppShellProps> = ({
           </button>
         )}
 
-        <button
-          onClick={() => onNavigate('attendance')}
-          className={`flex flex-col items-center gap-1 p-1.5 rounded-lg text-[10px] transition-colors ${
-            activeNav === 'attendance' ? 'text-emerald-700 font-bold' : 'text-slate-500'
-          }`}
-        >
-          <CalendarCheck className="w-4 h-4" />
-          <span>Attendance</span>
-        </button>
+        {!isSuperAdmin && currentUser.role !== 'ACCOUNTANT' && canOpenModule(currentUser, 'attendance') && (
+          <button
+            onClick={() => onNavigate('attendance')}
+            className={`flex flex-col items-center gap-1 p-1.5 rounded-lg text-[10px] transition-colors ${
+              activeNav === 'attendance' ? 'text-emerald-700 font-bold' : 'text-slate-500'
+            }`}
+          >
+            <CalendarCheck className="w-4 h-4" />
+            <span>Attendance</span>
+          </button>
+        )}
 
-        <button
-          onClick={() => onNavigate('fees')}
-          className={`flex flex-col items-center gap-1 p-1.5 rounded-lg text-[10px] transition-colors ${
-            activeNav === 'fees' ? 'text-emerald-700 font-bold' : 'text-slate-500'
-          }`}
-        >
-          <CreditCard className="w-4 h-4" />
-          <span>Fees</span>
-        </button>
+        {!isSuperAdmin && canOpenModule(currentUser, 'fees') && (
+          <button
+            onClick={() => onNavigate('fees')}
+            className={`flex flex-col items-center gap-1 p-1.5 rounded-lg text-[10px] transition-colors ${
+              activeNav === 'fees' ? 'text-emerald-700 font-bold' : 'text-slate-500'
+            }`}
+          >
+            <CreditCard className="w-4 h-4" />
+            <span>Fees</span>
+          </button>
+        )}
 
         <button
           onClick={() => setMobileMoreOpen(true)}

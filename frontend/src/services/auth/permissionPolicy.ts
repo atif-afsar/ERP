@@ -9,7 +9,8 @@ export function hasPermission(user: PermissionUser, permission: string, tenantId
 export const MODULE_ACCESS: Record<string, { view?: string[]; roles?: string[]; write?: string[] }> = {
  dashboard: {},
  students: {view:['student_lifecycle.view'],write:['student_lifecycle.manage','student_documents.manage']},
- staff: {view:['staff.view'],write:['staff.manage','teacher_accounts.manage']},
+ // Staff & HR: managers see everything; other employees get leave and payslips.
+ staff: {view:['staff.view','hr.view','hr.leave.request','hr.payroll.view','hr.payslip.view_own'],write:['staff.manage','teacher_accounts.manage','hr.manage','hr.payroll.manage']},
  attendance: {roles:['PARENT','STUDENT'],view:['attendance.view'],write:['attendance.manage']},
  timetable: {roles:['STUDENT'],view:['timetable.view'],write:['timetable.manage']},
  exams: {view:['examinations.view'],write:['examinations.manage','exam_marks.manage']},

@@ -112,6 +112,18 @@ export function SuperAdminSaaSModule() {
 
   // Preview Modal
   const [previewProof, setPreviewProof] = useState<SaaSProof | null>(null);
+  // The proof file needs the Bearer token, so it is fetched and shown as an object URL.
+  const [previewFileUrl, setPreviewFileUrl] = useState<string | null>(null);
+  const [previewFileError, setPreviewFileError] = useState('');
+  useEffect(() => {
+    if (!previewProof) return;
+    let url: string | null = null, active = true;
+    setPreviewFileUrl(null); setPreviewFileError('');
+    apiClient.requestBlob(`/api/v1/admin/billing/proofs/${previewProof.id}/file`)
+      .then(blob => { url = URL.createObjectURL(blob); if (active) setPreviewFileUrl(url); })
+      .catch(e => { if (active) setPreviewFileError(e.message || 'Could not load the file.'); });
+    return () => { active = false; if (url) URL.revokeObjectURL(url); };
+  }, [previewProof?.id]);
 
   // Approval / Rejection Modal
   const [verifyModalProof, setVerifyModalProof] = useState<SaaSProof | null>(null);
@@ -904,9 +916,13 @@ export function SuperAdminSaaSModule() {
               )}
 
               <div className="flex items-center justify-center bg-slate-900/5 rounded-2xl p-4 min-h-[250px]">
-                {previewProof.proof_mime_type?.startsWith('image/') ? (
+                {previewFileError ? (
+                  <p className="text-sm text-rose-700">{previewFileError}</p>
+                ) : !previewFileUrl ? (
+                  <p className="text-sm text-slate-500">Loading file…</p>
+                ) : previewProof.proof_mime_type?.startsWith('image/') ? (
                   <img
-                    src={`http://localhost:5000/api/v1/admin/billing/proofs/${previewProof.id}/file`}
+                    src={previewFileUrl}
                     alt="Payment Proof Receipt"
                     className="max-h-[50vh] max-w-full rounded-xl shadow-md border border-slate-200 object-contain"
                   />
@@ -915,7 +931,8 @@ export function SuperAdminSaaSModule() {
                   <FileCheck className="w-12 h-12 text-indigo-600 mx-auto" />
                   <p className="text-sm font-bold text-slate-800">{previewProof.proof_file_name}</p>
                   <a
-                    href={`http://localhost:5000/api/v1/admin/billing/proofs/${previewProof.id}/file`}
+                    href={previewFileUrl}
+                    download={previewProof.proof_file_name || undefined}
                     target="_blank"
                     rel="noreferrer"
                     className="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-bold"

@@ -6,6 +6,10 @@ import { masterDataService as master } from '../../services/masterDataService';
 import { apiClient } from '../../services/api/apiClient';
 import { QrSessionPanel } from '../qrAttendance/QrSessionPanel';
 import { StudentQrCheckIn } from '../qrAttendance/StudentQrCheckIn';
+import { LeavePanel } from '../hr/LeavePanel';
+import { StaffAttendancePanel } from '../hr/StaffAttendancePanel';
+import { PayrollPanel } from '../hr/PayrollPanel';
+import { StaffImport } from '../hr/StaffImport';
 import {
   CalendarCheck,
   QrCode,
@@ -22,7 +26,14 @@ import {
   ArrowRight
 } from 'lucide-react';
 
-type Tab = 'staff' | 'assignments' | 'timetable' | 'attendance' | 'qr' | 'reports' | 'self' | 'parent';
+type Tab = 'staff' | 'assignments' | 'leave' | 'staffAttendance' | 'payroll' | 'timetable' | 'attendance' | 'qr' | 'reports' | 'self' | 'parent';
+// Each sidebar route shows only its own tabs.
+type Group = 'staff' | 'attendance' | 'timetable';
+const TAB_GROUP: Record<Tab, Group> = {
+  staff: 'staff', assignments: 'staff', leave: 'staff', staffAttendance: 'staff', payroll: 'staff',
+  timetable: 'timetable',
+  attendance: 'attendance', qr: 'attendance', reports: 'attendance', self: 'attendance', parent: 'attendance',
+};
 
 const Field = ({ label, className = '', ...p }: any) => (
   <label className={`block text-xs font-medium text-slate-700 ${className}`}>
@@ -59,20 +70,28 @@ export const AcademicOperationsModule: React.FC<{ initialTab?: string }> = ({ in
   const qrEnabled = hasEntitlement('qr_attendance');
 
   // Initial tab resolution based on role
+  const group: Group = initialTab && initialTab in TAB_GROUP ? TAB_GROUP[initialTab as Tab] : 'attendance';
   const resolvedInitialTab: Tab = useMemo(() => {
-    if (initialTab && ['staff', 'assignments', 'timetable', 'attendance', 'qr', 'reports', 'self', 'parent'].includes(initialTab)) {
-      return initialTab as Tab;
+    if (group === 'staff') {
+      if (can('staff.view')) return 'staff';
+      if (can('hr.view') || can('hr.leave.request')) return 'leave';
+      return 'payroll';
     }
     if (isStudent) return 'self';
     if (isParent) return 'parent';
+    if (initialTab && initialTab in TAB_GROUP) {
+      return initialTab as Tab;
+    }
     if (can('attendance.view')) return 'attendance';
     if (can('staff.view')) return 'staff';
     return 'attendance';
-  }, [initialTab, isStudent, isParent, can]);
+  }, [initialTab, group, isStudent, isParent, can]);
 
   const [tab, setTab] = useState<Tab>(resolvedInitialTab);
   const heading = initialTab === 'staff'
-    ? { title: 'Staff', subtitle: 'Staff records, teacher logins and teaching assignments.' }
+    ? can('staff.view')
+      ? { title: 'Staff & HR', subtitle: 'Staff records, teaching assignments, leave, staff attendance and payroll.' }
+      : { title: 'My HR', subtitle: 'Request leave, check your balance and view your payslips.' }
     : initialTab === 'timetable'
     ? { title: 'Timetable', subtitle: 'Weekly class schedule with teacher and room clash checks.' }
     : isStudent
@@ -92,6 +111,7 @@ export const AcademicOperationsModule: React.FC<{ initialTab?: string }> = ({ in
     teachingContext: []
   });
 
+  const [showStaffImport, setShowStaffImport] = useState(false);
   const [msg, setMsg] = useState('');
   const [err, setErr] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -177,7 +197,7 @@ export const AcademicOperationsModule: React.FC<{ initialTab?: string }> = ({ in
     setErr('');
     try {
       const isStaffOrAdmin = can('master_data.view');
-      const isTeacherUser = isTeacher || !isStaffOrAdmin;
+      const isTeacherUser = isTeacher || (!isStaffOrAdmin && can('attendance.view'));
 
       const promises: Promise<any>[] = [];
 
@@ -273,7 +293,7 @@ export const AcademicOperationsModule: React.FC<{ initialTab?: string }> = ({ in
   // Load linked children for parents
   useEffect(() => {
     if (tab === 'parent' || isParent) {
-      apiClient.request<any[]>('/api/v1/students', { tenantId: t })
+      apiClient.request<any[]>('/api/v1/parents/children', { tenantId: t })
         .then(res => {
           const list = res.data || [];
           setParentChildren(list);
@@ -624,7 +644,7 @@ export const AcademicOperationsModule: React.FC<{ initialTab?: string }> = ({ in
         {/* Staff / Management Tabs */}
         {!isStudent && !isParent && (
           <>
-            {can('staff.view') && (
+            {group === 'staff' && can('staff.view') && (
               <button
                 onClick={() => setTab('staff')}
                 className={`rounded-lg px-3.5 py-2 text-xs sm:text-sm font-semibold transition-colors ${
@@ -635,7 +655,7 @@ export const AcademicOperationsModule: React.FC<{ initialTab?: string }> = ({ in
               </button>
             )}
 
-            {can('teaching_assignments.view') && (
+            {group === 'staff' && can('teaching_assignments.view') && (
               <button
                 onClick={() => setTab('assignments')}
                 className={`rounded-lg px-3.5 py-2 text-xs sm:text-sm font-semibold transition-colors ${
@@ -646,7 +666,23 @@ export const AcademicOperationsModule: React.FC<{ initialTab?: string }> = ({ in
               </button>
             )}
 
-            {can('timetable.view') && (
+            {group === 'staff' && ([
+              ['leave', can('hr.view') ? 'Leave' : 'My Leave', can('hr.view') || can('hr.leave.request')],
+              ['staffAttendance', 'Staff Attendance', can('hr.view')],
+              ['payroll', can('hr.payroll.view') ? 'Payroll' : 'My Payslips', can('hr.payroll.view') || can('hr.payslip.view_own')],
+            ] as [Tab, string, boolean][]).filter(([, , show]) => show).map(([id, label]) => (
+              <button
+                key={id}
+                onClick={() => setTab(id)}
+                className={`rounded-lg px-3.5 py-2 text-xs sm:text-sm font-semibold transition-colors ${
+                  tab === id ? 'bg-emerald-600 text-white shadow-sm' : 'border border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+
+            {group === 'timetable' && can('timetable.view') && (
               <button
                 onClick={() => setTab('timetable')}
                 className={`rounded-lg px-3.5 py-2 text-xs sm:text-sm font-semibold transition-colors ${
@@ -657,7 +693,7 @@ export const AcademicOperationsModule: React.FC<{ initialTab?: string }> = ({ in
               </button>
             )}
 
-            {can('attendance.view') && (
+            {group === 'attendance' && can('attendance.view') && (
               <button
                 onClick={() => setTab('attendance')}
                 className={`flex items-center gap-2 rounded-lg px-3.5 py-2 text-xs sm:text-sm font-semibold transition-colors ${
@@ -669,7 +705,7 @@ export const AcademicOperationsModule: React.FC<{ initialTab?: string }> = ({ in
               </button>
             )}
 
-            {qrEnabled && can('attendance.manage') && (
+            {group === 'attendance' && qrEnabled && can('attendance.manage') && (
               <button
                 onClick={() => setTab('qr')}
                 className={`flex items-center gap-2 rounded-lg px-3.5 py-2 text-xs sm:text-sm font-semibold transition-colors ${
@@ -681,7 +717,7 @@ export const AcademicOperationsModule: React.FC<{ initialTab?: string }> = ({ in
               </button>
             )}
 
-            {can('attendance.view') && (
+            {group === 'attendance' && can('attendance.view') && (
               <button
                 onClick={() => setTab('reports')}
                 className={`flex items-center gap-2 rounded-lg px-3.5 py-2 text-xs sm:text-sm font-semibold transition-colors ${
@@ -699,6 +735,15 @@ export const AcademicOperationsModule: React.FC<{ initialTab?: string }> = ({ in
       {/* ================= TAB 1: STAFF & TEACHERS ================= */}
       {tab === 'staff' && (
         <div className="space-y-6">
+          {can('staff.manage') && (
+            <div className="flex justify-end">
+              <button type="button" onClick={() => setShowStaffImport(v => !v)} className="rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs sm:text-sm font-semibold text-slate-700 hover:bg-slate-50">
+                <FileSpreadsheet className="mr-1.5 inline h-4 w-4" />
+                {showStaffImport ? 'Close import' : 'Bulk import (Excel / CSV)'}
+              </button>
+            </div>
+          )}
+          {can('staff.manage') && showStaffImport && <StaffImport tenantId={t} onComplete={() => load()} />}
           {can('staff.manage') && (
             <form
               onSubmit={e => {
@@ -743,6 +788,11 @@ export const AcademicOperationsModule: React.FC<{ initialTab?: string }> = ({ in
           />
         </div>
       )}
+
+      {/* ================= HR: LEAVE, STAFF ATTENDANCE, PAYROLL ================= */}
+      {tab === 'leave' && <LeavePanel tenantId={t} />}
+      {tab === 'staffAttendance' && <StaffAttendancePanel tenantId={t} />}
+      {tab === 'payroll' && <PayrollPanel tenantId={t} />}
 
       {/* ================= TAB 2: TEACHING ASSIGNMENTS ================= */}
       {tab === 'assignments' && (
@@ -1157,7 +1207,7 @@ export const AcademicOperationsModule: React.FC<{ initialTab?: string }> = ({ in
               </div>
             </>
           ) : (
-            <p className="text-sm text-slate-500">Loading student attendance profile...</p>
+            !err && <p className="text-sm text-slate-500">Loading student attendance profile...</p>
           )}
         </div>
       )}
@@ -1168,7 +1218,7 @@ export const AcademicOperationsModule: React.FC<{ initialTab?: string }> = ({ in
           <div className="grid gap-3 rounded-xl border border-slate-200 bg-white p-4 sm:grid-cols-3 shadow-sm">
             <Select
               label="Select Child"
-              items={parentChildren.map(c => ({ id: c.id, name: `${c.first_name} ${c.last_name} (${c.admission_number || c.id.slice(0, 6)})` }))}
+              items={parentChildren.map(c => ({ id: c.id, name: `${c.first_name} ${c.last_name} (${c.admission_no || c.id.slice(0, 6)})` }))}
               value={selectedChildId}
               onChange={(v: string) => setSelectedChildId(v)}
             />
