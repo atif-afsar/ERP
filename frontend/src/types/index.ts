@@ -150,6 +150,7 @@ export type Permission =
   | 'results.approve'
   | 'results.process'
   | 'homework.view'
+  | 'homework.manage'
   | 'homework.create'
   | 'homework.update'
   | 'timetable.view'

@@ -22,20 +22,7 @@ async function validatePlacement(client:any,tenantId:string,e:any){const r=await
 
 import { listStudentPublishedResults, getStudentExamReportCard } from '../services/studentResultsService.js';
 
-// A student may retrieve only their own identity and current enrollment.
-router.get('/self/id-card',asyncHandler(async(req,res)=>{
-  if(req.user.role!=='STUDENT')throw new AppError('Student access required.',403,'FORBIDDEN');
-  const result=await query(`SELECT s.id,s.admission_no,s.first_name,s.last_name,s.photo_url,s.status,e.roll_no,y.name academic_year_name,c.name class_name,sec.name section_name
-    FROM students s LEFT JOIN LATERAL(SELECT * FROM enrollments x WHERE x.student_id=s.id AND x.tenant_id=s.tenant_id AND x.status='enrolled' AND x.start_date<=CURRENT_DATE AND (x.end_date IS NULL OR x.end_date>=CURRENT_DATE) ORDER BY x.start_date DESC,x.enrolled_at DESC,x.id DESC LIMIT 1)e ON true
-    LEFT JOIN academic_years y ON y.id=e.academic_year_id AND y.tenant_id=s.tenant_id
-    LEFT JOIN classes c ON c.id=e.class_id AND c.tenant_id=s.tenant_id
-    LEFT JOIN sections sec ON sec.id=e.section_id AND sec.tenant_id=s.tenant_id
-    WHERE s.tenant_id=$1 AND s.user_id=$2 ORDER BY s.id LIMIT 2`,[req.tenantId,req.user.id]);
-  if(!result.rowCount)throw new AppError('Your account is not linked to a student record. Contact your institution administrator.',404,'STUDENT_NOT_LINKED');
-  if(result.rowCount!==1)throw new AppError('Your student account has ambiguous identity links. Contact your institution administrator.',409,'STUDENT_LINK_AMBIGUOUS');
-  respond(res,req,result.rows[0]);
-}));
-
+// A student may retrieve only their own published results.
 router.get('/self/results',asyncHandler(async(req,res)=>{
   if(req.user.role!=='STUDENT')throw new AppError('Student access required.',403,'FORBIDDEN');
   const result=await query(`SELECT s.id,s.admission_no,s.first_name,s.last_name,s.status FROM students s WHERE s.tenant_id=$1 AND s.user_id=$2 ORDER BY s.id LIMIT 2`,[req.tenantId,req.user.id]);

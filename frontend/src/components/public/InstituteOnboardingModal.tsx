@@ -58,28 +58,26 @@ interface InstituteOnboardingModalProps {
 }
 
 const AVAILABLE_MODULES = [
-  { id: 'admissions', label: 'Student Admissions & Registry', desc: 'Enrollments, student profiles & IDs', icon: GraduationCap },
-  { id: 'attendance', label: 'QR Attendance & Registers', desc: 'Instant student & staff QR scans', icon: QrCode },
-  { id: 'fees', label: 'Fee Invoicing & Receipts', desc: 'Due reminders, online proofs & receipts', icon: CreditCard },
-  { id: 'exams', label: 'Exams & CBSE Report Cards', desc: 'Grading, term marks & PDF cards', icon: Award },
-  { id: 'timetable', label: 'Timetable & Class Schedules', desc: 'Teacher allocations & lecture slots', icon: Calendar },
-  { id: 'hr', label: 'Staff HR & Leave Tracker', desc: 'Staff directory & biometric leaves', icon: Users },
-  { id: 'transport', label: 'Transport Fleet & Routes', desc: 'Bus route tracking & driver registry', icon: Bus },
-  { id: 'portals', label: 'Parent & Student App Portal', desc: 'Mobile-friendly view & notices', icon: Smartphone },
+  { id: 'admissions', label: 'Admissions & Student Records', desc: 'Profiles, parents, yearly enrollment', icon: GraduationCap },
+  { id: 'attendance', label: 'Daily Attendance', desc: 'Class roster marking and reports', icon: QrCode },
+  { id: 'fees', label: 'Fees & Receipts', desc: 'UPI proof approval, dues and receipts', icon: CreditCard },
+  { id: 'exams', label: 'Exams & Report Cards', desc: 'Marks entry, grades and report cards', icon: Award },
+  { id: 'timetable', label: 'Timetable', desc: 'Weekly schedule with clash check', icon: Calendar },
+  { id: 'homework', label: 'Homework & Notices', desc: 'Posted by teachers, seen by parents', icon: Users },
+  { id: 'portals', label: 'Parent & Student Portal', desc: 'Mobile-friendly logins', icon: Smartphone },
 ];
 
 const INSTITUTE_TYPES = [
   { id: 'school', title: 'K-12 School', subtitle: 'CBSE, ICSE, State & International', emoji: '🏫' },
-  { id: 'coaching', title: 'Coaching Academy', subtitle: 'JEE, NEET, Foundation & Test Prep', emoji: '🎯' },
-  { id: 'college', title: 'College / University', subtitle: 'Higher education & degree programs', emoji: '🏛️' },
-  { id: 'preschool', title: 'Preschool & Daycare', subtitle: 'Early learning & kindergarten', emoji: '🧸' },
+  { id: 'coaching', title: 'Coaching Institute', subtitle: 'JEE, NEET, Foundation & Test Prep', emoji: '🎯' },
+  { id: 'hybrid', title: 'School + Coaching', subtitle: 'A school that also runs coaching batches', emoji: '🏛️' },
 ];
 
 const STUDENT_TIERS = [
   { count: 150, title: 'Up to 250', desc: 'Growing / Small Campus', badge: 'Starter' },
   { count: 400, title: '250 – 600', desc: 'Mid-Sized Academy', badge: 'Most Popular' },
   { count: 1000, title: '600 – 1,500', desc: 'Large Comprehensive', badge: 'Pro Campus' },
-  { count: 2500, title: '1,500+', desc: 'Multi-Branch / Enterprise', badge: 'Enterprise' },
+  { count: 2500, title: '1,500+', desc: 'Large Institution', badge: 'Enterprise' },
 ];
 
 export const InstituteOnboardingModal: React.FC<InstituteOnboardingModalProps> = ({
@@ -101,6 +99,8 @@ export const InstituteOnboardingModal: React.FC<InstituteOnboardingModalProps> =
   // Form Fields
   const [instituteName, setInstituteName] = useState('');
   const [instituteType, setInstituteType] = useState('school');
+  // Institute types the selected plan can be bought for (from the server).
+  const [allowedTypes, setAllowedTypes] = useState<string[]>(['school', 'coaching', 'hybrid']);
   const [studentCountEstimate, setStudentCountEstimate] = useState<number>(300);
   const [selectedModules, setSelectedModules] = useState<string[]>([
     'admissions', 'attendance', 'fees', 'exams'
@@ -150,6 +150,9 @@ export const InstituteOnboardingModal: React.FC<InstituteOnboardingModalProps> =
       if (matched) {
         setDbPlanId(matched.id);
         setAmountPaid(matched.price_amount / 100);
+        const types: string[] = matched.institution_types?.length ? matched.institution_types : ['school', 'coaching', 'hybrid'];
+        setAllowedTypes(types);
+        setInstituteType(current => (types.includes(current) ? current : types[0]));
       }
 
       if (s) {
@@ -405,7 +408,7 @@ export const InstituteOnboardingModal: React.FC<InstituteOnboardingModalProps> =
                   Select Campus Type
                 </label>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                  {INSTITUTE_TYPES.map((t) => {
+                  {INSTITUTE_TYPES.filter((t) => allowedTypes.includes(t.id)).map((t) => {
                     const isSelected = instituteType === t.id;
                     return (
                       <button
@@ -682,7 +685,7 @@ export const InstituteOnboardingModal: React.FC<InstituteOnboardingModalProps> =
                   {/* Phone */}
                   <div>
                     <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                      Contact Phone / WhatsApp
+                      Contact Phone
                     </label>
                     <div className="relative">
                       <Phone className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />

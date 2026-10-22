@@ -29,7 +29,15 @@ interface SubscriptionPlan {
   billing_interval: number;
   is_active: boolean;
   features: string[] | string;
+  entitlements: string[];
+  institution_types: string[];
 }
+
+const INSTITUTION_TYPES = [
+  { id: 'school', label: 'Schools' },
+  { id: 'coaching', label: 'Coaching institutes' },
+  { id: 'hybrid', label: 'School + coaching' },
+];
 
 interface TenantSubscription {
   id: string;
@@ -121,6 +129,8 @@ export function SuperAdminSaaSModule() {
     billingPeriod: 'monthly',
     billingInterval: 1,
     features: ['Student Lifecycle', 'Attendance', 'Fee Management'],
+    qrAttendance: false,
+    institutionTypes: ['school', 'coaching', 'hybrid'] as string[],
   });
 
   // Settings Edit Form
@@ -237,7 +247,9 @@ export function SuperAdminSaaSModule() {
           currency: newPlan.currency,
           billingPeriod: newPlan.billingPeriod,
           billingInterval: Number(newPlan.billingInterval),
-          features: newPlan.features
+          features: newPlan.features,
+          entitlements: newPlan.qrAttendance ? ['qr_attendance'] : [],
+          institutionTypes: newPlan.institutionTypes
         }
       });
       alert('Subscription plan created.');
@@ -259,6 +271,15 @@ export function SuperAdminSaaSModule() {
       await loadData();
     } catch (err: any) {
       alert('Failed to toggle plan status: ' + err.message);
+    }
+  };
+
+  const handleUpdatePlanAccess = async (planId: string, body: { entitlements?: string[]; institutionTypes?: string[] }) => {
+    try {
+      await apiClient.request(`/api/v1/admin/billing/plans/${planId}`, { method: 'PATCH', body });
+      await loadData();
+    } catch (err: any) {
+      alert('Failed to update the plan: ' + err.message);
     }
   };
 
@@ -618,7 +639,7 @@ export function SuperAdminSaaSModule() {
             </button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
             {plans.map((p) => {
               const features = Array.isArray(p.features) 
                 ? p.features 
@@ -665,7 +686,34 @@ export function SuperAdminSaaSModule() {
                     </div>
                   </div>
 
-                  <div className="pt-6 mt-6 border-t border-slate-100 flex justify-end">
+                  <div className="space-y-3 pt-4 mt-4 border-t border-slate-100 text-xs">
+                    <label className="flex items-center gap-2 font-semibold text-slate-700">
+                      <input type="checkbox" className="accent-emerald-600" checked={(p.entitlements || []).includes('qr_attendance')}
+                        onChange={e => handleUpdatePlanAccess(p.id, { entitlements: e.target.checked ? ['qr_attendance'] : [] })} />
+                      Includes QR attendance
+                    </label>
+                    <div>
+                      <p className="font-bold text-slate-700 uppercase text-[11px] mb-1">Can be bought by</p>
+                      <div className="flex flex-wrap gap-x-3 gap-y-1">
+                        {INSTITUTION_TYPES.map(type => {
+                          const types = p.institution_types || [];
+                          const checked = types.includes(type.id);
+                          return (
+                            <label key={type.id} className="flex items-center gap-1.5 text-slate-600">
+                              <input type="checkbox" className="accent-emerald-600" checked={checked} disabled={checked && types.length === 1}
+                                onChange={() => handleUpdatePlanAccess(p.id, { institutionTypes: checked ? types.filter(x => x !== type.id) : [...types, type.id] })} />
+                              {type.label}
+                            </label>
+                          );
+                        })}
+                      </div>
+                      {(p.entitlements || []).includes('qr_attendance') && !(p.institution_types || []).some(x => x !== 'school') && (
+                        <p className="mt-1 text-amber-700">QR attendance only works for coaching or hybrid institutes.</p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="pt-4 mt-4 border-t border-slate-100 flex justify-end">
                     <button
                       onClick={() => handleTogglePlan(p.id, p.is_active)}
                       className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${
@@ -1031,6 +1079,26 @@ export function SuperAdminSaaSModule() {
                     <option value="yearly">Yearly</option>
                   </select>
                 </div>
+              </div>
+
+              <div className="space-y-2">
+                <p className="font-bold text-slate-700">Can be bought by</p>
+                <div className="flex flex-wrap gap-x-4 gap-y-1">
+                  {INSTITUTION_TYPES.map(type => {
+                    const checked = newPlan.institutionTypes.includes(type.id);
+                    return (
+                      <label key={type.id} className="flex items-center gap-1.5 text-slate-700">
+                        <input type="checkbox" className="accent-emerald-600" checked={checked} disabled={checked && newPlan.institutionTypes.length === 1}
+                          onChange={() => setNewPlan({ ...newPlan, institutionTypes: checked ? newPlan.institutionTypes.filter(x => x !== type.id) : [...newPlan.institutionTypes, type.id] })} />
+                        {type.label}
+                      </label>
+                    );
+                  })}
+                </div>
+                <label className="flex items-center gap-2 font-semibold text-slate-700">
+                  <input type="checkbox" className="accent-emerald-600" checked={newPlan.qrAttendance} onChange={e => setNewPlan({ ...newPlan, qrAttendance: e.target.checked })} />
+                  Includes QR attendance (works for coaching and hybrid institutes)
+                </label>
               </div>
 
               <div className="flex justify-end gap-3 pt-3">

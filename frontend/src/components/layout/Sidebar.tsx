@@ -3,27 +3,17 @@ import React from 'react';
 import {
   LayoutDashboard,
   Users,
-  GraduationCap,
   CalendarCheck,
   CreditCard,
   Award,
   Calendar,
   BookOpen,
   MessageSquare,
-  UserPlus,
-  Settings,
   Shield,
   Building,
-  CheckSquare,
   FileSpreadsheet,
   UserCheck,
-  DollarSign,
-  Package,
-  BookMarked,
-  Bus,
-  Home,
-  UtensilsCrossed,
-  HeartPulse,
+  QrCode,
 } from 'lucide-react';
 import { useTenant } from '../../context/TenantContext';
 import { useAuth } from '../../context/AuthContext';
@@ -36,7 +26,7 @@ interface SidebarProps {
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ activeNav, onNavigate, isOpen, onClose }) => {
-  const { currentTenant, getLabel, isFeatureEnabled, isSchool } = useTenant();
+  const { currentTenant, getLabel, isSchool, hasEntitlement } = useTenant();
   const { currentUser, isSuperAdmin, isTeacher, isParent, isStudent, can } = useAuth();
 
   // Super Admin view
@@ -45,7 +35,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeNav, onNavigate, isOpen,
       { id: 'superadmin-dashboard', label: 'Platform Overview', icon: LayoutDashboard },
       { id: 'superadmin-tenants', label: 'Tenants & Schools', icon: Building },
       { id: 'superadmin-plans', label: 'Subscription Plans', icon: CreditCard },
-      { id: 'superadmin-features', label: 'Feature Catalog', icon: Settings },
     ];
 
     return (
@@ -97,178 +86,29 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeNav, onNavigate, isOpen,
     );
   }
 
-  const featureForModule:Record<string,Parameters<typeof isFeatureEnabled>[0]>={attendance:'attendance',exams:'exams',timetable:'timetable',homework:'homework',fees:'fees',finance:'fees',communication:'communication',crm:'inquiryCrm'};
+  const isStaffSide = !isParent && !isStudent;
+  const qrAttendance = hasEntitlement('qr_attendance');
 
-  // Tenant-Scoped Navigation Items
+  // V1 navigation. Each entry is also checked against canOpenModule below.
   const navItems = [
-    {
-      id: 'dashboard',
-      label: isParent ? 'Children Overview' : isStudent ? 'Student Dashboard' : 'Dashboard',
-      icon: LayoutDashboard,
-      show: true,
-      section: 'OVERVIEW',
-    },
-    {
-      id: 'students',
-      label: isTeacher ? `My ${getLabel('studentPlural')}` : getLabel('studentPlural'),
-      icon: Users,
-      show: can('student_lifecycle.view'),
-      section: 'ACADEMICS',
-    },
-    {
-      id: 'academics',
-      label: isTeacher ? `My ${getLabel('groupPlural')}` : getLabel('groupPlural'),
-      icon: GraduationCap,
-      show: false,
-      section: 'ACADEMICS',
-    },
+    { id: 'dashboard', label: isParent ? 'Children Overview' : isStudent ? 'My Dashboard' : 'Dashboard', icon: LayoutDashboard },
+    { id: 'students', label: isTeacher ? `My ${getLabel('studentPlural')}` : getLabel('studentPlural'), icon: Users },
     {
       id: 'attendance',
-      label: isStudent ? 'My Attendance' : isParent ? "Children's Attendance" : 'Attendance',
-      icon: CalendarCheck,
-      show: isFeatureEnabled('attendance') && currentUser.role !== 'ACCOUNTANT',
-      section: 'ACADEMICS',
+      label: isStudent ? (qrAttendance ? 'Attendance & QR Scan' : 'My Attendance') : isParent ? "Children's Attendance" : qrAttendance ? 'Attendance & QR' : 'Attendance',
+      icon: isStudent && qrAttendance ? QrCode : CalendarCheck,
+      show: currentUser.role !== 'ACCOUNTANT',
     },
-    {
-      id: isParent || isStudent ? 'results' : 'exams',
-      label: isStudent ? 'My Results' : isParent ? "Children's Results" : getLabel('examPlural'),
-      icon: Award,
-      show: isFeatureEnabled('exams') && (isParent || isStudent || can('examinations.view')),
-      section: 'ACADEMICS',
-    },
-    {
-      id: 'timetable',
-      label: isStudent ? 'My Daily Schedule' : 'Timetable',
-      icon: Calendar,
-      show: isFeatureEnabled('timetable') && currentUser.role !== 'ACCOUNTANT',
-      section: 'ACADEMICS',
-    },
-    {
-      id: 'homework',
-      label: isStudent ? 'My Homework' : isParent ? "Children's Homework" : 'Homework & Notes',
-      icon: BookOpen,
-      show: false,
-      section: 'ACADEMICS',
-    },
-    {
-      id: 'fees',
-      label: isStudent ? 'Fee Invoices & Receipts' : isParent ? 'Fee Dues & Online Pay' : 'Fees & Payments',
-      icon: CreditCard,
-      show: isFeatureEnabled('fees') && (currentUser.role === 'TENANT_ADMIN' || currentUser.role === 'ACCOUNTANT' || currentUser.role === 'STAFF' || isParent || isStudent),
-      section: 'FINANCE & HR',
-    },
-    {
-      id: 'finance',
-      label: 'Finance & Accounts',
-      icon: DollarSign,
-      show: isFeatureEnabled('fees') && (currentUser.role === 'TENANT_ADMIN' || currentUser.role === 'ACCOUNTANT' || currentUser.role === 'SUPER_ADMIN'),
-      section: 'FINANCE & HR',
-    },
-    {
-      id: 'staff',
-      label: 'Staff & Teachers',
-      icon: UserCheck,
-      show: can('staff.view'),
-      section: 'FINANCE & HR',
-    },
-    {
-      id: 'hr',
-      label: 'HR & Leave',
-      icon: UserCheck,
-      show: can('hr.leave.request') || can('hr.view'),
-      section: 'FINANCE & HR',
-    },
-    {
-      id: 'inventory',
-      label: 'Inventory & Assets',
-      icon: Package,
-      show: can('inventory.view'),
-      section: 'OPERATIONS',
-    },
-    {
-      id: 'library',
-      label: isStudent ? 'Library & Books' : 'Library Management',
-      icon: BookMarked,
-      show: can('library.view'),
-      section: 'OPERATIONS',
-    },
-    {
-      id: 'transport',
-      label: isStudent ? 'My Bus & Route' : isParent ? "Children's Bus Route" : 'Transport & Fleet',
-      icon: Bus,
-      show: can('transport.view'),
-      section: 'OPERATIONS',
-    },
-    {
-      id: 'hostel',
-      label: isStudent ? 'My Hostel Room' : isParent ? "Children's Hostel" : 'Hostel Residence',
-      icon: Home,
-      show: can('hostel.view'),
-      section: 'OPERATIONS',
-    },
-    {
-      id: 'mess',
-      label: isStudent ? 'Mess Menu & Meals' : isParent ? 'Mess Dining & Meals' : 'Hostel Mess & Dining',
-      icon: UtensilsCrossed,
-      show: can('mess.view'),
-      section: 'OPERATIONS',
-    },
-    {
-      id: 'health',
-      label: isStudent ? 'My Health & Clinic' : isParent ? "Children's Health Record" : 'Health & Clinic',
-      icon: HeartPulse,
-      show: false,
-      section: 'OPERATIONS',
-    },
-    {
-      id: 'communication',
-      label: 'Notice & SMS',
-      icon: MessageSquare,
-      show: isFeatureEnabled('communication') && currentUser.role !== 'ACCOUNTANT',
-      section: 'ADMINISTRATION',
-    },
-    {
-      id: 'crm',
-      label: isSchool ? 'Admissions Desk' : 'Student Leads Desk',
-      icon: UserPlus,
-      show: false,
-      section: 'ADMINISTRATION',
-    },
-    {
-      id: 'reports',
-      label: 'Analytics & Reports',
-      icon: FileSpreadsheet,
-      show: can('fee_reports.view') || can('student_lifecycle.view') || can('attendance.view') || can('examinations.view') || ['TENANT_ADMIN', 'ACCOUNTANT', 'PRINCIPAL'].includes(currentUser?.role || ''),
-      section: 'ADMINISTRATION',
-    },
-    {
-      id: 'master-data',
-      label: 'School Master Data',
-      icon: Building,
-      show: can('master_data.view'),
-      section: 'ADMINISTRATION',
-    },
-    {
-      id: 'organization',
-      label: 'Users & Access',
-      icon: Shield,
-      show: can('users.view') || can('roles.view'),
-      section: 'ADMINISTRATION',
-    },
-    {
-      id: 'settings',
-      label: 'Institution Settings',
-      icon: Settings,
-      show: false,
-      section: 'ADMINISTRATION',
-    },
-    {
-      id: 'saas-billing',
-      label: 'SaaS Subscription',
-      icon: CreditCard,
-      show: currentUser.role === 'TENANT_ADMIN' || currentUser.role === 'SUPER_ADMIN',
-      section: 'ADMINISTRATION',
-    },
+    { id: isParent || isStudent ? 'results' : 'exams', label: isStudent ? 'My Results' : isParent ? "Children's Results" : 'Examinations', icon: Award },
+    { id: 'timetable', label: isStudent ? 'My Timetable' : 'Timetable', icon: Calendar, show: !isParent && currentUser.role !== 'ACCOUNTANT' },
+    { id: 'homework', label: isStudent ? 'My Homework' : isParent ? "Children's Homework" : 'Homework', icon: BookOpen },
+    { id: 'fees', label: isStudent ? 'My Fees' : isParent ? 'Fees & Payments' : 'Fees', icon: CreditCard },
+    { id: 'communication', label: 'Notices', icon: MessageSquare, show: isStaffSide },
+    { id: 'staff', label: 'Staff', icon: UserCheck },
+    { id: 'reports', label: 'Reports', icon: FileSpreadsheet },
+    { id: 'master-data', label: isSchool ? 'School Setup' : 'Institute Setup', icon: Building },
+    { id: 'organization', label: 'Users & Access', icon: Shield },
+    { id: 'saas-billing', label: 'Subscription', icon: CreditCard },
   ];
 
   return (
@@ -284,7 +124,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeNav, onNavigate, isOpen,
           <div className="flex items-center gap-1.5">
             <span className="font-extrabold text-slate-900 text-base tracking-tight truncate">EduNexus</span>
             <span className="text-[9px] px-1.5 py-0.2 font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 rounded shrink-0">
-              {isSchool ? 'School' : 'Coaching'}
+              {currentTenant.institutionLabel}
             </span>
           </div>
           <p className="text-xs text-slate-600 font-medium truncate" title={currentTenant.name}>
@@ -296,7 +136,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeNav, onNavigate, isOpen,
       {/* Navigation Links */}
       <div className="flex-1 px-3 py-3 space-y-0.5 overflow-y-auto">
         {navItems
-          .filter((item) => item.show !== false && canOpenModule(currentUser, item.id) && (!featureForModule[item.id] || isFeatureEnabled(featureForModule[item.id])))
+          .filter((item) => item.show !== false && canOpenModule(currentUser, item.id))
           .map((item) => {
             const Icon = item.icon;
             const normalizedActive = activeNav.replace(/^app\//, '');

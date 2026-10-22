@@ -11,14 +11,15 @@ import {
   Users, 
   BookOpen,
   MoreHorizontal,
-  GraduationCap,
+  Award,
   Calendar,
   MessageSquare,
-  UserPlus,
-  Settings,
   FileSpreadsheet,
+  Building,
+  Shield,
   X
 } from 'lucide-react';
+import { canOpenModule } from '../../services/auth/permissionPolicy';
 import { useAuth } from '../../context/AuthContext';
 import { useTenant } from '../../context/TenantContext';
 
@@ -27,7 +28,6 @@ interface AppShellProps {
   activeNav: string;
   subTitle?: string;
   onNavigate: (navId: string) => void;
-  onOpenAi: () => void;
 }
 
 export const AppShell: React.FC<AppShellProps> = ({
@@ -35,22 +35,22 @@ export const AppShell: React.FC<AppShellProps> = ({
   activeNav,
   subTitle,
   onNavigate,
-  onOpenAi,
 }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [mobileMoreOpen, setMobileMoreOpen] = useState(false);
   const { currentUser, isParent, isStudent, isSuperAdmin } = useAuth();
-  const { getLabel, isFeatureEnabled, isSchool } = useTenant();
+  const { getLabel, isSchool } = useTenant();
 
   const moreNavItems = [
-    { id: 'academics', label: getLabel('groupPlural'), icon: GraduationCap, show: !isStudent && !isParent && currentUser.role !== 'ACCOUNTANT' },
-    { id: 'timetable', label: 'Timetable', icon: Calendar, show: isFeatureEnabled('timetable') && currentUser.role !== 'ACCOUNTANT' },
-    { id: 'homework', label: getLabel('homework'), icon: BookOpen, show: isFeatureEnabled('homework') && currentUser.role !== 'ACCOUNTANT' },
-    { id: 'communication', label: 'Notices & WhatsApp', icon: MessageSquare, show: isFeatureEnabled('communication') },
-    { id: 'crm', label: isSchool ? 'Admission Inquiries' : 'Lead CRM', icon: UserPlus, show: isFeatureEnabled('inquiryCrm') && (currentUser.role === 'TENANT_ADMIN' || currentUser.role === 'STAFF') },
-    { id: 'reports', label: 'Reports & Analytics', icon: FileSpreadsheet, show: currentUser.role === 'TENANT_ADMIN' || currentUser.role === 'ACCOUNTANT' },
-    { id: 'settings', label: 'Tenant Settings', icon: Settings, show: currentUser.role === 'TENANT_ADMIN' },
-  ];
+    { id: isParent || isStudent ? 'results' : 'exams', label: isParent || isStudent ? 'Results' : 'Examinations', icon: Award },
+    { id: 'timetable', label: 'Timetable', icon: Calendar, show: !isParent && currentUser.role !== 'ACCOUNTANT' },
+    { id: 'homework', label: getLabel('homework'), icon: BookOpen },
+    { id: 'communication', label: 'Notices', icon: MessageSquare, show: !isParent && !isStudent },
+    { id: 'reports', label: 'Reports', icon: FileSpreadsheet },
+    { id: 'master-data', label: isSchool ? 'School Setup' : 'Institute Setup', icon: Building },
+    { id: 'organization', label: 'Users & Access', icon: Shield },
+    { id: 'saas-billing', label: 'Subscription', icon: CreditCard },
+  ].map(item => ({ ...item, show: item.show !== false && canOpenModule(currentUser, item.id) }));
 
   return (
     <div className="h-dvh min-h-0 overflow-hidden bg-[#f8faf9] text-slate-900 flex flex-col antialiased">
@@ -79,7 +79,6 @@ export const AppShell: React.FC<AppShellProps> = ({
         <div className="flex-1 flex flex-col min-h-0 min-w-0 lg:pl-64 bg-[#f8faf9]">
           <Header
             onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
-            onOpenAi={onOpenAi}
             onNavigate={onNavigate}
           />
 

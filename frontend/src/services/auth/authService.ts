@@ -1,8 +1,9 @@
 import { apiClient } from '../api/apiClient';
 import { UserProfile } from '../../types';
 import { ServiceResult, ok, fail } from '../../types/serviceResult';
+import type { Institution } from '../../context/TenantContext';
 
-export interface AuthSessionData { user: UserProfile; token?: string; expiresAt?: number; }
+export interface AuthSessionData { user: UserProfile; institution?: Institution | null; token?: string; expiresAt?: number; }
 function apiFailure<T>(error: any, fallback: string): ServiceResult<T> {
   const status = Number(error?.status) || 0;
   const code = status === 401 ? 'UNAUTHENTICATED' : status === 403 ? 'FORBIDDEN'
@@ -19,7 +20,9 @@ export const authService = {
         '/api/v1/auth/signin', { method: 'POST', body: { email: email.trim().toLowerCase(), password } });
       if (!response.data?.token || !response.data.user) return fail('INTERNAL_ERROR', 'Authentication response was incomplete.');
       apiClient.setAuthToken(response.data.token);
-      return ok(response.data);
+      // /auth/me carries the full permission list and the institution's plan entitlements.
+      const me = await apiClient.request<{ user: UserProfile; institution: Institution | null; expiresAt: number }>('/api/v1/auth/me');
+      return ok({ ...response.data, ...me.data, token: response.data.token });
     } catch (error: any) {
       apiClient.setAuthToken(null);
       return apiFailure(error, 'Unable to sign in.');
@@ -68,7 +71,7 @@ export const authService = {
     const token = apiClient.getAuthToken();
     if (!token) return ok(null);
     try {
-      const response = await apiClient.request<{ user: UserProfile; expiresAt: number }>('/api/v1/auth/me');
+      const response = await apiClient.request<{ user: UserProfile; institution: Institution | null; expiresAt: number }>('/api/v1/auth/me');
       return response.data?.user ? ok({ ...response.data, token }) : fail('INTERNAL_ERROR', 'Session response was incomplete.');
     } catch (error: any) {
       apiClient.setAuthToken(null);

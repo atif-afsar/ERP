@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { UserProfile, UserRole, Permission, AuthState, UserInvitation, AuditLog } from '../types';
 import { useTenant } from './TenantContext';
-import { authService } from '../services/auth';
+import { authService } from '../services/auth/authService';
 import { hasPermission } from '../services/auth/permissionPolicy';
 
 interface LoginResult {
@@ -40,228 +40,6 @@ interface AuthContextType {
   setActiveStudentId: (studentId: string) => void;
 }
 
-export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
-  SUPER_ADMIN: [
-    'tenants.manage',
-    'subscriptions.manage',
-    'users.manage',
-    'roles.manage',
-    'settings.view',
-    'settings.update',
-    'students.view',
-    'students.create',
-    'students.update',
-    'students.delete',
-    'attendance.view',
-    'attendance.mark',
-    'attendance.create',
-    'attendance.update',
-    'attendance.correct',
-    'fees.view',
-    'fees.create',
-    'fees.update',
-    'fees.export',
-    'payments.view',
-    'payments.record',
-    'payments.create',
-    'payments.refund',
-    'exams.view',
-    'exams.create',
-    'exams.update',
-    'exams.publish',
-    'results.view',
-    'results.create',
-    'results.publish',
-    'homework.view',
-    'homework.create',
-    'homework.update',
-    'timetable.view',
-    'timetable.manage',
-    'communication.send',
-    'announcements.view',
-    'announcements.create',
-    'reports.view',
-    'audit.view',
-    'documents.view',
-  ],
-  TENANT_ADMIN: [
-    'users.manage',
-    'roles.manage',
-    'settings.view',
-    'settings.update',
-    'students.view',
-    'students.create',
-    'students.update',
-    'students.delete',
-    'attendance.view',
-    'attendance.mark',
-    'attendance.create',
-    'attendance.update',
-    'attendance.correct',
-    'fees.view',
-    'fees.create',
-    'fees.update',
-    'fees.export',
-    'payments.view',
-    'payments.record',
-    'payments.create',
-    'payments.refund',
-    'exams.view',
-    'exams.create',
-    'exams.update',
-    'exams.publish',
-    'results.view',
-    'results.create',
-    'results.publish',
-    'homework.view',
-    'homework.create',
-    'homework.update',
-    'timetable.view',
-    'timetable.manage',
-    'communication.send',
-    'announcements.view',
-    'announcements.create',
-    'reports.view',
-    'audit.view',
-    'documents.view',
-    'staff.read',
-    'staff.create',
-    'staff.update',
-    'staff.manage',
-    'inventory.view',
-    'inventory.manage',
-    'inventory.issue',
-    'inventory.adjust',
-    'assets.view',
-    'assets.manage',
-    'assets.assign',
-    'assets.dispose',
-    'library.view',
-    'library.manage',
-    'library.issue',
-    'transport.view',
-    'transport.manage',
-    'transport.assign',
-    'transport.maintenance',
-    'transport.trip.manage',
-    'hostel.view',
-    'mess.view',
-    'health.view',
-  ],
-  BRANCH_MANAGER: [
-    'students.view',
-    'students.create',
-    'students.update',
-    'students.delete',
-    'attendance.view',
-    'attendance.mark',
-    'attendance.create',
-    'attendance.update',
-    'attendance.correct',
-    'fees.view',
-    'fees.create',
-    'fees.update',
-    'payments.view',
-    'payments.record',
-    'payments.create',
-    'exams.view',
-    'exams.create',
-    'exams.update',
-    'results.view',
-    'results.create',
-    'results.publish',
-    'homework.view',
-    'homework.create',
-    'homework.update',
-    'timetable.view',
-    'timetable.manage',
-    'communication.send',
-    'announcements.view',
-    'announcements.create',
-    'reports.view',
-    'documents.view',
-  ],
-  TEACHER: [
-    'students.view',
-    'attendance.view',
-    'attendance.mark',
-    'attendance.create',
-    'attendance.update',
-    'attendance.correct',
-    'exams.view',
-    'exams.update',
-    'results.view',
-    'results.create',
-    'homework.view',
-    'homework.create',
-    'homework.update',
-    'timetable.view',
-    'communication.send',
-    'announcements.view',
-    'documents.view',
-  ],
-  ACCOUNTANT: [
-    'students.view',
-    'fees.view',
-    'fees.create',
-    'fees.update',
-    'fees.export',
-    'payments.view',
-    'payments.record',
-    'payments.create',
-    'payments.refund',
-    'reports.view',
-    'announcements.view',
-  ],
-  RECEPTIONIST: [
-    'students.view',
-    'students.create',
-    'students.update',
-    'attendance.view',
-    'fees.view',
-    'payments.view',
-    'payments.record',
-    'payments.create',
-    'communication.send',
-    'announcements.view',
-  ],
-  STAFF: [
-    'students.view',
-    'students.create',
-    'attendance.view',
-    'attendance.mark',
-    'fees.view',
-    'payments.view',
-    'payments.record',
-    'communication.send',
-    'announcements.view',
-  ],
-  PARENT: [
-    'students.view',
-    'attendance.view',
-    'fees.view',
-    'payments.view',
-    'payments.record',
-    'exams.view',
-    'results.view',
-    'homework.view',
-    'timetable.view',
-    'announcements.view',
-    'documents.view',
-  ],
-  STUDENT: [
-    'students.view',
-    'attendance.view',
-    'fees.view',
-    'exams.view',
-    'results.view',
-    'homework.view',
-    'timetable.view',
-    'announcements.view',
-    'documents.view',
-  ],
-};
-
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -286,14 +64,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (!isMounted) return;
 
       if (res.data?.user) {
-        activateAuthenticatedTenant(res.data.user.tenantId);
+        activateAuthenticatedTenant(res.data.institution || null, res.data.user.tenantId);
         setAllUsers([res.data.user]);
         setCurrentUserId(res.data.user.id);
-        if (currentTenant.status === 'suspended') {
-          setAuthState('TENANT_SUSPENDED');
-        } else {
-          setAuthState('AUTHENTICATED');
-        }
+        setAuthState('AUTHENTICATED');
       } else {
         setAllUsers([]);
         setCurrentUserId('');
@@ -317,7 +91,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       isMounted = false;
       unsubscribe();
     };
-  }, [currentTenant.status]);
+  }, []);
 
   const currentUser = allUsers.find((u) => u.id === currentUserId) || anonymousUser;
 
@@ -375,7 +149,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     if (res.data?.user) {
-      activateAuthenticatedTenant(res.data.user.tenantId);
+      activateAuthenticatedTenant(res.data.institution || null, res.data.user.tenantId);
       setAllUsers([res.data.user]);
       setCurrentUserId(res.data.user.id);
       setAuthState('AUTHENTICATED');

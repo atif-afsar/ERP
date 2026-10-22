@@ -27,12 +27,12 @@ interface LandingPageProps {
 }
 
 const modules = [
-  { icon: Users, title: 'Students & families', text: 'Admissions, yearly enrollment, parent access, documents and a searchable student record.' },
-  { icon: ClipboardCheck, title: 'Academic operations', text: 'Teacher scope, timetables, daily attendance and secure QR check-in from one workspace.' },
-  { icon: ReceiptIndianRupee, title: 'Fees & accounts', text: 'Fee plans, installments, payment-proof review, receipts and balanced school accounting.' },
-  { icon: GraduationCap, title: 'Exams & results', text: 'Exam schedules, controlled marks entry, grade calculation and published report cards.' },
-  { icon: BookOpen, title: 'Campus operations', text: 'Library, inventory, HR, hostel, mess and homework workflows connected to real records.' },
-  { icon: Bus, title: 'Transport & oversight', text: 'Routes, vehicles, assignments, capacity controls, reports and durable audit history.' },
+  { icon: Users, title: 'Students & families', text: 'Admissions, yearly enrollment, parent and student logins, documents and a searchable student record.' },
+  { icon: ClipboardCheck, title: 'Attendance & timetable', text: 'Daily class attendance, a clash-free weekly timetable, and QR check-in for coaching batches.' },
+  { icon: ReceiptIndianRupee, title: 'Fees with UPI proof', text: 'Fee plans, installments and concessions. Parents pay by UPI or bank, upload proof, and get a receipt once you approve.' },
+  { icon: GraduationCap, title: 'Exams & results', text: 'Exam schedules, teacher marks entry, automatic grades and published report cards.' },
+  { icon: BookOpen, title: 'Homework & notices', text: 'Teachers post homework, the office sends notices, and parents see both in their portal.' },
+  { icon: Bus, title: 'Reports & control', text: 'Student, attendance, fee and exam reports with CSV export, role-based access and an audit trail.' },
 ];
 
 const plans = [
@@ -41,32 +41,40 @@ const plans = [
     name: 'Starter',
     price: 2999,
     period: 'month',
-    description: 'For small schools and growing academies building one reliable operating system.',
-    features: ['Up to 250 students', 'Admissions and attendance', 'Fees, invoices and timetables'],
+    description: 'For small schools getting admissions, attendance and fees onto one system.',
+    features: ['Up to 250 students', 'Admissions and attendance', 'Fees, receipts and timetables'],
   },
   {
     code: 'GROWTH_MONTHLY',
     name: 'Growth',
     price: 6999,
     period: 'month',
-    description: 'For established institutions that need academic, staff and campus workflows together.',
-    features: ['Up to 1,000 students', 'Exams and report cards', 'HR, library and inventory'],
+    description: 'For established schools that also run exams, homework and parent portals.',
+    features: ['Up to 1,000 students', 'Exams and report cards', 'Homework and parent portal'],
     featured: true,
+  },
+  {
+    code: 'COACHING_QR_MONTHLY',
+    name: 'Coaching',
+    price: 6999,
+    period: 'month',
+    description: 'For coaching institutes. Students mark attendance by scanning a QR code on their phones.',
+    features: ['Up to 1,000 students', 'QR attendance from student phones', 'Tests, fees and homework'],
   },
   {
     code: 'ENTERPRISE_YEARLY',
     name: 'Enterprise',
     price: 59999,
     period: 'year',
-    description: 'For large and multi-branch institutions that need the complete operational suite.',
-    features: ['Unlimited students and staff', 'All operational modules', 'Multi-branch controls and audit history'],
+    description: 'For large institutions that want unlimited users and assisted setup.',
+    features: ['Unlimited students and staff', 'Assisted data import', 'Priority support'],
   },
 ];
 
 const faqs = [
   {
     q: 'Who is EduNexus built for?',
-    a: 'EduNexus is designed for schools, coaching academies and multi-campus education groups that want one system for academics, people, fees and daily operations.',
+    a: 'EduNexus is designed for schools and coaching institutes that want one simple system for students, attendance, fees, exams and parent communication.',
   },
   {
     q: 'Can each role see only what it needs?',
@@ -78,11 +86,11 @@ const faqs = [
   },
   {
     q: 'Can we start with our existing academic structure?',
-    a: 'Yes. Configure academic years, branches, classes, sections and subjects first, then admit students and assign teachers without maintaining duplicate records.',
+    a: 'Yes. Set up your academic year, classes, sections and subjects first, then import or admit students and assign teachers.',
   },
   {
     q: 'Does EduNexus support parents and students?',
-    a: 'Linked parent and student accounts can securely view their own attendance, published results, fee status and other information exposed by their institution.',
+    a: 'Yes. Linked parent and student accounts see their own attendance, homework, published results and fee status.',
   },
 ];
 
@@ -192,7 +200,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate, subRoute, 
               <div className="mt-4 rounded-xl bg-slate-950 p-4 text-white"><div className="flex items-center justify-between"><p className="text-xs font-bold">Fee collection</p><p className="text-[10px] text-slate-400">This session</p></div><div className="mt-4 flex h-24 items-end gap-2">{[35,52,42,68,61,82,76,92].map((h,i)=><div key={i} className="landing-chart-bar flex-1 rounded-t bg-gradient-to-t from-violet-600 to-amber-200" style={{height:`${h}%`, animationDelay: `${420 + i * 75}ms`}} />)}</div></div>
             </div>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
-              <div className="rounded-2xl border border-slate-200 bg-[#f6f4ff] p-5"><QrCode className="h-6 w-6 text-violet-700"/><p className="mt-4 text-base font-black">Attendance that fits the day</p><p className="mt-2 text-xs leading-5 text-slate-600">Load the assigned roster, mark attendance, or open a time-limited QR session.</p></div>
+              <div className="rounded-2xl border border-slate-200 bg-[#f6f4ff] p-5"><QrCode className="h-6 w-6 text-violet-700"/><p className="mt-4 text-base font-black">Attendance that fits the day</p><p className="mt-2 text-xs leading-5 text-slate-600">Teachers mark the class roster in a minute. Coaching batches can check in by scanning a QR code.</p></div>
               <div className="rounded-2xl border border-slate-200 bg-[#fffbea] p-5"><CreditCard className="h-6 w-6 text-amber-700"/><p className="mt-4 text-base font-black">Payments with human control</p><p className="mt-2 text-xs leading-5 text-slate-600">Review bank or UPI proof before a receipt and accounting entry are created.</p></div>
             </div>
           </div>
@@ -224,7 +232,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate, subRoute, 
               <h2 className="mt-4 text-4xl font-black tracking-[-0.055em] text-slate-950 sm:text-6xl">Choose the operating depth your institute needs.</h2>
               <p className="mx-auto mt-5 max-w-2xl text-base leading-7 text-slate-600">Pay through the displayed bank or UPI account and upload proof during onboarding. Access begins after platform verification.</p>
             </div>
-            <div className="mt-14 grid items-stretch gap-5 lg:grid-cols-3">
+            <div className="mt-14 grid items-stretch gap-5 md:grid-cols-2 xl:grid-cols-4">
               {plans.map((plan) => (
                 <article key={plan.code} className={`relative flex flex-col rounded-3xl border p-7 ${plan.featured ? 'border-violet-300 bg-[#f7f4ff] shadow-xl shadow-violet-100' : 'border-slate-200 bg-white'}`}>
                   {plan.featured && <span className="absolute right-5 top-5 rounded-full bg-violet-700 px-3 py-1 text-[10px] font-black uppercase tracking-wider text-white">Most popular</span>}

@@ -62,7 +62,7 @@ jobs:
       - name: Install Dependencies from Lockfile
         run: npm ci
 
-      - name: Apply Database Migrations (Native 0001 through 0041)
+      - name: Apply Database Migrations
         run: |
           cd backend
           node migrate.mjs up
@@ -85,14 +85,8 @@ jobs:
             tests/examination-assessment.test.mjs \
             tests/fee-management.test.mjs \
             tests/fee-parent-portal.test.mjs \
-            tests/finance.test.mjs \
-            tests/saas-billing.test.mjs \
-            tests/hr-operations-integration.test.mjs \
             tests/communication-notifications.test.mjs \
-            tests/transport-operations-integration.test.mjs \
-            tests/inventory-operations-integration.test.mjs \
-            tests/library-operations-integration.test.mjs \
-            tests/hostel-mess-operations-integration.test.mjs
+            tests/qr-attendance-v2.test.mjs
 
       - name: Verify Report Completeness & Authorization Guard
         run: node --import tsx qa/verify-phase4-completeness.mjs

@@ -1,171 +1,108 @@
 import { asyncHandler } from '../middleware/asyncHandler.js';
 import { Router, Request, Response } from 'express';
+import { z } from 'zod';
 import { query } from '../db.js';
-import { requireAuth } from '../middleware/auth.js';
 import { tenantContext } from '../middleware/tenantContext.js';
+import { requirePermission } from '../middleware/permission.js';
+import { validateBody } from '../middleware/validation.js';
 import { AppError } from '../middleware/errorHandler.js';
+import { writeAudit } from '../services/auditService.js';
+import { requireTeachingScope } from '../services/teachingAccess.js';
 
 const router = Router();
+router.use(tenantContext(true));
 
-// GET /api/v1/homework - List all homework for tenant
-router.get('/', requireAuth, tenantContext(true), asyncHandler(async (req: Request, res: Response) => {
-  const result = await query(
-    `SELECT h.*, c.name as class_name, s.name as subject_name,
-            COUNT(sub.id) as submission_count
-     FROM homework h
-     JOIN classes c ON c.id = h.class_id
-     LEFT JOIN subjects s ON s.id = h.subject_id
-     LEFT JOIN homework_submissions sub ON sub.homework_id = h.id
-     WHERE h.tenant_id = $1
-     GROUP BY h.id, c.name, s.name
-     ORDER BY h.due_date DESC`,
-    [req.tenantId]
-  );
+const reply = (res: Response, req: Request, data: any, status = 200, meta?: any) =>
+  res.status(status).json({ data, ...(meta ? { meta } : {}), requestId: req.id, timestamp: new Date().toISOString() });
 
-  const mapped = result.rows.map((h) => ({
-    id: h.id,
-    tenantId: h.tenant_id,
-    classId: h.class_id,
-    className: h.class_name,
-    subjectId: h.subject_id,
-    subjectName: h.subject_name || 'General',
-    title: h.title,
-    description: h.description,
-    dueDate: h.due_date,
-    submissionCount: parseInt(h.submission_count) || 0,
-    createdAt: h.created_at,
-  }));
+const homeworkSchema = z.object({
+  academicYearId: z.string().uuid(),
+  classId: z.string().uuid(),
+  sectionId: z.string().uuid().optional().nullable(),
+  subjectId: z.string().uuid().optional().nullable(),
+  title: z.string().trim().min(2).max(255),
+  description: z.string().trim().max(5000).optional().nullable(),
+  dueDate: z.string().date(),
+});
 
-  res.json({
-    data: mapped,
-    meta: { total: result.rowCount },
-    requestId: req.id,
-    timestamp: new Date().toISOString(),
-  });
-}));
+const SELECT = `SELECT h.id, h.class_id, h.section_id, h.subject_id, h.title, h.description, h.due_date, h.created_at,
+    c.name AS class_name, sec.name AS section_name, sub.name AS subject_name
+  FROM homework h
+  JOIN classes c ON c.id = h.class_id AND c.tenant_id = h.tenant_id
+  LEFT JOIN sections sec ON sec.id = h.section_id AND sec.tenant_id = h.tenant_id
+  LEFT JOIN subjects sub ON sub.id = h.subject_id AND sub.tenant_id = h.tenant_id`;
 
-// POST /api/v1/homework - Teacher creates a new homework assignment
-router.post('/', requireAuth, tenantContext(true), asyncHandler(async (req: Request, res: Response) => {
-  const tenantId = req.tenantId!;
-  const { classId, sectionId, subjectId, title, description, dueDate } = req.body;
+const map = (h: any) => ({
+  id: h.id,
+  classId: h.class_id,
+  className: h.class_name,
+  sectionId: h.section_id,
+  sectionName: h.section_name || 'All sections',
+  subjectId: h.subject_id,
+  subjectName: h.subject_name || 'General',
+  title: h.title,
+  description: h.description,
+  dueDate: h.due_date,
+  createdAt: h.created_at,
+  studentName: h.student_name || null,
+});
 
-  if (!classId || !title || !dueDate) {
-    throw new AppError('classId, title, and dueDate are required.', 422, 'VALIDATION_ERROR');
-  }
+// Homework for the classes a parent's children or a student currently attend.
+const PORTAL_SCOPE = `JOIN enrollments e ON e.tenant_id = h.tenant_id AND e.class_id = h.class_id AND e.status = 'enrolled'
+    AND (h.section_id IS NULL OR h.section_id = e.section_id)
+  JOIN students st ON st.id = e.student_id AND st.tenant_id = e.tenant_id`;
 
-  const result = await query(
-    `INSERT INTO homework (tenant_id, class_id, section_id, subject_id, title, description, due_date)
-     VALUES ($1, $2, $3, $4, $5, $6, $7)
-     RETURNING *`,
-    [tenantId, classId, sectionId || null, subjectId || null, title, description || null, dueDate]
-  );
-
-  res.status(201).json({
-    data: result.rows[0],
-    requestId: req.id,
-    timestamp: new Date().toISOString(),
-  });
-}));
-
-// GET /api/v1/homework/:id/submissions - View submissions for an assignment
-router.get('/:id/submissions', requireAuth, tenantContext(true), asyncHandler(async (req: Request, res: Response) => {
-  const { id } = req.params;
-
-  const result = await query(
-    `SELECT s.*, st.first_name, st.last_name, st.admission_no
-     FROM homework_submissions s
-     JOIN students st ON st.id = s.student_id
-     JOIN homework h ON h.id = s.homework_id
-     WHERE s.homework_id = $1 AND h.tenant_id = $2
-     ORDER BY s.submitted_at DESC`,
-    [id, req.tenantId]
-  );
-
-  const mapped = result.rows.map(r => ({
-    id: r.id,
-    homeworkId: r.homework_id,
-    studentId: r.student_id,
-    studentName: `${r.first_name} ${r.last_name || ''}`.trim(),
-    admissionNo: r.admission_no,
-    submissionText: r.submission_text,
-    fileUrl: r.file_url,
-    status: r.status,
-    marksObtained: r.marks_obtained !== null ? Number(r.marks_obtained) : null,
-    feedback: r.feedback,
-    submittedAt: r.submitted_at
-  }));
-
-  res.json({
-    data: mapped,
-    requestId: req.id,
-    timestamp: new Date().toISOString()
-  });
-}));
-
-// POST /api/v1/homework/:id/submissions - Student submits homework
-router.post('/:id/submissions', requireAuth, tenantContext(true), asyncHandler(async (req: Request, res: Response) => {
-  const { id } = req.params;
-  const { studentId, submissionText, fileUrl } = req.body;
-
-  let actualStudentId = studentId;
-
-  // If studentId not explicitly provided, find student linked to requesting user
-  if (!actualStudentId) {
-    const studentRes = await query(
-      `SELECT id FROM students WHERE user_id = $1 AND tenant_id = $2 LIMIT 1`,
-      [req.user!.id, req.tenantId]
+// GET /api/v1/homework: staff see the institution's homework; parents and students see their own classes.
+router.get('/', requirePermission('homework.view'), asyncHandler(async (req: Request, res: Response) => {
+  const order = 'ORDER BY h.due_date DESC, h.created_at DESC';
+  let result;
+  if (req.user.role === 'PARENT') {
+    result = await query(
+      `${SELECT.replace('SELECT h.id,', "SELECT st.first_name || ' ' || COALESCE(st.last_name, '') AS student_name, h.id,")}
+       ${PORTAL_SCOPE}
+       JOIN parent_students ps ON ps.student_id = st.id AND ps.tenant_id = st.tenant_id
+       JOIN parents p ON p.id = ps.parent_id AND p.tenant_id = ps.tenant_id
+       WHERE h.tenant_id = $1 AND p.user_id = $2 ${order} LIMIT 200`,
+      [req.tenantId, req.user.id]
     );
-    actualStudentId = studentRes.rows[0]?.id;
+  } else if (req.user.role === 'STUDENT') {
+    result = await query(`${SELECT} ${PORTAL_SCOPE} WHERE h.tenant_id = $1 AND st.user_id = $2 ${order} LIMIT 200`, [req.tenantId, req.user.id]);
+  } else {
+    result = await query(`${SELECT} WHERE h.tenant_id = $1 ${order} LIMIT 500`, [req.tenantId]);
   }
-
-  if (!actualStudentId) {
-    throw new AppError('Valid student identifier is required to submit homework.', 422, 'STUDENT_REQUIRED');
-  }
-
-  // Check homework existence and due date
-  const hwRes = await query(`SELECT due_date FROM homework WHERE id = $1 AND tenant_id = $2`, [id, req.tenantId]);
-  if (!hwRes.rowCount) throw new AppError('Homework assignment not found.', 404, 'NOT_FOUND');
-
-  const dueDate = new Date(hwRes.rows[0].due_date);
-  const now = new Date();
-  const status = now > dueDate ? 'LATE' : 'SUBMITTED';
-
-  const result = await query(
-    `INSERT INTO homework_submissions (homework_id, student_id, submission_text, file_url, status, submitted_at)
-     VALUES ($1, $2, $3, $4, $5, NOW())
-     RETURNING *`,
-    [id, actualStudentId, submissionText || null, fileUrl || null, status]
-  );
-
-  res.status(201).json({
-    data: result.rows[0],
-    message: status === 'LATE' ? 'Homework submitted (marked late).' : 'Homework submitted successfully!',
-    requestId: req.id,
-    timestamp: new Date().toISOString()
-  });
+  reply(res, req, result.rows.map(map), 200, { total: result.rowCount });
 }));
 
-// PATCH /api/v1/homework/submissions/:submissionId/grade - Teacher grades submission
-router.patch('/submissions/:submissionId/grade', requireAuth, tenantContext(true), asyncHandler(async (req: Request, res: Response) => {
-  const { submissionId } = req.params;
-  const { marksObtained, feedback } = req.body;
+// POST /api/v1/homework: teachers post for their assigned classes; the owner for any class.
+router.post('/', requirePermission('homework.manage'), validateBody(homeworkSchema), asyncHandler(async (req: Request, res: Response) => {
+  const b = req.body as z.infer<typeof homeworkSchema>;
+  await requireTeachingScope(req, b.academicYearId, b.classId, b.sectionId, b.subjectId);
+  const teacher = (await query(`SELECT id FROM staff WHERE tenant_id = $1 AND user_id = $2 LIMIT 1`, [req.tenantId, req.user.id])).rows[0];
+  const created = (await query(
+    `INSERT INTO homework (tenant_id, class_id, section_id, subject_id, title, description, due_date, teacher_id)
+     SELECT $1, c.id, $3, $4, $5, $6, $7, $8 FROM classes c WHERE c.id = $2 AND c.tenant_id = $1
+     RETURNING id`,
+    [req.tenantId, b.classId, b.sectionId || null, b.subjectId || null, b.title, b.description || null, b.dueDate, teacher?.id || null]
+  )).rows[0];
+  if (!created) throw new AppError('Class not found.', 404, 'NOT_FOUND');
+  await writeAudit({ tenantId: req.tenantId!, userId: req.user.id, action: 'HOMEWORK_CREATED', module: 'homework', entityId: created.id, details: { title: b.title }, request: req });
+  const row = (await query(`${SELECT} WHERE h.id = $1 AND h.tenant_id = $2`, [created.id, req.tenantId])).rows[0];
+  reply(res, req, map(row), 201);
+}));
 
-  const result = await query(
-    `UPDATE homework_submissions
-     SET marks_obtained = $1, feedback = $2, status = 'GRADED'
-     WHERE id = $3
-     RETURNING *`,
-    [marksObtained !== undefined ? Number(marksObtained) : null, feedback || null, submissionId]
-  );
-
-  if (!result.rowCount) throw new AppError('Submission not found.', 404, 'NOT_FOUND');
-
-  res.json({
-    data: result.rows[0],
-    message: 'Submission graded successfully.',
-    requestId: req.id,
-    timestamp: new Date().toISOString()
-  });
+// DELETE /api/v1/homework/:id: remove a posting made in error. Teachers may remove only their own.
+router.delete('/:id', requirePermission('homework.manage'), asyncHandler(async (req: Request, res: Response) => {
+  if (!z.string().uuid().safeParse(req.params.id).success) throw new AppError('Homework not found.', 404, 'NOT_FOUND');
+  const row = (await query(
+    `SELECT h.id, h.title, s.user_id AS teacher_user_id FROM homework h
+     LEFT JOIN staff s ON s.id = h.teacher_id AND s.tenant_id = h.tenant_id
+     WHERE h.id = $1 AND h.tenant_id = $2`, [req.params.id, req.tenantId])).rows[0];
+  if (!row) throw new AppError('Homework not found.', 404, 'NOT_FOUND');
+  if (req.user.role !== 'TENANT_ADMIN' && !req.user.isSuperAdmin && row.teacher_user_id !== req.user.id)
+    throw new AppError('Teachers can remove only homework they posted.', 403, 'FORBIDDEN');
+  await query('DELETE FROM homework WHERE id = $1 AND tenant_id = $2', [row.id, req.tenantId]);
+  await writeAudit({ tenantId: req.tenantId!, userId: req.user.id, action: 'HOMEWORK_DELETED', module: 'homework', entityId: row.id, details: { title: row.title }, request: req });
+  reply(res, req, { deleted: true });
 }));
 
 export default router;

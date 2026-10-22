@@ -12,6 +12,7 @@ import { config } from '../config.js';
 import { writeAudit } from '../services/auditService.js';
 import { enqueueNotification } from '../services/notificationService.js';
 import { authLimiter } from '../middleware/rateLimiter.js';
+import { getInstitutionProfile } from '../services/institutionFeatures.js';
 
 const router = Router();
 const signInSchema = z.object({ email: z.string().email(), password: z.string().min(1), tenantId: z.string().uuid().optional() });
@@ -323,8 +324,10 @@ router.get('/me', requireAuth, asyncHandler(async (req, res) => {
   const permissions = await query(
     `SELECT p.key FROM memberships m JOIN role_permissions rp ON rp.role_id=m.role_id
      JOIN permissions p ON p.id=rp.permission_id WHERE m.user_id=$1 AND m.tenant_id=$2`, [req.user.id, req.user.tenantId]);
+  const institution = req.user.isSuperAdmin ? null : await getInstitutionProfile(req.user.tenantId);
   res.json({ data: { user: profile({ ...result.rows[0], role_key: req.user.role, tenant_id: req.user.tenantId,
       permissions: permissions.rows.map(row => row.key) }),
+    institution: institution && { id: institution.id, name: institution.name, type: institution.type, entitlements: institution.entitlements },
     expiresAt: req.user.exp * 1000 }, requestId: req.id, timestamp: new Date().toISOString() });
 }));
 router.post('/password', requireAuth, authLimiter, validateBody(passwordSchema), asyncHandler(async (req, res) => {

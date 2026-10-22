@@ -106,7 +106,6 @@ check('parent cannot submit another child proof or approve a proof',async()=>{
 });
 check('partial verification moves DUE to PARTIAL to PAID and preserves journals/receipts/audit',async()=>{
   assert.equal(f.assignments[1].status,201);const id=f.assignments[1].data.id;
-  await ok('GET','/finance/accounts',f.owner.token);
   const due=(await ok('GET','/fees/assignments',f.parent.token)).find(a=>a.id===id);
   for(const [amount,balance,status] of [[400,600,'PARTIAL'],[600,0,'PAID']]){
     const proof=await ok('POST','/fees/proofs',f.parent.token,{feeAssignmentId:id,installmentId:due.installments[0].id,amount,transactionReference:`batch1-${id}-${amount}`,paymentDate:'2026-10-03',fileName:'proof.png',proofDataUrl:'data:image/png;base64,aGVsbG8='},201);

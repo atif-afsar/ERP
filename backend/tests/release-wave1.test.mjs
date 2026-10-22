@@ -560,37 +560,3 @@ test('RC-BUG-003: Duplicate key violations return controlled 409 Conflict withou
   assert.equal(enrDup.error?.code, 'DUPLICATE_YEAR_ENROLLMENT');
   assert.ok(!enrDup.error?.message.includes('uq_enrollments_student_year'));
 });
-
-// ========================================================
-// RC-BUG-004 — Super Admin Finance Scope Protection
-// ========================================================
-test('RC-BUG-004: Global Super Admin cannot create accounts or view finance without school tenant', async () => {
-  // 1. Super Admin GET /finance/accounts without school tenant context returns 400 TENANT_SELECTION_REQUIRED
-  const saFin = await call(superAdminToken, '/finance/accounts');
-  assert.equal(saFin.status, 400, 'Global Super Admin finance returns 400 (not 500)');
-  assert.equal(saFin.error?.code, 'TENANT_SELECTION_REQUIRED');
-
-  // 2. Verify NO accounts were fabricated under platform tenant
-  const platformAccounts = await pool.query('SELECT * FROM finance_accounts WHERE tenant_id = $1', [
-    'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
-  ]);
-  assert.equal(platformAccounts.rowCount, 0, 'Zero platform tenant finance accounts exist');
-
-  // 3. Super Admin with explicit school tenant header CAN view that school finance safely
-  const saScoped = await call(superAdminToken, '/finance/accounts', 'GET', null, {
-    'x-tenant-id': tenantId,
-  });
-  assert.equal(saScoped.status, 200, 'Super Admin with explicit school tenant succeeds');
-  assert.ok(Array.isArray(saScoped.data), 'Accounts returned');
-
-  // 4. TENANT_ADMIN own finance continues to work
-  const taFin = await call(tenantAdminToken, '/finance/accounts');
-  assert.equal(taFin.status, 200, 'Tenant admin finance works');
-  assert.ok(taFin.data.length > 0);
-
-  // 5. Cross-tenant finance remains forbidden (403)
-  const crossFin = await call(tenantAdminToken, '/finance/accounts', 'GET', null, {
-    'x-tenant-id': state.otherTenant,
-  });
-  assert.equal(crossFin.status, 403, 'Cross-tenant finance rejected');
-});

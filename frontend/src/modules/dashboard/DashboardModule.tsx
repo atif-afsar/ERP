@@ -5,13 +5,12 @@ import {useAuth} from '../../context/AuthContext';
 import {apiClient} from '../../services/api/apiClient';
 import {canOpenModule} from '../../services/auth/permissionPolicy';
 import {StatCard} from '../../components/ui/StatCard';
-import {Modal} from '../../components/ui/Modal';
 const money=(n:number)=>new Intl.NumberFormat('en-IN',{style:'currency',currency:'INR'}).format(n);
 const localDate=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`};
-export const DashboardModule:React.FC<{onNavigate:(id:string)=>void;onOpenAi:()=>void}>=({onNavigate})=>{
+export const DashboardModule:React.FC<{onNavigate:(id:string)=>void}>=({onNavigate})=>{
  const {currentTenant}=useTenant();const {currentUser,can}=useAuth();
- const [data,setData]=useState<any>(null),[error,setError]=useState(''),[loading,setLoading]=useState(true),[retry,setRetry]=useState(0),[date,setDate]=useState(localDate),[childId,setChildId]=useState(''),[showId,setShowId]=useState(false);
- useEffect(()=>{let active=true;setLoading(true);setData(null);setError('');setShowId(false);apiClient.request<any>('/api/v1/dashboard/summary?date='+date,{tenantId:currentTenant.id}).then(r=>{if(active)setData(r.data)}).catch(e=>{if(active)setError(e.message)}).finally(()=>{if(active)setLoading(false)});return()=>{active=false}},[currentTenant.id,currentUser.id,currentUser.role,date,retry]);
+ const [data,setData]=useState<any>(null),[error,setError]=useState(''),[loading,setLoading]=useState(true),[retry,setRetry]=useState(0),[date,setDate]=useState(localDate),[childId,setChildId]=useState('');
+ useEffect(()=>{let active=true;setLoading(true);setData(null);setError('');apiClient.request<any>('/api/v1/dashboard/summary?date='+date,{tenantId:currentTenant.id}).then(r=>{if(active)setData(r.data)}).catch(e=>{if(active)setError(e.message)}).finally(()=>{if(active)setLoading(false)});return()=>{active=false}},[currentTenant.id,currentUser.id,currentUser.role,date,retry]);
  const canGo=(id:string)=>canOpenModule(currentUser,id);const children=data?.children||[];const child=children.find((x:any)=>x.id===childId)||children[0];const m=data?.metrics||{};const actions:[string,string][]=[];
  if(can('student_lifecycle.manage')&&canGo('students'))actions.push(['Add Student','app/students?admit=1']);
  for(const [label,module]of [['Students','students'],['Attendance','attendance'],['Fees & Payment Proofs','fees'],['Staff & Teachers','staff'],['Timetable','timetable'],['Examinations','exams'],['Request Leave','hr']] as [string,string][])if(canGo(module))actions.push([label,module]);
@@ -27,8 +26,7 @@ export const DashboardModule:React.FC<{onNavigate:(id:string)=>void;onOpenAi:()=
    <p className="text-sm text-slate-600">Scope: {data.scope}. Attendance date: {data.date}. Fee totals cover all academic years. Attendance percentage uses recorded entries: Present/Late count as one day, Half day as half, and Excused is excluded.</p>
    {children.length>1&&<label className="block text-sm font-semibold">Select child<select value={child?.id||''} onChange={e=>setChildId(e.target.value)} className="ml-2 max-w-full rounded border p-2">{children.map((x:any)=><option key={x.id} value={x.id}>{x.first_name} {x.last_name} — {x.admission_no}</option>)}</select></label>}
    {['PARENT','STUDENT'].includes(currentUser.role)&&!children.length&&<p role="status" className="rounded border bg-white p-4">{currentUser.role==='STUDENT'?'Your account is not linked to a student record. Contact your institution administrator.':'No student identities are linked to your parent account.'}</p>}
-   {currentUser.role==='STUDENT'&&!child&&<button className="rounded border px-4 py-2" onClick={()=>setShowId(true)}>View My Digital ID Card</button>}
-   {child&&<div className="rounded-xl border bg-white p-5"><h3 className="font-bold">{child.first_name} {child.last_name}</h3><p className="text-sm text-slate-600">Admission: {child.admission_no} · {child.class_name||'No current enrollment'} {child.section_name||''} · Roll: {child.roll_no||'Not available'}</p>{currentUser.role==='STUDENT'&&<button className="mt-3 rounded border px-4 py-2" onClick={()=>setShowId(true)}>View My Digital ID Card</button>}</div>}
+   {child&&<div className="rounded-xl border bg-white p-5"><h3 className="font-bold">{child.first_name} {child.last_name}</h3><p className="text-sm text-slate-600">Admission: {child.admission_no} · {child.class_name||'No current enrollment'} {child.section_name||''} · Roll: {child.roll_no||'Not available'}</p></div>}
    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
     {m.totalInstitutes!==undefined&&<StatCard title="Total Institutions" value={m.totalInstitutes} icon={Building} onClick={()=>onNavigate('superadmin-tenants')}/>}
     {m.activeInstitutes!==undefined&&<StatCard title="Active Institutions" value={m.activeInstitutes} icon={Building}/>}
@@ -46,6 +44,5 @@ export const DashboardModule:React.FC<{onNavigate:(id:string)=>void;onOpenAi:()=
    {!Object.keys(m).length&&!fee&&!att&&!children.length&&!['PARENT','STUDENT'].includes(currentUser.role)&&<p className="text-sm text-slate-600">No institute-wide metrics are available for your permissions.</p>}
   </>}
   <section className="rounded-xl border bg-white p-5"><h3 className="mb-3 font-bold">Quick Actions</h3><div className="flex flex-wrap gap-3">{actions.map(([label,path])=><button key={label} className="rounded border px-4 py-2 hover:bg-emerald-50" onClick={()=>onNavigate(path)}>{label}</button>)}</div></section>
-  {currentUser.role==='STUDENT'&&<Modal isOpen={showId} onClose={()=>setShowId(false)} title="Digital Student Identity Card" subtitle="Student identity and current enrollment" maxWidth="md"><div className="space-y-3"><h3 className="font-bold">{currentTenant.name}</h3>{!child&&<p role="alert">Your account is not linked to a student record. Contact your institution administrator.</p>}<p>{child?.first_name} {child?.last_name}</p><p>Admission No<br/>{child?.admission_no||'Not available'}</p><p>Roll Number<br/>{child?.roll_no||'Not available'}</p><p>Current Class<br/>{child?.class_name?`${child.class_name} - ${child.section_name||'Not available'}`:'Not available'}</p><p>Academic year<br/>{child?.academic_year_name||'Not available'}</p><p>Status<br/>{child?.status||'Not available'}</p></div></Modal>}
  </div>;
 };

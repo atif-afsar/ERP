@@ -28,7 +28,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
   onNavigate,
 }) => {
   const { currentUser, changePassword } = useAuth();
-  const { currentTenant, currentBranch } = useTenant();
+  const { currentTenant } = useTenant();
 
   const [activeTab, setActiveTab] = useState<'profile' | 'security'>('profile');
   const [oldPassword, setOldPassword] = useState('');
@@ -147,10 +147,10 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
               <div className="p-3 rounded-lg border border-slate-200 bg-white">
                 <p className="text-slate-400 font-medium flex items-center gap-1 mb-1">
                   <MapPin className="w-3.5 h-3.5 text-slate-400" />
-                  Campus Branch
+                  Institution
                 </p>
-                <p className="font-semibold text-slate-800 truncate">{currentBranch?.name || 'Main Campus'}</p>
-                <p className="text-[10px] text-slate-400 mt-0.5">Session 2026–27</p>
+                <p className="font-semibold text-slate-800 truncate">{currentTenant.name || '—'}</p>
+                <p className="text-[10px] text-slate-400 mt-0.5">{currentTenant.institutionLabel}</p>
               </div>
 
               <div className="p-3 rounded-lg border border-slate-200 bg-white">
@@ -171,8 +171,8 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
                   <Clock className="w-3.5 h-3.5 text-slate-400" />
                   Authentication Status
                 </p>
-                <p className="font-semibold text-slate-800">Bearer JWT Authenticated</p>
-                <p className="text-[10px] text-slate-400 mt-0.5">Expires in 7 days</p>
+                <p className="font-semibold text-slate-800">Signed in securely</p>
+                <p className="text-[10px] text-slate-400 mt-0.5">Sign out on shared devices</p>
               </div>
             </div>
 
@@ -180,8 +180,8 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
             {currentUser.role === 'TENANT_ADMIN' && onNavigate && (
               <div className="p-3 rounded-lg bg-emerald-50 border border-emerald-200 flex items-center justify-between">
                 <div>
-                  <p className="text-xs font-bold text-emerald-900">School Profile & Master Data</p>
-                  <p className="text-[11px] text-emerald-700">Configure Springfield Academy's profile, years, and branches.</p>
+                  <p className="text-xs font-bold text-emerald-900">Institute Setup</p>
+                  <p className="text-[11px] text-emerald-700">Configure {currentTenant.name || 'your institute'}'s profile, academic years, classes and subjects.</p>
                 </div>
                 <Button
                   variant="outline"
@@ -191,7 +191,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
                     onNavigate('app/master-data');
                   }}
                 >
-                  Manage Master Data
+                  Open Setup
                 </Button>
               </div>
             )}

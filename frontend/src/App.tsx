@@ -14,89 +14,39 @@ import { apiClient } from './services/api/apiClient';
 // Modules
 const DashboardModule = React.lazy(() => import('./modules/dashboard/DashboardModule').then(m => ({ default: m.DashboardModule })));
 const StudentLifecycleModule = React.lazy(() => import('./modules/students/StudentLifecycleModule').then(m => ({ default: m.StudentLifecycleModule })));
-const AcademicsModule = React.lazy(() => import('./modules/academics/AcademicsModule').then(m => ({ default: m.AcademicsModule })));
-const AttendanceModule = React.lazy(() => import('./modules/attendance/AttendanceModule').then(m => ({ default: m.AttendanceModule })));
+const AcademicOperationsModule = React.lazy(() => import('./modules/academicOperations/AcademicOperationsModule').then(m => ({ default: m.AcademicOperationsModule })));
 const FeeManagementModule = React.lazy(() => import('./modules/fees/FeeManagementModule').then(m => ({ default: m.FeeManagementModule })));
-const FinanceModule = React.lazy(() => import('./modules/finance/FinanceModule').then(m => ({ default: m.FinanceModule })));
-const InventoryOperationsModule = React.lazy(() => import('./modules/inventory/InventoryOperationsModule').then(m => ({ default: m.InventoryOperationsModule })));
-const LibraryOperationsModule = React.lazy(() => import('./modules/library/LibraryOperationsModule').then(m => ({ default: m.LibraryOperationsModule })));
-const TransportOperationsModule = React.lazy(() => import('./modules/transport/TransportOperationsModule').then(m => ({ default: m.TransportOperationsModule })));
-const HostelOperationsModule = React.lazy(() => import('./modules/hostel/HostelOperationsModule').then(m => ({ default: m.HostelOperationsModule })));
-const MessOperationsModule = React.lazy(() => import('./modules/mess/MessOperationsModule').then(m => ({ default: m.MessOperationsModule })));
-const HealthModule = React.lazy(() => import('./modules/health/HealthModule').then(m => ({ default: m.HealthModule })));
-const ExamsModule = React.lazy(() => import('./modules/exams/ExamsModule').then(m => ({ default: m.ExamsModule })));
 const ExaminationAssessmentModule = React.lazy(() => import('./modules/examinations/ExaminationAssessmentModule').then(m => ({ default: m.ExaminationAssessmentModule })));
 const StudentParentResultsModule = React.lazy(() => import('./modules/examinations/StudentParentResultsModule').then(m => ({ default: m.StudentParentResultsModule })));
-const TimetableModule = React.lazy(() => import('./modules/timetable/TimetableModule').then(m => ({ default: m.TimetableModule })));
+const StudentTimetable = React.lazy(() => import('./modules/timetable/StudentTimetable').then(m => ({ default: m.StudentTimetable })));
 const HomeworkModule = React.lazy(() => import('./modules/homework/HomeworkModule').then(m => ({ default: m.HomeworkModule })));
 const CommunicationCenterModule = React.lazy(() => import('./modules/communication/CommunicationCenterModule').then(m => ({ default: m.CommunicationCenterModule })));
-const CrmModule = React.lazy(() => import('./modules/crm/CrmModule').then(m => ({ default: m.CrmModule })));
 const ReportsModule = React.lazy(() => import('./modules/reports/ReportsModule').then(m => ({ default: m.ReportsModule })));
 const SuperAdminModule = React.lazy(() => import('./modules/superadmin/SuperAdminModule').then(m => ({ default: m.SuperAdminModule })));
 const SuperAdminSaaSModule = React.lazy(() => import('./modules/superadmin/SuperAdminSaaSModule').then(m => ({ default: m.SuperAdminSaaSModule })));
 const TenantManagementModule = React.lazy(() => import('./modules/superadmin/TenantManagementModule').then(m => ({ default: m.TenantManagementModule })));
 const OrganizationModule = React.lazy(() => import('./modules/organization/OrganizationModule').then(m => ({ default: m.OrganizationModule })));
 const SchoolMasterDataModule = React.lazy(() => import('./modules/masterData/SchoolMasterDataModule').then(m => ({ default: m.SchoolMasterDataModule })));
-const SettingsModule = React.lazy(() => import('./modules/settings/SettingsModule').then(m => ({ default: m.SettingsModule })));
-const ApiExplorerModule = React.lazy(() => import('./modules/apiExplorer/ApiExplorerModule').then(m => ({ default: m.ApiExplorerModule })));
-const SchemaExplorerModule = React.lazy(() => import('./modules/schemaExplorer/SchemaExplorerModule').then(m => ({ default: m.SchemaExplorerModule })));
-const RolesMatrixModule = React.lazy(() => import('./modules/rolesMatrix/RolesMatrixModule').then(m => ({ default: m.RolesMatrixModule })));
-const StaffModule = React.lazy(() => import('./modules/staff/StaffModule').then(m => ({ default: m.StaffModule })));
-const AcademicOperationsModule = React.lazy(() => import('./modules/academicOperations/AcademicOperationsModule').then(m => ({ default: m.AcademicOperationsModule })));
-const HrOperationsModule = React.lazy(() => import('./modules/hr/HrOperationsModule').then(m => ({ default: m.HrOperationsModule })));
 const SaaSBillingModule = React.lazy(() => import('./modules/saasBilling/SaaSBillingModule').then(m => ({ default: m.SaaSBillingModule })));
 import { OwnerOnboardingView } from './components/auth/OwnerOnboardingView';
-import { GlobalAiAssistantBot } from './components/ai/GlobalAiAssistantBot';
 import { LandingPage } from './modules/public/LandingPage';
-import { SuperAdminShell } from './modules/superadmin/SuperAdminShell';
-
-const READ_ONLY_MODULES = new Set([
-  'settings', 'roles-matrix', 'superadmin-features',
-]);
-
-const ReadOnlyModule: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <div className="space-y-3">
-    <div role="status" className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-900">
-      Read-only during backend migration. Existing browser records have been preserved but are no longer used.
-    </div>
-    <div className="pointer-events-none select-text" aria-readonly="true">{children}</div>
-  </div>
-);
 
 const ROUTE_PERMISSIONS: Record<string, Permission> = {
   students: 'student_lifecycle.view',
-  'students/new': 'students.create',
   staff: 'staff.view',
-  hr: 'hr.leave.request',
-  academics: 'students.view',
   attendance: 'attendance.view',
-  'attendance/mark': 'attendance.mark',
   fees: 'fee_management.view',
-  finance: 'fee_management.view',
-  inventory: 'inventory.view',
-  library: 'library.view',
-  transport: 'transport.view',
-  hostel: 'hostel.view',
-  mess: 'mess.view',
-  health: 'health.view',
-  'fees/new': 'fees.create',
   exams: 'examinations.view',
   results: 'exam_marks.view',
   timetable: 'timetable.view',
   homework: 'homework.view',
   communication: 'communications.view',
-  crm: 'students.create',
-  reports: 'reports.view',
-  settings: 'organization.view',
+  reports: 'fee_reports.view',
   organization: 'users.view',
   'master-data': 'master_data.view',
-  'api-docs': 'organization.view',
-  schema: 'organization.view',
-  'roles-matrix': 'roles.manage',
   'superadmin-dashboard': 'tenants.manage',
   'superadmin-tenants': 'tenants.manage',
   'superadmin-plans': 'subscriptions.manage',
-  'superadmin-features': 'tenants.manage',
   'saas-billing': 'organization.view',
 };
 
@@ -141,8 +91,7 @@ const NotFoundView: React.FC<{ attemptedRoute: string; onBackToDashboard: () => 
 
 const MainRouter: React.FC = () => {
   const { authState, isAuthenticated, isSuperAdmin, currentUser, can } = useAuth();
-  const { currentTenant, isFeatureEnabled } = useTenant();
-  const [isAiModalOpen, setIsAiModalOpen] = useState(false);
+  const { currentTenant } = useTenant();
   const [ownerEntitlement, setOwnerEntitlement] = useState<{ isActive: boolean } | null>(null);
   const [entitlementError, setEntitlementError] = useState('');
   useEffect(() => {
@@ -256,103 +205,37 @@ const MainRouter: React.FC = () => {
       switch (currentNav) {
         case 'dashboard':
         case 'superadmin-dashboard':
-          return isSuperAdmin ? (
-            <SuperAdminModule />
-          ) : (
-            <DashboardModule
-              onNavigate={(nav) => navigateTo(nav)}
-              onOpenAi={() => setIsAiModalOpen(true)}
-            />
-          );
+          return isSuperAdmin ? <SuperAdminModule /> : <DashboardModule onNavigate={(nav) => navigateTo(nav)} />;
         case 'students':
           return <StudentLifecycleModule />;
         case 'staff':
           return <AcademicOperationsModule initialTab="staff" />;
-        case 'hr':
-          return <HrOperationsModule />;
-        case 'academics':
-          return <AcademicsModule />;
         case 'attendance':
-          return isFeatureEnabled('attendance') ? (
-            <AcademicOperationsModule initialTab="attendance" />
-          ) : (
-            <UnauthorizedCard permission="attendance.view" onBackToDashboard={() => navigateTo('dashboard')} />
-          );
-        case 'fees':
-          return isFeatureEnabled('fees') ? (
-            <FeeManagementModule />
-          ) : (
-            <UnauthorizedCard permission="fees.view" onBackToDashboard={() => navigateTo('dashboard')} />
-          );
-        case 'finance':
-          return <FinanceModule />;
-        case 'inventory':
-          return <InventoryOperationsModule />;
-        case 'library':
-          return <LibraryOperationsModule />;
-        case 'transport':
-          return <TransportOperationsModule />;
-        case 'hostel':
-          return <HostelOperationsModule />;
-        case 'mess':
-          return <MessOperationsModule />;
-        case 'health':
-          return <HealthModule />;
+          return <AcademicOperationsModule initialTab="attendance" />;
+        case 'timetable':
+          return currentUser.role === 'STUDENT' ? <StudentTimetable /> : <AcademicOperationsModule initialTab="timetable" />;
         case 'exams':
         case 'results':
-          if (currentUser.role === 'PARENT' || currentUser.role === 'STUDENT') {
-            return <StudentParentResultsModule />;
-          }
-          return isFeatureEnabled('exams') ? (
-            <ExaminationAssessmentModule initialTab={currentNav === 'results' ? 'results' : 'exams'} />
-          ) : (
-            <UnauthorizedCard permission="exams.view" onBackToDashboard={() => navigateTo('dashboard')} />
-          );
-        case 'timetable':
-          return isFeatureEnabled('timetable') ? (
-            <AcademicOperationsModule initialTab="timetable" />
-          ) : (
-            <UnauthorizedCard permission="timetable.view" onBackToDashboard={() => navigateTo('dashboard')} />
-          );
+          if (currentUser.role === 'PARENT' || currentUser.role === 'STUDENT') return <StudentParentResultsModule />;
+          return <ExaminationAssessmentModule initialTab={currentNav === 'results' ? 'results' : 'exams'} />;
+        case 'fees':
+          return <FeeManagementModule />;
         case 'homework':
-          return isFeatureEnabled('homework') ? (
-            <HomeworkModule />
-          ) : (
-            <UnauthorizedCard permission="homework.view" onBackToDashboard={() => navigateTo('dashboard')} />
-          );
+          return <HomeworkModule />;
         case 'communication':
-          return isFeatureEnabled('communication') ? (
-            <CommunicationCenterModule />
-          ) : (
-            <UnauthorizedCard permission="communication.send" onBackToDashboard={() => navigateTo('dashboard')} />
-          );
-        case 'crm':
-          return isFeatureEnabled('inquiryCrm') ? (
-            <CrmModule />
-          ) : (
-            <UnauthorizedCard permission="students.create" onBackToDashboard={() => navigateTo('dashboard')} />
-          );
+          return <CommunicationCenterModule />;
         case 'reports':
           return <ReportsModule />;
-        case 'api-docs':
-          return <ApiExplorerModule />;
-        case 'schema':
-          return <SchemaExplorerModule />;
-        case 'roles-matrix':
-          return <RolesMatrixModule />;
-        case 'settings':
-        case 'superadmin-features':
-          return <SettingsModule />;
+        case 'organization':
+          return <OrganizationModule />;
+        case 'master-data':
+          return <SchoolMasterDataModule />;
+        case 'saas-billing':
+          return <SaaSBillingModule />;
         case 'superadmin-tenants':
           return <TenantManagementModule />;
         case 'superadmin-plans':
           return <SuperAdminSaaSModule />;
-        case 'organization':
-          return <OrganizationModule />;
-        case 'saas-billing':
-          return <SaaSBillingModule />;
-        case 'master-data':
-          return <SchoolMasterDataModule />;
         default:
           return (
             <NotFoundView
@@ -362,10 +245,6 @@ const MainRouter: React.FC = () => {
           );
       }
     })();
-
-    if (READ_ONLY_MODULES.has(currentNav)) {
-      return <ReadOnlyModule>{moduleNode}</ReadOnlyModule>;
-    }
 
     return moduleNode;
   };
@@ -392,7 +271,7 @@ const MainRouter: React.FC = () => {
               if (redirect && redirect.startsWith('/') && !redirect.includes('://')) {
                 navigateTo(redirect.slice(1));
               } else if (isSuperAdmin) {
-                navigateTo('super-admin');
+                navigateTo('app/superadmin-dashboard');
               } else {
                 navigateTo('app/dashboard');
               }
@@ -415,23 +294,10 @@ const MainRouter: React.FC = () => {
       return <SuspendedTenantView tenantName={currentTenant.name} />;
     }
 
-    // 5. SEPARATE SUPER ADMIN SURFACE (Doc 64)
+    // 5. Old super admin link: the console now lives inside the app shell.
     if (routeState.path === 'super-admin') {
-      if (!isSuperAdmin) {
-        return (
-          <UnauthorizedCard
-            permission="tenants.manage"
-            onBackToDashboard={() => navigateTo('app/dashboard')}
-          />
-        );
-      }
-      return (
-        <SuperAdminShell
-          onNavigate={navigateTo}
-          activeSubRoute={routeState.subParam}
-          onOpenAi={() => setIsAiModalOpen(true)}
-        />
-      );
+      navigateTo(isSuperAdmin ? 'app/superadmin-dashboard' : 'app/dashboard');
+      return null;
     }
 
     // 6. TENANT WORKSPACE & PORTALS (/app/*)
@@ -439,11 +305,9 @@ const MainRouter: React.FC = () => {
       <AppShell
         activeNav={activeModule}
         onNavigate={(nav) => navigateTo(nav)}
-        onOpenAi={() => setIsAiModalOpen(true)}
       >
         <React.Suspense fallback={<div className="flex h-64 items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-gray-400" /></div>}>
-          {READ_ONLY_MODULES.has(currentNav) && !(currentUser.role === 'TENANT_ADMIN' && (entitlementError || (ownerEntitlement && !ownerEntitlement.isActive)))
-            ? <ReadOnlyModule>{renderModule()}</ReadOnlyModule> : renderModule()}
+          {renderModule()}
         </React.Suspense>
       </AppShell>
     );
@@ -453,14 +317,6 @@ const MainRouter: React.FC = () => {
     <>
       {renderPageContent()}
 
-      {!isPublicRoute && (
-        <GlobalAiAssistantBot
-          onNavigate={navigateTo}
-          isOpen={isAiModalOpen}
-          onOpen={() => setIsAiModalOpen(true)}
-          onClose={() => setIsAiModalOpen(false)}
-        />
-      )}
     </>
   );
 };

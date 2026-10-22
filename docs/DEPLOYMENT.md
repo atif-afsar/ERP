@@ -130,9 +130,8 @@ From the root directory, you can orchestrate tasks without changing directories:
 | Variable | Required in Prod | Example / Description |
 |---|:---:|---|
 | `VITE_API_URL` | **Yes** | `https://api.yourdomain.com/api` (The production backend base URL) |
-| `VITE_GEMINI_API_KEY` | Optional | Google Gemini API key for AI assistant features |
 
-> **Note**: Vite environment variables must start with the `VITE_` prefix to be exposed to the browser.
+> **Note**: Vite variables are exposed to the browser. Never put secrets in a `VITE_*` variable.
 
 ---
 
@@ -167,7 +166,6 @@ From the root directory, you can orchestrate tasks without changing directories:
    - **Install Command**: `npm install`
 4. Add **Environment Variables** in Vercel:
    - `VITE_API_URL`: `https://api.yourdomain.com/api`
-   - `VITE_GEMINI_API_KEY`: *(Your Gemini API key)*
 5. Click **Deploy**.
 6. Note your generated production domain (e.g., `https://edunexus-erp.vercel.app`).
    *You will paste this URL into your VPS backend `.env` as `FRONTEND_URL`.*

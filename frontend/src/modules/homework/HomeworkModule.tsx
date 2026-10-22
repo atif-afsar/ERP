@@ -1,539 +1,217 @@
-import React, { useState, useEffect } from 'react';
-import { BookOpen, Plus, Calendar, Clock, CheckCircle2, FileText, User, Award, ArrowUpRight, Search, Check, Send, X } from 'lucide-react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { BookOpen, Plus, Calendar, Trash2, Search } from 'lucide-react';
 import { useTenant } from '../../context/TenantContext';
 import { useAuth } from '../../context/AuthContext';
-import { storage } from '../../services/storageService';
-import { homeworkService, HomeworkItem, HomeworkSubmission } from '../../services/homeworkService';
-import { Homework } from '../../types';
+import { homeworkService, HomeworkItem } from '../../services/homeworkService';
+import { academicOperationsService } from '../../services/academicOperationsService';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { Modal } from '../../components/ui/Modal';
-import { Tabs } from '../../components/ui/Tabs';
+
+interface TeachingScope {
+  academic_year_id: string; academic_year_name: string;
+  class_id: string; class_name: string;
+  section_id: string | null; section_name: string | null;
+  subject_id: string | null; subject_name: string | null;
+}
+
+const today = () => new Date().toISOString().slice(0, 10);
+const inDays = (days: number) => new Date(Date.now() + days * 86400000).toISOString().slice(0, 10);
+const inputClass = 'w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500';
 
 export const HomeworkModule: React.FC = () => {
-  const { currentTenant, getLabel, isSchool, isCoaching } = useTenant();
-  const { can, currentUser } = useAuth();
-  const classes = storage.getClasses(currentTenant.id);
-  const batches = storage.getBatches(currentTenant.id);
-  const staff = storage.getStaff(currentTenant.id);
+  const { currentTenant, getLabel } = useTenant();
+  const { can, isParent, isStudent } = useAuth();
+  const canPost = can('homework.manage');
 
-  const [homeworkList, setHomeworkList] = useState<Homework[]>(() =>
-    storage.getHomework(currentTenant.id)
-  );
-  const [loading, setLoading] = useState(false);
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [filterTab, setFilterTab] = useState<string>('all');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [items, setItems] = useState<HomeworkItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [search, setSearch] = useState('');
 
-  // Submissions State
-  const [selectedHw, setSelectedHw] = useState<Homework | null>(null);
-  const [submissions, setSubmissions] = useState<HomeworkSubmission[]>([]);
-  const [loadingSubmissions, setLoadingSubmissions] = useState(false);
-  const [gradingState, setGradingState] = useState<{ [key: string]: { marks: string; feedback: string } }>({});
-  const [solutionText, setSolutionText] = useState('');
-  const [submittingSolution, setSubmittingSolution] = useState(false);
+  const [scopes, setScopes] = useState<TeachingScope[]>([]);
+  const [formOpen, setFormOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [formError, setFormError] = useState('');
+  const [form, setForm] = useState({ scope: '', title: '', description: '', dueDate: inDays(2) });
 
-  const [formData, setFormData] = useState({
-    subject: 'Mathematics',
-    title: '',
-    description: '',
-    groupId: isSchool ? classes[0]?.id || 'class-10-a' : batches[0]?.id || 'batch-jee-alpha',
-    groupName: isSchool ? 'Class 10 - Section A' : 'JEE Alpha 2027',
-    dueDate: new Date(Date.now() + 3 * 86400000).toISOString().split('T')[0],
-    maxMarks: '25',
-  });
-
-  // Load live homework from backend
-  const loadHomework = async () => {
+  const load = async () => {
+    setLoading(true);
+    setError('');
     try {
-      setLoading(true);
-      const res = await homeworkService.list(currentTenant.id);
-      if (res.data?.data && res.data.data.length > 0) {
-        const liveHw: Homework[] = res.data.data.map((h: HomeworkItem) => ({
-          id: h.id,
-          tenantId: h.tenantId,
-          groupId: h.classId,
-          groupName: h.className,
-          subject: h.subjectName,
-          title: h.title,
-          description: h.description,
-          assignedDate: h.createdAt?.split('T')[0] || new Date().toISOString().split('T')[0],
-          dueDate: h.dueDate?.split('T')[0] || h.dueDate,
-          teacherName: 'Faculty',
-          submissionsCount: h.submissionCount,
-          totalStudents: 40
-        }));
-        setHomeworkList(liveHw);
-      }
-    } catch {
-      // Keep existing storage fallback if offline
+      const result = await homeworkService.list(currentTenant.id);
+      setItems(result.data || []);
+    } catch (err: any) {
+      setError(err.message || 'Homework could not be loaded.');
     } finally {
       setLoading(false);
     }
   };
 
+  useEffect(() => { if (currentTenant.id) void load(); }, [currentTenant.id]);
+
   useEffect(() => {
-    loadHomework();
-  }, [currentTenant.id]);
+    if (!canPost || !currentTenant.id) return;
+    academicOperationsService.teachingContext(currentTenant.id)
+      .then(result => setScopes((result.data || []) as TeachingScope[]))
+      .catch(() => setScopes([]));
+  }, [canPost, currentTenant.id]);
 
-  const handleOpenSubmissions = async (hw: Homework) => {
-    setSelectedHw(hw);
-    setSolutionText('');
-    try {
-      setLoadingSubmissions(true);
-      const res = await homeworkService.listSubmissions(hw.id, currentTenant.id);
-      if (res.data?.data) {
-        setSubmissions(res.data.data);
-      } else {
-        setSubmissions([]);
-      }
-    } catch {
-      setSubmissions([]);
-    } finally {
-      setLoadingSubmissions(false);
-    }
+  // One option per class/section/subject the user may post for.
+  const scopeOptions = useMemo(() => scopes.map(s => ({
+    key: [s.academic_year_id, s.class_id, s.section_id || '', s.subject_id || ''].join('|'),
+    label: `${s.class_name}${s.section_name ? ` – ${s.section_name}` : ''}${s.subject_name ? ` · ${s.subject_name}` : ''} (${s.academic_year_name})`,
+    scope: s,
+  })), [scopes]);
+
+  const openForm = () => {
+    setForm({ scope: scopeOptions[0]?.key || '', title: '', description: '', dueDate: inDays(2) });
+    setFormError('');
+    setFormOpen(true);
   };
 
-  const handleGradeSubmission = async (subId: string) => {
-    const grade = gradingState[subId];
-    if (!grade) return;
-    try {
-      await homeworkService.grade(subId, {
-        marksObtained: grade.marks ? Number(grade.marks) : undefined,
-        feedback: grade.feedback || undefined
-      }, currentTenant.id);
-      if (selectedHw) handleOpenSubmissions(selectedHw);
-    } catch (err: any) {
-      alert(err.message || 'Failed to save grade');
-    }
-  };
-
-  const handleSubmitSolution = async (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedHw || !solutionText.trim()) return;
+    const chosen = scopeOptions.find(o => o.key === form.scope)?.scope;
+    if (!chosen) { setFormError(`Choose a ${getLabel('group').toLowerCase()}.`); return; }
+    if (form.dueDate < today()) { setFormError('The due date cannot be in the past.'); return; }
+    setSaving(true);
+    setFormError('');
     try {
-      setSubmittingSolution(true);
-      await homeworkService.submit(selectedHw.id, {
-        submissionText: solutionText.trim()
-      }, currentTenant.id);
-      setSolutionText('');
-      handleOpenSubmissions(selectedHw);
-      loadHomework();
-    } catch (err: any) {
-      alert(err.message || 'Submission failed');
-    } finally {
-      setSubmittingSolution(false);
-    }
-  };
-
-  const handleCreateHomework = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!formData.title) return;
-
-    try {
-      // First try backend API
-      const matchedClass = classes.find(c => `${c.name} - Section A` === formData.groupName) || classes[0];
       await homeworkService.create({
-        classId: matchedClass?.id || formData.groupId,
-        title: formData.title.trim(),
-        description: formData.description.trim() || undefined,
-        dueDate: formData.dueDate,
-        subjectId: undefined
+        academicYearId: chosen.academic_year_id,
+        classId: chosen.class_id,
+        sectionId: chosen.section_id,
+        subjectId: chosen.subject_id,
+        title: form.title.trim(),
+        description: form.description.trim() || undefined,
+        dueDate: form.dueDate,
       }, currentTenant.id);
-
-      await loadHomework();
-    } catch {
-      // Local fallback
-      const newHw: Homework = {
-        id: `hw-${Date.now()}`,
-        tenantId: currentTenant.id,
-        groupId: formData.groupId,
-        groupName: formData.groupName,
-        subject: formData.subject,
-        title: formData.title,
-        description: formData.description,
-        assignedDate: new Date().toISOString().split('T')[0],
-        dueDate: formData.dueDate,
-        teacherName: staff[0]?.name || 'Senior Faculty',
-        submissionsCount: 0,
-        totalStudents: isSchool ? 40 : 45,
-      };
-      storage.saveHomework(newHw);
-      setHomeworkList(storage.getHomework(currentTenant.id));
+      setFormOpen(false);
+      await load();
+    } catch (err: any) {
+      setFormError(err.message || 'Homework could not be posted.');
+    } finally {
+      setSaving(false);
     }
-
-    setIsAddModalOpen(false);
-    setFormData({
-      subject: 'Mathematics',
-      title: '',
-      description: '',
-      groupId: isSchool ? classes[0]?.id || 'class-10-a' : batches[0]?.id || 'batch-jee-alpha',
-      groupName: isSchool ? 'Class 10 - Section A' : 'JEE Alpha 2027',
-      dueDate: new Date(Date.now() + 3 * 86400000).toISOString().split('T')[0],
-      maxMarks: '25',
-    });
   };
 
-  const filteredList = homeworkList.filter((hw) => {
-    const matchesSearch =
-      hw.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      hw.subject.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      hw.groupName.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesSearch;
+  const remove = async (item: HomeworkItem) => {
+    try {
+      await homeworkService.remove(item.id, currentTenant.id);
+      setItems(list => list.filter(x => x.id !== item.id));
+    } catch (err: any) {
+      setError(err.message || 'Homework could not be removed.');
+    }
+  };
+
+  const visible = items.filter(item => {
+    const term = search.trim().toLowerCase();
+    return !term || [item.title, item.className, item.subjectName, item.studentName || ''].some(v => v.toLowerCase().includes(term));
   });
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      {/* Title & Actions */}
+    <div className="space-y-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
-              {getLabel('homework')} & Assignments
-            </h2>
-            <Badge variant="blue" size="sm">
-              {isSchool ? 'CBSE Standard' : 'IIT-JEE / NEET DPP'}
-            </Badge>
-          </div>
-          <p className="text-xs text-slate-500">
-            {isSchool
-              ? 'Assign daily homework, chapter worksheets, and monitor class submission rates.'
-              : 'Distribute Daily Practice Problem (DPP) sheets, numerical sets, and track student submissions.'}
+          <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
+            {isStudent ? 'My Homework' : isParent ? "Children's Homework" : 'Homework'}
+          </h2>
+          <p className="text-sm text-slate-500">
+            {canPost ? `Post homework for your ${getLabel('groupPlural').toLowerCase()}. Parents and ${getLabel('studentPlural').toLowerCase()} see it in their portal.` : 'Homework posted by your teachers.'}
           </p>
         </div>
-
-        {can('homework.create') && (
-          <Button
-            variant="primary"
-            leftIcon={<Plus className="w-4 h-4" />}
-            onClick={() => setIsAddModalOpen(true)}
-          >
-            Create {getLabel('homework')}
+        {canPost && (
+          <Button onClick={openForm} leftIcon={<Plus className="w-4 h-4" />} disabled={!scopeOptions.length}>
+            Post homework
           </Button>
         )}
       </div>
 
-      {/* Search & Tabs */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
-        <div className="relative flex-1 max-w-md">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder={`Search ${getLabel('homework').toLowerCase()} by title, subject...`}
-            className="w-full pl-10 pr-4 py-2 bg-slate-900/80 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-sky-500"
-          />
-        </div>
+      {canPost && !scopeOptions.length && !loading && (
+        <p className="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">
+          You have no {getLabel('groupPlural').toLowerCase()} assigned yet. Ask the owner to add a teaching assignment under Staff.
+        </p>
+      )}
 
-        <Tabs
-          tabs={[
-            { id: 'all', label: 'All Tasks' },
-            { id: 'active', label: 'Active Due' },
-            { id: 'completed', label: 'Evaluated' },
-          ]}
-          activeTab={filterTab}
-          onChange={(t) => setFilterTab(t)}
+      <div className="relative max-w-md">
+        <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+        <input
+          id="homework-search"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          placeholder="Search by title, class or subject"
+          className={`${inputClass} pl-9`}
         />
       </div>
 
-      {/* Homework Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {filteredList.length === 0 ? (
-          <div className="col-span-full p-12 glass-panel rounded-2xl border border-slate-800 text-center text-slate-400 text-xs space-y-2">
-            <BookOpen className="w-8 h-8 mx-auto text-slate-500" />
-            <p className="text-white font-semibold">No {getLabel('homework').toLowerCase()} records found.</p>
-            <p className="text-slate-500 text-[11px]">Create a new task to assign problems to students.</p>
-          </div>
-        ) : (
-          filteredList.map((hw) => {
-            const submissionPercent = Math.min(
-              100,
-              Math.round((hw.submissionsCount / hw.totalStudents) * 100)
-            );
+      {error && <p role="alert" className="text-sm text-rose-700 bg-rose-50 border border-rose-200 rounded-lg px-4 py-3">{error}</p>}
 
+      {loading ? (
+        <p className="text-sm text-slate-500">Loading homework…</p>
+      ) : visible.length === 0 ? (
+        <div className="p-10 bg-white border border-slate-200 rounded-xl text-center space-y-2">
+          <BookOpen className="w-8 h-8 text-slate-300 mx-auto" />
+          <p className="text-sm font-semibold text-slate-700">{items.length ? 'No homework matches your search.' : 'No homework posted yet.'}</p>
+          {canPost && !items.length && <p className="text-sm text-slate-500">Use “Post homework” to add the first one.</p>}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {visible.map(item => {
+            const overdue = item.dueDate < today();
             return (
-              <div
-                key={hw.id}
-                className="glass-panel p-6 rounded-2xl border border-slate-800 space-y-4 hover:border-sky-500/40 transition-all group"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Badge variant="purple" size="sm">{hw.subject}</Badge>
-                    <span className="text-xs font-semibold text-slate-300">{hw.groupName}</span>
+              <article key={`${item.id}-${item.studentName || ''}`} className="bg-white border border-slate-200 rounded-xl p-5 space-y-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap gap-1.5 mb-1.5">
+                      <Badge variant="emerald">{item.subjectName}</Badge>
+                      <Badge variant="slate">{item.className}{item.sectionId ? ` – ${item.sectionName}` : ''}</Badge>
+                      {item.studentName && <Badge variant="blue">{item.studentName}</Badge>}
+                    </div>
+                    <h3 className="font-semibold text-slate-900">{item.title}</h3>
                   </div>
-                  <span className="text-xs text-rose-400 font-medium">Due: {hw.dueDate}</span>
+                  {canPost && (
+                    <button onClick={() => void remove(item)} title="Remove homework" aria-label={`Remove ${item.title}`}
+                      className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50">
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
                 </div>
-
-                <div>
-                  <h3 className="font-bold text-white text-base group-hover:text-sky-400 transition-colors">
-                    {hw.title}
-                  </h3>
-                  <p className="text-xs text-slate-300 mt-1 leading-relaxed line-clamp-2">
-                    {hw.description}
-                  </p>
-                </div>
-
-                {/* Progress bar */}
-                <div className="space-y-1">
-                  <div className="flex justify-between text-[11px] text-slate-400">
-                    <span>Submission Status</span>
-                    <span className="text-emerald-400 font-semibold">
-                      {hw.submissionsCount} Submissions ({submissionPercent}%)
-                    </span>
-                  </div>
-                  <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
-                    <div
-                      className="bg-emerald-500 h-full rounded-full transition-all"
-                      style={{ width: `${submissionPercent}%` }}
-                    />
-                  </div>
-                </div>
-
-                <div className="pt-3 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
-                  <div className="flex items-center gap-1.5">
-                    <User className="w-3.5 h-3.5 text-slate-400" />
-                    <span>{hw.teacherName}</span>
-                  </div>
-                  <button
-                    onClick={() => handleOpenSubmissions(hw)}
-                    className="flex items-center gap-1 text-sky-400 font-medium hover:text-sky-300 transition-colors"
-                  >
-                    <span>View & Grade Submissions</span>
-                    <ArrowUpRight className="w-3 h-3" />
-                  </button>
-                </div>
-              </div>
+                {item.description && <p className="text-sm text-slate-600 whitespace-pre-line">{item.description}</p>}
+                <p className={`text-xs flex items-center gap-1.5 ${overdue ? 'text-rose-700' : 'text-slate-500'}`}>
+                  <Calendar className="w-3.5 h-3.5" /> Due {new Date(item.dueDate + 'T00:00:00').toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}{overdue ? ' · past due' : ''}
+                </p>
+              </article>
             );
-          })
-        )}
-      </div>
-
-      {/* Modal: View & Grade Submissions */}
-      {selectedHw && (
-        <Modal
-          isOpen={!!selectedHw}
-          onClose={() => setSelectedHw(null)}
-          title={`Submissions: ${selectedHw.title}`}
-          subtitle={`${selectedHw.subject} • ${selectedHw.groupName} • Due: ${selectedHw.dueDate}`}
-          maxWidth="2xl"
-        >
-          <div className="space-y-6 text-xs text-slate-300">
-            {/* Quick Submit Section (For Students/Testing) */}
-            <form onSubmit={handleSubmitSolution} className="p-4 bg-slate-950/60 rounded-xl border border-slate-800 space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="font-bold text-white text-xs flex items-center gap-1.5">
-                  <Send className="w-3.5 h-3.5 text-sky-400" /> Submit Student Solution / Answer
-                </span>
-                <span className="text-[10px] text-slate-400">Recorded with student ID</span>
-              </div>
-              <textarea
-                rows={2}
-                value={solutionText}
-                onChange={(e) => setSolutionText(e.target.value)}
-                placeholder="Type your solution explanation, answers, or notes..."
-                className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-white text-xs focus:outline-none focus:border-sky-500"
-              />
-              <div className="flex justify-end">
-                <Button variant="primary" size="sm" type="submit" disabled={submittingSolution || !solutionText.trim()}>
-                  {submittingSolution ? 'Submitting...' : 'Upload Submission'}
-                </Button>
-              </div>
-            </form>
-
-            {/* Submissions List */}
-            <div className="space-y-3">
-              <h4 className="font-bold text-white text-sm">
-                Student Submissions ({submissions.length})
-              </h4>
-
-              {loadingSubmissions ? (
-                <div className="p-8 text-center text-slate-400">Loading submissions...</div>
-              ) : submissions.length === 0 ? (
-                <div className="p-8 text-center text-slate-400 bg-slate-950/40 rounded-xl border border-slate-800/80">
-                  No submissions have been received yet for this task.
-                </div>
-              ) : (
-                <div className="space-y-3 max-h-[380px] overflow-y-auto pr-1">
-                  {submissions.map((sub) => {
-                    const currentMarks = gradingState[sub.id]?.marks ?? (sub.marksObtained !== null ? String(sub.marksObtained) : '');
-                    const currentFeedback = gradingState[sub.id]?.feedback ?? (sub.feedback || '');
-
-                    return (
-                      <div
-                        key={sub.id}
-                        className="p-4 bg-slate-900/90 border border-slate-800 rounded-xl space-y-3 hover:border-slate-700 transition-colors"
-                      >
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <span className="font-bold text-white text-xs">{sub.studentName}</span>
-                            <span className="text-slate-400 text-[11px] ml-2">Adm: {sub.admissionNo}</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                              sub.status === 'graded'
-                                ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                                : sub.status === 'late'
-                                ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
-                                : 'bg-sky-500/20 text-sky-400 border border-sky-500/30'
-                            }`}>
-                              {sub.status.toUpperCase()}
-                            </span>
-                            <span className="text-[10px] text-slate-500">
-                              {new Date(sub.submittedAt).toLocaleDateString()}
-                            </span>
-                          </div>
-                        </div>
-
-                        {sub.submissionText && (
-                          <p className="text-slate-300 text-xs bg-slate-950/80 p-2.5 rounded-lg border border-slate-800">
-                            {sub.submissionText}
-                          </p>
-                        )}
-
-                        {/* Grading Inputs */}
-                        <div className="pt-2 border-t border-slate-800/80 grid grid-cols-1 sm:grid-cols-3 gap-2 items-center">
-                          <input
-                            type="number"
-                            placeholder="Marks / 25"
-                            value={currentMarks}
-                            onChange={(e) =>
-                              setGradingState({
-                                ...gradingState,
-                                [sub.id]: { marks: e.target.value, feedback: currentFeedback }
-                              })
-                            }
-                            className="px-2.5 py-1.5 bg-slate-950 border border-slate-700 rounded-lg text-white text-xs focus:outline-none focus:border-sky-500"
-                          />
-                          <input
-                            type="text"
-                            placeholder="Teacher feedback..."
-                            value={currentFeedback}
-                            onChange={(e) =>
-                              setGradingState({
-                                ...gradingState,
-                                [sub.id]: { marks: currentMarks, feedback: e.target.value }
-                              })
-                            }
-                            className="px-2.5 py-1.5 bg-slate-950 border border-slate-700 rounded-lg text-white text-xs focus:outline-none focus:border-sky-500"
-                          />
-                          <Button
-                            variant="secondary"
-                            size="sm"
-                            onClick={() => handleGradeSubmission(sub.id)}
-                            leftIcon={<Check className="w-3.5 h-3.5" />}
-                          >
-                            Save Grade
-                          </Button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          </div>
-        </Modal>
+          })}
+        </div>
       )}
 
-      {/* Modal: Create Homework */}
-      <Modal
-        isOpen={isAddModalOpen}
-        onClose={() => setIsAddModalOpen(false)}
-        title={`Create New ${getLabel('homework')}`}
-        subtitle={`Publish assignment tasks, problem sheets, and due dates for ${getLabel('groupPlural').toLowerCase()}.`}
-        maxWidth="lg"
-      >
-        <form onSubmit={handleCreateHomework} className="space-y-4 text-xs">
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-slate-400 mb-1 font-medium">{getLabel('group')} *</label>
-              <select
-                value={formData.groupName}
-                onChange={(e) => setFormData({ ...formData, groupName: e.target.value })}
-                className="w-full px-3 py-2 bg-slate-950/70 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-sky-500"
-              >
-                {isSchool
-                  ? classes.map((c) => (
-                      <option key={c.id} value={`${c.name} - Section A`}>
-                        {c.name} - Section A
-                      </option>
-                    ))
-                  : batches.map((b) => (
-                      <option key={b.id} value={b.name}>
-                        {b.name}
-                      </option>
-                    ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-slate-400 mb-1 font-medium">Subject *</label>
-              <input
-                type="text"
-                required
-                value={formData.subject}
-                onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-                placeholder="e.g. Physics / Calculus"
-                className="w-full px-3 py-2 bg-slate-950/70 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-sky-500"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-slate-400 mb-1 font-medium">Assignment Title *</label>
-            <input
-              type="text"
-              required
-              value={formData.title}
-              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              placeholder={isSchool ? 'e.g. Chapter 4 - Light Reflection & Refraction Exercises' : 'e.g. DPP-08: Rotational Dynamics Advanced Problem Set'}
-              className="w-full px-3 py-2 bg-slate-950/70 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-sky-500"
-            />
-          </div>
-
-          <div>
-            <label className="block text-slate-400 mb-1 font-medium">Task Instructions & Questions</label>
-            <textarea
-              rows={3}
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder="Write detailed student instructions or problem numbers..."
-              className="w-full px-3 py-2 bg-slate-950/70 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-sky-500 resize-none"
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-slate-400 mb-1 font-medium">Submission Due Date *</label>
-              <input
-                type="date"
-                required
-                value={formData.dueDate}
-                onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
-                className="w-full px-3 py-2 bg-slate-950/70 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-sky-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-slate-400 mb-1 font-medium">Maximum Marks (Optional)</label>
-              <input
-                type="number"
-                value={formData.maxMarks}
-                onChange={(e) => setFormData({ ...formData, maxMarks: e.target.value })}
-                placeholder="25"
-                className="w-full px-3 py-2 bg-slate-950/70 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-sky-500"
-              />
-            </div>
-          </div>
-
-          <div className="flex justify-end gap-2 pt-2 border-t border-slate-800">
-            <Button variant="ghost" onClick={() => setIsAddModalOpen(false)}>
-              Cancel
-            </Button>
-            <Button variant="primary" type="submit">
-              Publish {getLabel('homework')}
-            </Button>
+      <Modal isOpen={formOpen} onClose={() => setFormOpen(false)} title="Post homework" maxWidth="lg">
+        <form onSubmit={submit} className="space-y-4">
+          <label className="block space-y-1">
+            <span className="text-sm font-medium text-slate-700">{getLabel('group')} and subject</span>
+            <select id="homework-scope" required value={form.scope} onChange={e => setForm({ ...form, scope: e.target.value })} className={inputClass}>
+              {scopeOptions.map(o => <option key={o.key} value={o.key}>{o.label}</option>)}
+            </select>
+          </label>
+          <label className="block space-y-1">
+            <span className="text-sm font-medium text-slate-700">Title</span>
+            <input id="homework-title" required minLength={2} maxLength={255} value={form.title} onChange={e => setForm({ ...form, title: e.target.value })}
+              placeholder="e.g. Chapter 4 exercises 1–10" className={inputClass} />
+          </label>
+          <label className="block space-y-1">
+            <span className="text-sm font-medium text-slate-700">Instructions (optional)</span>
+            <textarea id="homework-description" rows={4} maxLength={5000} value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} className={inputClass} />
+          </label>
+          <label className="block space-y-1">
+            <span className="text-sm font-medium text-slate-700">Due date</span>
+            <input id="homework-due" type="date" required min={today()} value={form.dueDate} onChange={e => setForm({ ...form, dueDate: e.target.value })} className={inputClass} />
+          </label>
+          {formError && <p role="alert" className="text-sm text-rose-700">{formError}</p>}
+          <div className="flex justify-end gap-2 pt-2">
+            <Button type="button" variant="outline" onClick={() => setFormOpen(false)}>Cancel</Button>
+            <Button type="submit" isLoading={saving}>Post homework</Button>
           </div>
         </form>
       </Modal>

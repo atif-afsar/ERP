@@ -1,44 +1,15 @@
 import { Request, Response, NextFunction } from 'express';
-import { requireRole } from './auth.js';
 import { AppError } from './errorHandler.js';
 
-// Explicit default-deny policy for the existing API. Self/child-scoped portal
-// access is withheld until those queries have resource-level authorization.
-const read: Record<string, string[]> = {
-  tenants: ['TENANT_ADMIN','TEACHER','ACCOUNTANT','STAFF','PARENT','STUDENT'],
-  students: ['TENANT_ADMIN','TEACHER','ACCOUNTANT','STAFF'],
-  staff: ['TENANT_ADMIN','TEACHER','STAFF'],
-  academics: ['TENANT_ADMIN','TEACHER','STAFF'],
-  attendance: ['TENANT_ADMIN','TEACHER','STAFF'],
-  fees: ['TENANT_ADMIN','ACCOUNTANT'], payments: ['TENANT_ADMIN','ACCOUNTANT'],
-  finance: ['TENANT_ADMIN','ACCOUNTANT'], exams: ['TENANT_ADMIN','TEACHER'],
-  homework: ['TENANT_ADMIN','TEACHER'], timetable: ['TENANT_ADMIN','TEACHER','STAFF'],
-  communication: ['TENANT_ADMIN','TEACHER','ACCOUNTANT','STAFF','PARENT','STUDENT'],
-  audit: ['TENANT_ADMIN'], inventory: ['TENANT_ADMIN','STAFF'],
-  library: ['TENANT_ADMIN','STAFF'], hostel: ['TENANT_ADMIN','STAFF'],
-  mess: ['TENANT_ADMIN','STAFF'], transport: ['TENANT_ADMIN','STAFF'],
-  'health-records': ['TENANT_ADMIN','STAFF'], reports: ['TENANT_ADMIN','ACCOUNTANT','BRANCH_HEAD','TEACHER'],
-  organization: ['TENANT_ADMIN'],
-  parents: ['PARENT', 'TENANT_ADMIN'],
-  crm: ['TENANT_ADMIN', 'STAFF', 'BRANCH_HEAD'],
-};
-const write: Record<string, string[]> = {
-  tenants: ['TENANT_ADMIN'], students: ['TENANT_ADMIN','STAFF'], staff: ['TENANT_ADMIN'],
-  academics: ['TENANT_ADMIN'], attendance: ['TENANT_ADMIN','TEACHER'],
-  fees: ['TENANT_ADMIN','ACCOUNTANT'], payments: ['TENANT_ADMIN','ACCOUNTANT'],
-  finance: ['TENANT_ADMIN','ACCOUNTANT'], exams: ['TENANT_ADMIN','TEACHER'],
-  homework: ['TENANT_ADMIN','TEACHER'], timetable: ['TENANT_ADMIN'],
-  communication: ['TENANT_ADMIN','STAFF'], audit: ['TENANT_ADMIN'],
-  inventory: ['TENANT_ADMIN','STAFF'], library: ['TENANT_ADMIN','STAFF'],
-  reports: ['TENANT_ADMIN','ACCOUNTANT','BRANCH_HEAD'],
-  organization: ['TENANT_ADMIN'],
-  crm: ['TENANT_ADMIN', 'STAFF', 'BRANCH_HEAD'],
-};
-export function businessAccess(req: Request, res: Response, next: NextFunction) {
+// Default-deny: only V1 modules are reachable. Each of these routers enforces
+// database-backed permissions (requirePermission) or its own role checks.
+const V1_MODULES = new Set([
+  'dashboard', 'tenants', 'students', 'parents', 'staff', 'attendance', 'timetable',
+  'exams', 'homework', 'fees', 'communication', 'reports', 'organization', 'master-data', 'audit',
+]);
+
+export function businessAccess(req: Request, _res: Response, next: NextFunction) {
   const module = req.path.split('/').filter(Boolean)[0];
-  // These modules enforce database-backed permissions at the route level.
-  if (['dashboard','communication','organization','audit','master-data','students','staff','attendance','timetable','exams','fees','hr','library','inventory','transport','hostel','mess','parents','reports','crm'].includes(module)) return next();
-  const allowed = (['GET','HEAD'].includes(req.method) ? read : write)[module];
-  if (!allowed) return next(new AppError('Endpoint not found.', 404, 'NOT_FOUND'));
-  requireRole(...allowed)(req, res, next);
+  if (!V1_MODULES.has(module)) return next(new AppError('Endpoint not found.', 404, 'NOT_FOUND'));
+  next();
 }

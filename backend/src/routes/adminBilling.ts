@@ -38,7 +38,8 @@ const createPlanSchema = z.object({
   billingPeriod: z.enum(['daily', 'weekly', 'monthly', 'quarterly', 'yearly']).default('monthly'),
   billingInterval: z.number().int().positive().default(1),
   features: z.union([z.array(z.string()), z.string()]).optional().nullable(),
-  razorpayPlanId: z.string().trim().max(100).optional().nullable(),
+  entitlements: z.array(z.enum(['qr_attendance'])).max(5).default([]),
+  institutionTypes: z.array(z.enum(['school', 'coaching', 'hybrid'])).min(1).default(['school', 'coaching', 'hybrid']),
 });
 
 // Plans Management
@@ -56,14 +57,14 @@ router.post('/plans', asyncHandler(async (req, res) => {
       'VALIDATION_ERROR'
     );
   }
-  const { code, name, description, priceAmount, currency, billingPeriod, billingInterval, features, razorpayPlanId } = parsed.data;
+  const { code, name, description, priceAmount, currency, billingPeriod, billingInterval, features, entitlements, institutionTypes } = parsed.data;
   const featuresJson = typeof features === 'string' ? features : JSON.stringify(features || []);
 
   const plan = await query(
-    `INSERT INTO subscription_plans (code, name, description, price_amount, currency, billing_period, billing_interval, features, razorpay_plan_id) 
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) 
+    `INSERT INTO subscription_plans (code, name, description, price_amount, currency, billing_period, billing_interval, features, entitlements, institution_types) 
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) 
      RETURNING *`,
-    [code, name, description || null, priceAmount, currency, billingPeriod, billingInterval, featuresJson, razorpayPlanId || null]
+    [code, name, description || null, priceAmount, currency, billingPeriod, billingInterval, featuresJson, entitlements, institutionTypes]
   );
 
   await writeAudit({
@@ -81,6 +82,11 @@ router.post('/plans', asyncHandler(async (req, res) => {
 router.patch('/plans/:id', asyncHandler(async (req, res) => {
   const { id } = req.params;
   const { name, description, isActive, features, priceAmount } = req.body;
+  const access = z.object({
+    entitlements: z.array(z.enum(['qr_attendance'])).max(5).optional(),
+    institutionTypes: z.array(z.enum(['school', 'coaching', 'hybrid'])).min(1).optional(),
+  }).safeParse(req.body);
+  if (!access.success) throw new AppError('Entitlements or institution types are invalid.', 422, 'VALIDATION_ERROR');
   const featuresJson = features !== undefined ? (typeof features === 'string' ? features : JSON.stringify(features)) : undefined;
 
   const plan = await query(
@@ -90,10 +96,13 @@ router.patch('/plans/:id', asyncHandler(async (req, res) => {
          is_active = COALESCE($3, is_active),
          features = COALESCE($4, features),
          price_amount = COALESCE($5, price_amount),
+         entitlements = COALESCE($7, entitlements),
+         institution_types = COALESCE($8, institution_types),
          updated_at = NOW()
      WHERE id = $6
      RETURNING *`,
-    [name ?? null, description ?? null, isActive ?? null, featuresJson ?? null, priceAmount ?? null, id]
+    [name ?? null, description ?? null, isActive ?? null, featuresJson ?? null, priceAmount ?? null, id,
+      access.data.entitlements ?? null, access.data.institutionTypes ?? null]
   );
 
   if (plan.rowCount === 0) throw new AppError('Plan not found', 404, 'NOT_FOUND');

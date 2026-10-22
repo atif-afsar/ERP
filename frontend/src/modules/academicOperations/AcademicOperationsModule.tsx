@@ -1,10 +1,11 @@
 import React, { useEffect, useState, useRef, useMemo } from 'react';
-import QRCode from 'qrcode';
 import { useTenant } from '../../context/TenantContext';
 import { useAuth } from '../../context/AuthContext';
 import { academicOperationsService as api } from '../../services/academicOperationsService';
 import { masterDataService as master } from '../../services/masterDataService';
 import { apiClient } from '../../services/api/apiClient';
+import { QrSessionPanel } from '../qrAttendance/QrSessionPanel';
+import { StudentQrCheckIn } from '../qrAttendance/StudentQrCheckIn';
 import {
   CalendarCheck,
   QrCode,
@@ -51,9 +52,11 @@ const Select = ({ label, items, value, onChange, required = false, disabled = fa
 );
 
 export const AcademicOperationsModule: React.FC<{ initialTab?: string }> = ({ initialTab }) => {
-  const { currentTenant } = useTenant();
+  const { currentTenant, hasEntitlement } = useTenant();
   const { currentUser, can, isTeacher, isParent, isStudent } = useAuth();
   const t = currentTenant.id;
+  // QR attendance is sold only to coaching institutes on a plan that includes it.
+  const qrEnabled = hasEntitlement('qr_attendance');
 
   // Initial tab resolution based on role
   const resolvedInitialTab: Tab = useMemo(() => {
@@ -68,6 +71,15 @@ export const AcademicOperationsModule: React.FC<{ initialTab?: string }> = ({ in
   }, [initialTab, isStudent, isParent, can]);
 
   const [tab, setTab] = useState<Tab>(resolvedInitialTab);
+  const heading = initialTab === 'staff'
+    ? { title: 'Staff', subtitle: 'Staff records, teacher logins and teaching assignments.' }
+    : initialTab === 'timetable'
+    ? { title: 'Timetable', subtitle: 'Weekly class schedule with teacher and room clash checks.' }
+    : isStudent
+    ? { title: 'My Attendance', subtitle: qrEnabled ? 'Your attendance record. Scan the classroom QR to mark yourself present.' : 'Your attendance record.' }
+    : isParent
+    ? { title: "Children's Attendance", subtitle: 'Daily attendance for your linked children.' }
+    : { title: 'Attendance', subtitle: qrEnabled ? 'Mark the class roster, run QR attendance, and export reports.' : 'Mark the class roster, make corrections, and export reports.' };
   const [data, setData] = useState<any>({
     staff: [],
     assignments: [],
@@ -138,21 +150,6 @@ export const AcademicOperationsModule: React.FC<{ initialTab?: string }> = ({ in
   const [historyRecords, setHistoryRecords] = useState<any[]>([]);
   const [historyCorrections, setHistoryCorrections] = useState<any[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
-
-  // QR Session state
-  const [qrScope, setQrScope] = useState<any>({
-    academicYearId: '',
-    classId: '',
-    sectionId: '',
-    date: new Date().toISOString().slice(0, 10),
-    durationMinutes: 15
-  });
-  const [activeSession, setActiveSession] = useState<any | null>(null);
-  const [qrDataUrl, setQrDataUrl] = useState('');
-  const [manualToken, setManualToken] = useState('');
-  const [checkInMsg, setCheckInMsg] = useState('');
-  const [checkInErr, setCheckInErr] = useState('');
-  const [sessionAttendees, setSessionAttendees] = useState<any[]>([]);
 
   // Self-Service state
   const [selfAttendance, setSelfAttendance] = useState<any | null>(null);
@@ -253,7 +250,6 @@ export const AcademicOperationsModule: React.FC<{ initialTab?: string }> = ({ in
       if (years.length > 0 && !scope.academicYearId) {
         const defaultYear = years[0].id;
         setScope((s: any) => ({ ...s, academicYearId: defaultYear }));
-        setQrScope((s: any) => ({ ...s, academicYearId: defaultYear }));
         setReportFilter((s: any) => ({ ...s, academicYearId: defaultYear }));
       }
     } catch (e: any) {
@@ -337,12 +333,6 @@ export const AcademicOperationsModule: React.FC<{ initialTab?: string }> = ({ in
   const timetableSections = useMemo(() => {
     return data.sections.filter((x: any) => x.class_id === slot.classId);
   }, [data.sections, slot.classId]);
-
-  // QR sections helper
-  const qrAvailableSections = useMemo(() => {
-    if (!qrScope.classId) return [];
-    return data.sections.filter((s: any) => s.class_id === qrScope.classId);
-  }, [qrScope.classId, data.sections]);
 
   const changeScope = (updates: any) => {
     scopeVersion.current++;
@@ -506,90 +496,6 @@ export const AcademicOperationsModule: React.FC<{ initialTab?: string }> = ({ in
     }
   };
 
-  // QR Session Management
-  const handleCreateQrSession = async () => {
-    if (!qrScope.academicYearId || !qrScope.classId || !qrScope.sectionId || !qrScope.date) {
-      setErr('Please select an Academic Year, Class, Section, and Date for the QR session.');
-      return;
-    }
-    setErr('');
-    setMsg('');
-    try {
-      const res = await run(
-        () =>
-          api.createQrSession(t, {
-            academicYearId: qrScope.academicYearId,
-            classId: qrScope.classId,
-            sectionId: qrScope.sectionId,
-            attendanceDate: qrScope.date,
-            durationMinutes: Number(qrScope.durationMinutes) || 15
-          }),
-        'QR Session started successfully!'
-      );
-      const session = res.data;
-      setActiveSession(session);
-      if (session.token) {
-        const qrString = session.qrData || `EDUNEXUS:ATTENDANCE:${session.id}:${session.token}`;
-        const dataUrl = await QRCode.toDataURL(qrString, { width: 320, margin: 2 });
-        setQrDataUrl(dataUrl);
-      }
-      setSessionAttendees([]);
-    } catch (e: any) {
-      setErr(e.message || 'Failed to start QR session');
-    }
-  };
-
-  const handleCloseQrSession = async (sessionId: string) => {
-    try {
-      await run(() => api.closeQrSession(t, sessionId), 'QR session closed successfully.');
-      setActiveSession(null);
-      setQrDataUrl('');
-    } catch (e: any) {
-      setErr(e.message || 'Failed to close QR session');
-    }
-  };
-
-  const handleRevokeQrSession = async (sessionId: string) => {
-    try {
-      await run(() => api.revokeQrSession(t, sessionId, 'Revoked by instructor'), 'QR session revoked successfully.');
-      setActiveSession(null);
-      setQrDataUrl('');
-    } catch (e: any) {
-      setErr(e.message || 'Failed to revoke QR session');
-    }
-  };
-
-  const handleQrCheckIn = async (tokenToUse?: string) => {
-    const token = tokenToUse || manualToken.trim();
-    if (!token) {
-      setCheckInErr('Please provide a QR token to check in.');
-      return;
-    }
-    setCheckInErr('');
-    setCheckInMsg('');
-    setSubmitting(true);
-    try {
-      const res: any = await api.qrCheckIn(t, { token });
-      const isDuplicate = res?.alreadyRecorded || res?.alreadyCheckedIn || res?.data?.alreadyRecorded || res?.data?.alreadyCheckedIn;
-      if (isDuplicate) {
-        setCheckInMsg(res?.message || 'Attendance already recorded for this session.');
-      } else {
-        setCheckInMsg(res?.message || 'Check-in successful! Attendance recorded.');
-      }
-      setManualToken('');
-      // If we are currently observing this active session, refresh attendee count
-      if (activeSession) {
-        api.getQrSession(t, activeSession.id).then((r: any) => {
-          setSessionAttendees(r.data?.attendees || []);
-        });
-      }
-    } catch (e: any) {
-      setCheckInErr(e.message || 'Check-in failed');
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
   // Reports Generation
   const handleGenerateReport = async () => {
     if (!reportFilter.academicYearId) {
@@ -648,19 +554,9 @@ export const AcademicOperationsModule: React.FC<{ initialTab?: string }> = ({ in
   return (
     <div className="space-y-6 max-w-full overflow-x-hidden">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b pb-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Academic Operations</h1>
-          <p className="text-xs sm:text-sm text-slate-500">
-            Student attendance, teaching scope, dynamic QR sessions, and comprehensive academic reporting.
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-800 border border-emerald-200">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-600 animate-pulse" />
-            Verified Isolated Tenant
-          </span>
-        </div>
+      <div className="border-b pb-4">
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900">{heading.title}</h1>
+        <p className="text-xs sm:text-sm text-slate-500">{heading.subtitle}</p>
       </div>
 
       {/* Global Alerts */}
@@ -700,15 +596,15 @@ export const AcademicOperationsModule: React.FC<{ initialTab?: string }> = ({ in
               <CalendarCheck className="h-4 w-4" />
               My Attendance
             </button>
-            <button
+            {qrEnabled && <button
               onClick={() => setTab('qr')}
               className={`flex items-center gap-2 rounded-lg px-3.5 py-2 text-xs sm:text-sm font-semibold transition-colors ${
                 tab === 'qr' ? 'bg-emerald-600 text-white shadow-sm' : 'border border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
               }`}
             >
               <QrCode className="h-4 w-4" />
-              QR Check-In
-            </button>
+              Scan QR
+            </button>}
           </>
         )}
 
@@ -773,7 +669,7 @@ export const AcademicOperationsModule: React.FC<{ initialTab?: string }> = ({ in
               </button>
             )}
 
-            {(can('attendance.manage') || isTeacher) && (
+            {qrEnabled && can('attendance.manage') && (
               <button
                 onClick={() => setTab('qr')}
                 className={`flex items-center gap-2 rounded-lg px-3.5 py-2 text-xs sm:text-sm font-semibold transition-colors ${
@@ -1130,166 +1026,8 @@ export const AcademicOperationsModule: React.FC<{ initialTab?: string }> = ({ in
         </div>
       )}
 
-      {/* ================= TAB 5: QR ATTENDANCE ================= */}
-      {tab === 'qr' && (
-        <div className="space-y-6">
-          <div className={`grid gap-6 ${isStudent ? 'max-w-xl mx-auto' : 'md:grid-cols-2'}`}>
-            {/* Session Creator / Active Card (Staff / Teachers only) */}
-            {!isStudent && (
-              <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm space-y-4">
-                <div className="flex items-center justify-between border-b pb-3">
-                  <div className="flex items-center gap-2">
-                    <QrCode className="h-5 w-5 text-emerald-600" />
-                    <h3 className="font-semibold text-slate-900">QR Session Controller</h3>
-                  </div>
-                  {activeSession && (
-                    <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-800 animate-pulse">
-                      ACTIVE
-                    </span>
-                  )}
-                </div>
-
-                {!activeSession ? (
-                  <div className="space-y-4">
-                    <p className="text-xs text-slate-500">
-                      Generate an authenticated, cryptographically signed short-lived QR token for student check-in. Only one active session is permitted per class scope.
-                    </p>
-                    <Select
-                      label="Academic Year"
-                      required
-                      items={data.years}
-                      value={qrScope.academicYearId}
-                      onChange={(v: string) => setQrScope({ ...qrScope, academicYearId: v })}
-                    />
-                    <Select
-                      label="Class"
-                      required
-                      items={availableClasses}
-                      value={qrScope.classId}
-                      onChange={(v: string) => setQrScope({ ...qrScope, classId: v, sectionId: '' })}
-                    />
-                    <Select
-                      label="Section"
-                      required
-                      items={qrAvailableSections}
-                      value={qrScope.sectionId}
-                      onChange={(v: string) => setQrScope({ ...qrScope, sectionId: v })}
-                    />
-                    <div className="grid grid-cols-2 gap-3">
-                      <Field
-                        label="Attendance Date"
-                        type="date"
-                        value={qrScope.date}
-                        onChange={(e: any) => setQrScope({ ...qrScope, date: e.target.value })}
-                      />
-                      <Select
-                        label="Valid Duration"
-                        items={[
-                          { id: '5', name: '5 minutes' },
-                          { id: '15', name: '15 minutes' },
-                          { id: '30', name: '30 minutes' },
-                          { id: '60', name: '1 hour' }
-                        ]}
-                        value={String(qrScope.durationMinutes)}
-                        onChange={(v: string) => setQrScope({ ...qrScope, durationMinutes: Number(v) })}
-                      />
-                    </div>
-                    <button
-                      disabled={submitting || !qrScope.academicYearId || !qrScope.classId || !qrScope.sectionId}
-                      onClick={handleCreateQrSession}
-                      className="w-full rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
-                    >
-                      {submitting ? 'Generating Token...' : 'Create QR Attendance Session'}
-                    </button>
-                  </div>
-                ) : (
-                  <div className="space-y-4 text-center">
-                    {qrDataUrl && (
-                      <div className="flex justify-center p-2 bg-white rounded-xl border border-slate-200">
-                        <img src={qrDataUrl} alt="Attendance QR Code" className="w-56 h-56 object-contain" />
-                      </div>
-                    )}
-                    <div className="rounded-lg bg-slate-50 p-3 text-xs text-slate-700 text-left space-y-1">
-                      <p><strong>Session ID:</strong> {activeSession.id}</p>
-                      <p><strong>Expires At:</strong> {new Date(activeSession.expiresAt).toLocaleTimeString()}</p>
-                      <p><strong>Attendees Checked In:</strong> {sessionAttendees.length}</p>
-                      <p className="font-mono text-[11px] truncate text-slate-500"><strong>Manual Code:</strong> {activeSession.token}</p>
-                    </div>
-                    <div className="flex gap-2">
-                      <button
-                        disabled={submitting}
-                        onClick={() => handleCloseQrSession(activeSession.id)}
-                        className="flex-1 rounded-lg bg-amber-600 px-4 py-2 text-xs font-semibold text-white hover:bg-amber-700 disabled:opacity-50"
-                      >
-                        {submitting ? 'Closing...' : 'Close Session'}
-                      </button>
-                      <button
-                        disabled={submitting}
-                        onClick={() => handleRevokeQrSession(activeSession.id)}
-                        className="flex-1 rounded-lg bg-rose-600 px-4 py-2 text-xs font-semibold text-white hover:bg-rose-700 disabled:opacity-50"
-                      >
-                        {submitting ? 'Revoking...' : 'Revoke Session'}
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Check-In Interface (Student / Teacher Device) */}
-            <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm space-y-4">
-              <div className="flex items-center gap-2 border-b pb-3">
-                <CalendarCheck className="h-5 w-5 text-indigo-600" />
-                <h3 className="font-semibold text-slate-900">QR Check-In Scanner / Input</h3>
-              </div>
-              <p className="text-xs text-slate-500">
-                Students or classroom devices can scan the QR code or securely paste the session token to register attendance.
-              </p>
-
-              {checkInErr && (
-                <div className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-xs text-rose-800">
-                  {checkInErr}
-                </div>
-              )}
-              {checkInMsg && (
-                <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-800">
-                  {checkInMsg}
-                </div>
-              )}
-
-              <div className="space-y-3">
-                <Field
-                  label="Session Token / QR String"
-                  placeholder="Paste scanned QR code or enter token..."
-                  value={manualToken}
-                  onChange={(e: any) => setManualToken(e.target.value)}
-                />
-                <button
-                  disabled={submitting || !manualToken.trim()}
-                  onClick={() => handleQrCheckIn()}
-                  className="w-full rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
-                >
-                  {submitting ? 'Confirming...' : 'Confirm Check-In'}
-                </button>
-              </div>
-
-              {activeSession && sessionAttendees.length > 0 && (
-                <div className="mt-4 border-t pt-3">
-                  <h4 className="text-xs font-semibold text-slate-700 mb-2">Live Session Attendees ({sessionAttendees.length})</h4>
-                  <div className="max-h-40 overflow-y-auto space-y-1">
-                    {sessionAttendees.map((att: any, idx: number) => (
-                      <div key={idx} className="flex justify-between items-center text-xs p-1.5 bg-slate-50 rounded">
-                        <span>{att.first_name} {att.last_name} ({att.roll_no || '—'})</span>
-                        <span className="text-emerald-700 font-semibold">{att.status}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+      {/* ================= TAB 5: QR ATTENDANCE (coaching plans) ================= */}
+      {tab === 'qr' && qrEnabled && (isStudent ? <StudentQrCheckIn /> : <QrSessionPanel />)}
 
       {/* ================= TAB 6: REPORTS & EXPORT ================= */}
       {tab === 'reports' && (

@@ -24,11 +24,14 @@ function parseFile(dataUrl: string, allowed: string[]) {
 
 // Public/Tenant Context (Available Plans)
 router.get('/plans', asyncHandler(async (req, res) => {
+  // ?institutionType=coaching narrows the list to plans that institution can buy.
+  const type = ['school', 'coaching', 'hybrid'].includes(String(req.query.institutionType)) ? String(req.query.institutionType) : null;
   const plans = await query(
-    `SELECT id, code, name, description, price_amount, currency, billing_period, billing_interval, features 
+    `SELECT id, code, name, description, price_amount, currency, billing_period, billing_interval, features, entitlements, institution_types
      FROM subscription_plans 
-     WHERE is_active = true 
-     ORDER BY price_amount ASC`
+     WHERE is_active = true AND ($1::text IS NULL OR $1 = ANY(institution_types))
+     ORDER BY price_amount ASC`,
+    [type]
   );
   res.json({ plans: plans.rows });
 }));
@@ -104,6 +107,9 @@ router.post('/onboard-institute', asyncHandler(async (req, res) => {
   }
   if (!planRes.rowCount) throw new AppError('Selected subscription plan not found or inactive.', 404, 'NOT_FOUND');
   const plan = planRes.rows[0];
+  const institutionType = instituteType || 'school';
+  if (!['school', 'coaching', 'hybrid'].includes(institutionType)) throw new AppError('Choose school, coaching or hybrid as the institute type.', 422, 'VALIDATION_ERROR');
+  if (!plan.institution_types.includes(institutionType)) throw new AppError(`The ${plan.name} is not available for this type of institute.`, 422, 'PLAN_NOT_FOR_INSTITUTION');
 
   const parsedFile = parseFile(actualProofData, ['image/png', 'image/jpeg', 'image/webp', 'application/pdf']);
 
@@ -118,7 +124,7 @@ router.post('/onboard-institute', asyncHandler(async (req, res) => {
       `INSERT INTO tenants (name, slug, tenant_type, status, email, phone)
        VALUES ($1, $2, $3, 'pending_approval', $4, $5)
        RETURNING id, name, slug, status`,
-      [instituteName.trim(), slug, instituteType || 'school', cleanEmail, adminPhone || null]
+      [instituteName.trim(), slug, institutionType, cleanEmail, adminPhone || null]
     );
     const tenant = tenantRes.rows[0];
 
@@ -163,7 +169,7 @@ router.post('/onboard-institute', asyncHandler(async (req, res) => {
         String(transactionReference).trim(), paymentDate || new Date().toISOString().split('T')[0],
         fileName || proofFileName || 'receipt.png', parsedFile.mime, parsedFile.data,
         useCaseReason || null, user.id,
-        instituteType || 'school', parseInt(actualStudentCount) || 100, funcsJson,
+        institutionType, parseInt(actualStudentCount) || 100, funcsJson,
         useCaseReason || null, adminName?.trim() || null, adminPhone || null
       ]
     );
@@ -256,6 +262,8 @@ router.post('/subscription/proof', asyncHandler(async (req, res) => {
   const planRes = await query('SELECT * FROM subscription_plans WHERE id = $1 AND is_active = true', [planId]);
   if (!planRes.rowCount) throw new AppError('Selected plan not found or inactive.', 404, 'NOT_FOUND');
   const plan = planRes.rows[0];
+  const tenant = (await query('SELECT tenant_type FROM tenants WHERE id = $1', [tenantId])).rows[0];
+  if (!tenant || !plan.institution_types.includes(tenant.tenant_type)) throw new AppError(`The ${plan.name} is not available for this type of institute.`, 422, 'PLAN_NOT_FOR_INSTITUTION');
 
   const parsedFile = parseFile(proofDataUrl, ['image/png', 'image/jpeg', 'image/webp', 'application/pdf']);
 

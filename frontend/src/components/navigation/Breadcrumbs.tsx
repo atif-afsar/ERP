@@ -29,12 +29,14 @@ export const Breadcrumbs: React.FC<BreadcrumbsProps> = ({
         return 'Dashboard';
       case 'students':
         return getLabel('studentPlural');
-      case 'academics':
-        return getLabel('groupPlural');
       case 'attendance':
-        return 'Attendance & QR';
+        return 'Attendance';
       case 'fees':
-        return 'Fees & Finance';
+        return 'Fees';
+      case 'staff':
+        return 'Staff';
+      case 'results':
+        return 'Results';
       case 'exams':
         return getLabel('examPlural');
       case 'timetable':
@@ -42,14 +44,15 @@ export const Breadcrumbs: React.FC<BreadcrumbsProps> = ({
       case 'homework':
         return getLabel('homework');
       case 'communication':
-        return 'Notices & WhatsApp';
-      case 'crm':
-        return isSchool ? 'Admission Inquiries' : 'Lead CRM';
+        return 'Notices';
       case 'reports':
-        return 'Reports & Analytics';
-      case 'settings':
-      case 'superadmin-features':
-        return 'Settings';
+        return 'Reports';
+      case 'master-data':
+        return isSchool ? 'School Setup' : 'Institute Setup';
+      case 'organization':
+        return 'Users & Access';
+      case 'saas-billing':
+        return 'Subscription';
       case 'superadmin-tenants':
         return 'Tenants & Institutions';
       case 'superadmin-plans':

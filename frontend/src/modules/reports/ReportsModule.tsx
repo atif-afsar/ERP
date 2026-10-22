@@ -20,7 +20,7 @@ import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 
 export const ReportsModule: React.FC = () => {
-  const { currentTenant, currentBranch, getLabel, isSchool } = useTenant();
+  const { currentTenant, getLabel, isSchool } = useTenant();
   const [activeTab, setActiveTab] = useState<'overview' | 'students' | 'attendance' | 'finance' | 'academics'>('overview');
   const [selectedRange, setSelectedRange] = useState<'week' | 'month' | 'term' | 'year'>('month');
 
@@ -140,12 +140,6 @@ export const ReportsModule: React.FC = () => {
               <BarChart3 className="w-3.5 h-3.5" />
               Authoritative PostgreSQL Analytics
             </span>
-            {currentBranch && (
-              <span className="px-2.5 py-0.5 rounded-full bg-slate-800 text-slate-300 text-[11px] flex items-center gap-1 border border-slate-700">
-                <Building className="w-3 h-3 text-sky-400" />
-                {currentBranch.name}
-              </span>
-            )}
           </div>
           <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">Institutional Reports & Intelligence</h1>
           <p className="text-xs text-slate-400 mt-0.5">

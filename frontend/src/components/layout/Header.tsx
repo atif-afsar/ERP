@@ -1,32 +1,20 @@
 import React, { useEffect, useState } from 'react';
-import { 
-  Menu, 
-  Search, 
-  Bell, 
-  Building, 
-  LogOut, 
-  Sparkles, 
-  Building2,
-  ShieldCheck,
-  GraduationCap,
-  Users,
-  BookOpen,
-  User
-} from 'lucide-react';
+import { Menu, Search, Bell, LogOut, User } from 'lucide-react';
 import { useTenant } from '../../context/TenantContext';
 import { useAuth } from '../../context/AuthContext';
-import { storage } from '../../services/storageService';
+import { studentLifecycleService } from '../../services/studentLifecycleService';
 import { notificationService, type AppNotification } from '../../services/notificationService';
 import { UserProfileModal } from './UserProfileModal';
 
 interface HeaderProps {
   onToggleSidebar: () => void;
-  onOpenAi: () => void;
   onNavigate: (navId: string) => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ onToggleSidebar, onOpenAi, onNavigate }) => {
-  const { currentTenant, allTenants, switchTenant, isSchool, getLabel, branches, currentBranch, switchBranch } = useTenant();
+interface StudentHit { id: string; name: string; admissionNo: string; status: string; }
+
+export const Header: React.FC<HeaderProps> = ({ onToggleSidebar, onNavigate }) => {
+  const { currentTenant, getLabel } = useTenant();
   const { currentUser, isParent, activeStudentId, setActiveStudentId, logout, can } = useAuth();
   
   const [showNotifications, setShowNotifications] = useState(false);
@@ -38,8 +26,8 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar, onOpenAi, onNav
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
 
-  const students = storage.getStudents(currentTenant.id);
-  const staff = storage.getStaff(currentTenant.id);
+  const [matchingStudents, setMatchingStudents] = useState<StudentHit[]>([]);
+  const canSearch = can('student_lifecycle.view');
 
   const notificationsAllowed = can('notifications.view_own');
   const unreadCount = notifications.filter((n) => !n.readAt).length;
@@ -48,21 +36,25 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar, onOpenAi, onNav
   const markAllRead=async()=>{await notificationService.markAllRead(currentTenant.id);const now=new Date().toISOString();setNotifications(items=>items.map(x=>({...x,readAt:x.readAt||now})));};
 
 
-  const matchingStudents = searchQuery.trim()
-    ? students.filter(
-        (s) =>
-          `${s.firstName} ${s.lastName}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          s.admissionNo.toLowerCase().includes(searchQuery.toLowerCase())
-      ).slice(0, 3)
-    : [];
-
-  const matchingStaff = searchQuery.trim()
-    ? staff.filter(
-        (st) =>
-          st.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          st.subjects.some((sub) => sub.toLowerCase().includes(searchQuery.toLowerCase()))
-      ).slice(0, 2)
-    : [];
+  useEffect(() => {
+    const term = searchQuery.trim();
+    if (!canSearch || term.length < 2) { setMatchingStudents([]); return; }
+    let active = true;
+    const timer = setTimeout(() => {
+      studentLifecycleService.list(currentTenant.id, { search: term, pageSize: 5 })
+        .then(result => {
+          if (!active) return;
+          setMatchingStudents((result.data || []).map((s: any) => ({
+            id: s.id,
+            name: `${s.firstName ?? s.first_name ?? ''} ${s.lastName ?? s.last_name ?? ''}`.trim(),
+            admissionNo: s.admissionNo ?? s.admission_no ?? '',
+            status: s.status ?? '',
+          })));
+        })
+        .catch(() => { if (active) setMatchingStudents([]); });
+    }, 250);
+    return () => { active = false; clearTimeout(timer); };
+  }, [searchQuery, canSearch, currentTenant.id]);
 
   return (
     <header className="h-16 shrink-0 border-b border-slate-200 bg-white px-4 sm:px-6 flex items-center justify-between gap-3 sticky top-0 z-20 shadow-2xs">
@@ -88,27 +80,8 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar, onOpenAi, onNav
           </span>
         </div>
 
-        {/* Multi-Branch Selector (Section 15) */}
-        {branches && branches.length > 0 && (
-          <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs hover:border-slate-300 transition-colors">
-            <Building className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-            <span className="text-slate-500 text-[11px] font-medium">Branch:</span>
-            <select
-              value={currentBranch?.id || ''}
-              onChange={(e) => switchBranch(e.target.value)}
-              className="bg-transparent text-slate-800 font-semibold outline-none cursor-pointer text-xs"
-            >
-              {branches.map((b) => (
-                <option key={b.id} value={b.id} className="bg-white text-slate-800">
-                  {b.name} {b.isMain ? '(Main)' : ''}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
-
         {/* Global Search Bar (Section 18) */}
-        <div className="relative w-full max-w-xs sm:max-w-sm hidden md:block">
+        {canSearch && <div className="relative w-full max-w-xs sm:max-w-sm hidden md:block">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <input
             type="text"
@@ -118,7 +91,7 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar, onOpenAi, onNav
               setShowSearchResults(true);
             }}
             onFocus={() => setShowSearchResults(true)}
-            placeholder={`Search ${isSchool ? 'students, classes, teachers' : 'learners, batches, faculty'}...`}
+            placeholder={`Search ${getLabel('studentPlural').toLowerCase()} by name or admission no...`}
             className="w-full pl-9 pr-4 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all"
           />
 
@@ -138,78 +111,38 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar, onOpenAi, onNav
                 </button>
               </div>
 
-              {matchingStudents.length === 0 && matchingStaff.length === 0 ? (
-                <p className="text-xs text-slate-500 py-2 text-center">No matching records found.</p>
+              {searchQuery.trim().length < 2 ? (
+                <p className="text-xs text-slate-500 py-2 text-center">Type at least 2 characters.</p>
+              ) : matchingStudents.length === 0 ? (
+                <p className="text-xs text-slate-500 py-2 text-center">No matching {getLabel('studentPlural').toLowerCase()} found.</p>
               ) : (
-                <>
-                  {matchingStudents.length > 0 && (
-                    <div className="space-y-1.5">
-                      <span className="text-[10px] uppercase font-bold text-emerald-700 tracking-wider">
-                        {getLabel('studentPlural')}
-                      </span>
-                      {matchingStudents.map((s) => (
-                        <div
-                          key={s.id}
-                          onClick={() => {
-                            onNavigate(`app/students/${s.id}`);
-                            setShowSearchResults(false);
-                            setSearchQuery('');
-                          }}
-                          className="p-2 rounded-lg bg-slate-50 hover:bg-emerald-50/60 border border-slate-200 cursor-pointer flex justify-between items-center text-xs"
-                        >
-                          <div>
-                            <p className="font-semibold text-slate-900">{s.firstName} {s.lastName}</p>
-                            <p className="text-[10px] text-slate-500">Adm: {s.admissionNo} • Status: {s.status}</p>
-                          </div>
-                          <span className="text-xs text-emerald-700 font-semibold">View Profile →</span>
-                        </div>
-                      ))}
+                <div className="space-y-1.5">
+                  {matchingStudents.map((s) => (
+                    <div
+                      key={s.id}
+                      onClick={() => {
+                        onNavigate(`app/students?student=${s.id}`);
+                        setShowSearchResults(false);
+                        setSearchQuery('');
+                      }}
+                      className="p-2 rounded-lg bg-slate-50 hover:bg-emerald-50/60 border border-slate-200 cursor-pointer flex justify-between items-center text-xs"
+                    >
+                      <div>
+                        <p className="font-semibold text-slate-900">{s.name}</p>
+                        <p className="text-[10px] text-slate-500">Adm: {s.admissionNo} • {s.status}</p>
+                      </div>
+                      <span className="text-xs text-emerald-700 font-semibold">Open →</span>
                     </div>
-                  )}
-
-                  {matchingStaff.length > 0 && (
-                    <div className="space-y-1.5">
-                      <span className="text-[10px] uppercase font-bold text-slate-600 tracking-wider">
-                        {getLabel('staffPlural')}
-                      </span>
-                      {matchingStaff.map((st) => (
-                        <div
-                          key={st.id}
-                          onClick={() => {
-                            onNavigate('app/academics');
-                            setShowSearchResults(false);
-                            setSearchQuery('');
-                          }}
-                          className="p-2 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-200 cursor-pointer flex justify-between items-center text-xs"
-                        >
-                          <div>
-                            <p className="font-semibold text-slate-900">{st.name}</p>
-                            <p className="text-[10px] text-slate-500">{st.designation} • {st.subjects.join(', ')}</p>
-                          </div>
-                          <span className="text-xs text-slate-700 font-semibold">View Faculty →</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </>
+                  ))}
+                </div>
               )}
             </div>
           )}
-        </div>
+        </div>}
       </div>
 
-      {/* Right: Role Dropdown + AI + Notifications + Profile */}
+      {/* Right: Notifications + Profile */}
       <div className="flex items-center gap-2.5">
-        {/* AI Assistant Button */}
-        <button
-          onClick={onOpenAi}
-          className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow-xs transition-colors"
-          title="Open AI Education Assistant"
-        >
-          <Sparkles className="w-3.5 h-3.5" />
-          <span className="hidden md:inline">AI Assistant</span>
-        </button>
-
         {/* Notifications Bell */}
         <div className="relative">
           <button

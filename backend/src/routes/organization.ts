@@ -17,8 +17,6 @@ const inviteSchema = z.object({
 });
 const membershipSchema = z.object({ roleId: z.string().uuid().optional(), status: z.enum(['active', 'suspended', 'inactive']).optional() })
   .refine(value => value.roleId || value.status, 'roleId or status is required');
-const roleSchema = z.object({ name: z.string().trim().min(2).max(100), key: z.string().trim().regex(/^[A-Z][A-Z0-9_]{1,49}$/), description: z.string().max(500).optional() });
-const permissionsSchema = z.object({ permissionIds: z.array(z.string().uuid()).max(100) });
 
 router.use(tenantContext(true));
 
@@ -85,11 +83,6 @@ router.patch('/memberships/:id', requirePermission('users.manage'), validateBody
   res.json({ data: result.rows[0], requestId: req.id, timestamp: new Date().toISOString() });
 }));
 
-router.get('/permissions', requirePermission('roles.view'), asyncHandler(async (req: Request, res: Response) => {
-  const result = await query('SELECT id,key,name,description,module FROM permissions ORDER BY module,key');
-  res.json({ data: result.rows, requestId: req.id, timestamp: new Date().toISOString() });
-}));
-
 router.get('/roles', requirePermission('roles.view'), asyncHandler(async (req: Request, res: Response) => {
   const result = await query(
     `SELECT r.id,r.name,r.key,r.description,r.is_system_role,r.tenant_id,
@@ -97,32 +90,6 @@ router.get('/roles', requirePermission('roles.view'), asyncHandler(async (req: R
      FROM roles r LEFT JOIN role_permissions rp ON rp.role_id=r.id LEFT JOIN permissions p ON p.id=rp.permission_id
      WHERE r.tenant_id=$1 OR (r.tenant_id IS NULL AND r.key <> 'SUPER_ADMIN') GROUP BY r.id ORDER BY r.is_system_role DESC,r.name`, [req.tenantId]);
   res.json({ data: result.rows, requestId: req.id, timestamp: new Date().toISOString() });
-}));
-
-router.post('/roles', requirePermission('roles.manage'), validateBody(roleSchema), asyncHandler(async (req: Request, res: Response) => {
-  const result = await query(`INSERT INTO roles (tenant_id,name,key,description,is_system_role) VALUES ($1,$2,$3,$4,false) RETURNING *`,
-    [req.tenantId, req.body.name, req.body.key, req.body.description || null]).catch((error: any) => {
-      if (error?.code === '23505') throw new AppError('A role with this key already exists for the institution.', 409, 'ROLE_EXISTS');
-      throw error;
-    });
-  await writeAudit({ tenantId: req.tenantId!, userId: req.user.id, action: 'ROLE_CREATED', module: 'roles', entityId: result.rows[0].id,
-    details: { key: req.body.key }, request: req });
-  res.status(201).json({ data: result.rows[0], requestId: req.id, timestamp: new Date().toISOString() });
-}));
-
-router.put('/roles/:id/permissions', requirePermission('roles.manage'), validateBody(permissionsSchema), asyncHandler(async (req: Request, res: Response) => {
-  await transaction(async client => {
-    const role = await client.query(`SELECT id,is_system_role FROM roles WHERE id=$1 AND tenant_id=$2`, [req.params.id, req.tenantId]);
-    if (!role.rowCount) throw new AppError('Only tenant-defined roles can be edited.', 403, 'SYSTEM_ROLE_IMMUTABLE');
-    const valid = await client.query('SELECT id FROM permissions WHERE id = ANY($1::uuid[])', [req.body.permissionIds]);
-    if (valid.rowCount !== req.body.permissionIds.length) throw new AppError('One or more permissions are invalid.', 422, 'INVALID_PERMISSION');
-    await client.query('DELETE FROM role_permissions WHERE role_id=$1', [req.params.id]);
-    if (req.body.permissionIds.length) await client.query(
-      `INSERT INTO role_permissions(role_id,permission_id) SELECT $1,unnest($2::uuid[])`, [req.params.id, req.body.permissionIds]);
-    await writeAudit({ tenantId: req.tenantId!, userId: req.user.id, action: 'ROLE_PERMISSIONS_UPDATED', module: 'roles', entityId: req.params.id,
-      details: { permissionIds: req.body.permissionIds }, request: req }, client);
-  });
-  res.json({ data: { success: true }, requestId: req.id, timestamp: new Date().toISOString() });
 }));
 
 export default router;
