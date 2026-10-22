@@ -10,7 +10,7 @@ if [ ! -d /mnt/pgdata/data ]; then
   su - postgres -c "initdb -D /mnt/pgdata/data --auth=trust --username=postgres"
 fi
 
-grep -q "listen_addresses = '*'" /mnt/pgdata/data/postgresql.conf || echo "listen_addresses = '*'" >> /mnt/pgdata/data/postgresql.conf
+grep -Fq "listen_addresses = '*'" /mnt/pgdata/data/postgresql.conf || echo "listen_addresses = '*'" >> /mnt/pgdata/data/postgresql.conf
 grep -q "0.0.0.0/0" /mnt/pgdata/data/pg_hba.conf || echo "host all all 0.0.0.0/0 trust" >> /mnt/pgdata/data/pg_hba.conf
 grep -q "::0/0" /mnt/pgdata/data/pg_hba.conf || echo "host all all ::0/0 trust" >> /mnt/pgdata/data/pg_hba.conf
 
