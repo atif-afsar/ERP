@@ -13,3 +13,7 @@ export const aiAssistantService={
  addKnowledge:(t:string,b:{title:string;content:string;allowedRoles:string[]})=>apiClient.request<any>(`${base}/knowledge`,{method:'POST',body:b,tenantId:t}),
  removeKnowledge:(t:string,id:string)=>apiClient.request<any>(`${base}/knowledge/${id}`,{method:'DELETE',tenantId:t}),
 };
+// Public website (not signed in). History lives in the browser; nothing is stored.
+export const publicAssistantService={
+ chat:(message:string,history:{role:'USER'|'ASSISTANT';content:string}[])=>apiClient.request<{reply:string;followUps:string[];actions:{label:string;route:string}[]}>('/api/v1/public-assistant/chat',{method:'POST',body:{message,history:history.slice(-6)},timeoutMs:75000}),
+};

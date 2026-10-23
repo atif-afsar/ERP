@@ -44,7 +44,7 @@ const createPlanSchema = z.object({
 
 // Plans Management
 router.get('/plans', asyncHandler(async (req, res) => {
-  const plans = await query(`SELECT * FROM subscription_plans ORDER BY created_at DESC`);
+  const plans = await query(`SELECT * FROM subscription_plans ORDER BY is_active DESC, sort_order, created_at DESC`);
   res.json({ plans: plans.rows });
 }));
 
@@ -85,8 +85,11 @@ router.patch('/plans/:id', asyncHandler(async (req, res) => {
   const access = z.object({
     entitlements: z.array(z.enum(['qr_attendance'])).max(5).optional(),
     institutionTypes: z.array(z.enum(['school', 'coaching', 'hybrid'])).min(1).optional(),
+    // null = unlimited; omit to keep the current limit.
+    maxStudents: z.number().int().positive().max(1000000).nullable().optional(),
+    isFeatured: z.boolean().optional(),
   }).safeParse(req.body);
-  if (!access.success) throw new AppError('Entitlements or institution types are invalid.', 422, 'VALIDATION_ERROR');
+  if (!access.success) throw new AppError('Entitlements, institution types or student limit are invalid.', 422, 'VALIDATION_ERROR');
   const featuresJson = features !== undefined ? (typeof features === 'string' ? features : JSON.stringify(features)) : undefined;
 
   const plan = await query(
@@ -98,11 +101,14 @@ router.patch('/plans/:id', asyncHandler(async (req, res) => {
          price_amount = COALESCE($5, price_amount),
          entitlements = COALESCE($7, entitlements),
          institution_types = COALESCE($8, institution_types),
+         max_students = CASE WHEN $9::boolean THEN $10::int ELSE max_students END,
+         is_featured = COALESCE($11, is_featured),
          updated_at = NOW()
      WHERE id = $6
      RETURNING *`,
     [name ?? null, description ?? null, isActive ?? null, featuresJson ?? null, priceAmount ?? null, id,
-      access.data.entitlements ?? null, access.data.institutionTypes ?? null]
+      access.data.entitlements ?? null, access.data.institutionTypes ?? null,
+      access.data.maxStudents !== undefined, access.data.maxStudents ?? null, access.data.isFeatured ?? null]
   );
 
   if (plan.rowCount === 0) throw new AppError('Plan not found', 404, 'NOT_FOUND');

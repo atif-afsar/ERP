@@ -30,6 +30,7 @@ import adminBillingRoutes from './routes/adminBilling.js';
 import parentsRoutes from './routes/parents.js';
 import hrRoutes from './routes/hr.js';
 import aiRoutes from './routes/ai.js';
+import publicAssistantRoutes from './routes/publicAssistant.js';
 import { config } from './config.js';
 import { requireAuth } from './middleware/auth.js';
 import { businessAccess } from './middleware/businessAccess.js';
@@ -121,6 +122,8 @@ apiRouter.use('/auth', authRoutes);
 // SaaS Billing Routes
 apiRouter.use('/billing', billingRoutes);
 apiRouter.use('/admin/billing', adminBillingRoutes);
+// Public website chatbot (no sign-in; rate-limited and capped per day).
+apiRouter.use('/public-assistant', publicAssistantRoutes);
 
 // Own notification shell remains available during subscription recovery.
 apiRouter.use('/notifications', requireAuth, notificationRoutes);

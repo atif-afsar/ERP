@@ -27,10 +27,11 @@ router.get('/plans', asyncHandler(async (req, res) => {
   // ?institutionType=coaching narrows the list to plans that institution can buy.
   const type = ['school', 'coaching', 'hybrid'].includes(String(req.query.institutionType)) ? String(req.query.institutionType) : null;
   const plans = await query(
-    `SELECT id, code, name, description, price_amount, currency, billing_period, billing_interval, features, entitlements, institution_types
+    `SELECT id, code, name, description, price_amount, currency, billing_period, billing_interval, features, entitlements, institution_types,
+            max_students, is_featured
      FROM subscription_plans 
      WHERE is_active = true AND ($1::text IS NULL OR $1 = ANY(institution_types))
-     ORDER BY price_amount ASC`,
+     ORDER BY sort_order ASC, price_amount ASC`,
     [type]
   );
   res.json({ plans: plans.rows });

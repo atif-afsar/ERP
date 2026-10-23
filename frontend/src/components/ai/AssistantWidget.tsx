@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Bot, X, Send, Plus, History, BookOpen, ThumbsUp, ThumbsDown, Trash2, ArrowRight, Loader2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useTenant } from '../../context/TenantContext';
@@ -20,7 +20,7 @@ const STARTERS: Record<string, string[]> = {
 function Inline({ text }: { text: string }) {
   return <>{text.split(/(\*\*[^*]+\*\*)/g).map((part, i) => part.startsWith('**') && part.endsWith('**') ? <strong key={i}>{part.slice(2, -2)}</strong> : <React.Fragment key={i}>{part}</React.Fragment>)}</>;
 }
-function Rich({ text }: { text: string }) {
+export function Rich({ text }: { text: string }) {
   const blocks: React.ReactNode[] = [];
   let list: { ordered: boolean; items: string[] } | null = null;
   const flush = () => {
@@ -46,6 +46,51 @@ function Rich({ text }: { text: string }) {
   return <div className="space-y-2">{blocks}</div>;
 }
 
+// Typewriter: reveals text character-by-character with a blinking cursor.
+// Speed adapts to length so long answers don't take forever. Reports onDone when
+// the full text has been revealed (or if the user clicks to skip).
+function TypewriterBubble({ text, onDone, className, scrollRef }: { text: string; onDone: () => void; className?: string; scrollRef?: React.RefObject<HTMLDivElement | null> }) {
+  const [charIndex, setCharIndex] = useState(0);
+  const done = charIndex >= text.length;
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    // Adaptive speed: short texts type slower for a natural feel; long texts
+    // speed up so users aren't kept waiting.
+    const msPerChar = text.length < 100 ? 18 : text.length < 300 ? 12 : text.length < 600 ? 6 : 3;
+    // Reveal in small chunks for very fast speeds to keep smooth rendering
+    const charsPerTick = msPerChar <= 6 ? 3 : 1;
+    intervalRef.current = setInterval(() => {
+      setCharIndex(prev => {
+        const next = Math.min(prev + charsPerTick, text.length);
+        return next;
+      });
+    }, msPerChar);
+    return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
+  }, [text]);
+
+  useEffect(() => {
+    if (done) {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      onDone();
+    }
+  }, [done, onDone]);
+
+  // Auto-scroll as text types in
+  useEffect(() => {
+    scrollRef?.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [charIndex, scrollRef]);
+
+  const visible = text.slice(0, charIndex);
+
+  return (
+    <div className={className} onClick={() => { if (!done) { setCharIndex(text.length); } }} style={{ cursor: done ? undefined : 'pointer' }}>
+      <Rich text={visible} />
+      {!done && <span className="inline-block w-[2px] h-[1em] bg-slate-400 align-text-bottom ml-0.5 animate-pulse" />}
+    </div>
+  );
+}
+
 export const AssistantWidget: React.FC<{ onNavigate: (route: string) => void }> = ({ onNavigate }) => {
   const { currentUser, can } = useAuth();
   const { currentTenant } = useTenant();
@@ -58,6 +103,8 @@ export const AssistantWidget: React.FC<{ onNavigate: (route: string) => void }> 
   const [input, setInput] = useState('');
   const [busy, setBusy] = useState(false);
   const [history, setHistory] = useState<{ id: string; title: string; updated_at: string }[]>([]);
+  // Tracks which message index (if any) is currently being typed out
+  const [typingMsgIndex, setTypingMsgIndex] = useState<number | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
 
   const remember = (id?: string) => {
@@ -68,6 +115,7 @@ export const AssistantWidget: React.FC<{ onNavigate: (route: string) => void }> 
     try {
       const rows = (await api.messages(t, id)).data;
       setMessages(rows.map(m => ({ id: m.id, role: m.role, content: m.content, sources: (m.citations || []).map(c => c.documentTitle) })));
+      setTypingMsgIndex(null);
       remember(id); setView('chat');
     } catch { remember(undefined); setMessages([]); }
   };
@@ -85,7 +133,11 @@ export const AssistantWidget: React.FC<{ onNavigate: (route: string) => void }> 
     try {
       const r = (await api.chat(t, { message, conversationId, currentRoute: window.location.hash })).data;
       remember(r.conversationId);
-      setMessages(m => [...m, { id: r.messageId, role: 'ASSISTANT', content: r.reply, followUps: r.followUps, actions: r.actions, sources: r.citations.map(c => c.documentTitle) }]);
+      setMessages(m => {
+        const next = [...m, { id: r.messageId, role: 'ASSISTANT' as const, content: r.reply, followUps: r.followUps, actions: r.actions, sources: r.citations.map(c => c.documentTitle) }];
+        setTypingMsgIndex(next.length - 1);
+        return next;
+      });
     } catch (e: any) {
       const text = e?.name === 'AbortError' ? 'That took too long. Please try again.' : e?.message || 'The assistant is unavailable right now.';
       setMessages(m => [...m, { role: 'ASSISTANT', content: text, error: true }]);
@@ -98,13 +150,14 @@ export const AssistantWidget: React.FC<{ onNavigate: (route: string) => void }> 
     setMessages(m => m.map(x => x === msg ? { ...x, rating } : x));
     try { await api.feedback(t, msg.id, rating); } catch { /* feedback is best-effort */ }
   };
-  const newChat = () => { remember(undefined); setMessages([]); setView('chat'); };
+  const newChat = () => { remember(undefined); setMessages([]); setTypingMsgIndex(null); setView('chat'); };
   const showHistory = async () => {
     setView('history');
     try { setHistory((await api.conversations(t)).data); } catch { setHistory([]); }
   };
   const starters = STARTERS[currentUser.role] || STARTERS.TENANT_ADMIN;
   const headerButton = 'rounded-lg p-1.5 text-emerald-50 hover:bg-white/15';
+  const handleTypingDone = useCallback(() => setTypingMsgIndex(null), []);
 
   return (
     <>
@@ -157,23 +210,37 @@ export const AssistantWidget: React.FC<{ onNavigate: (route: string) => void }> 
                   <div key={i} className="ml-8 rounded-2xl rounded-br-sm bg-emerald-600 px-3 py-2 text-white whitespace-pre-wrap">{m.content}</div>
                 ) : (
                   <div key={i} className="mr-4 space-y-2">
-                    <div className={`rounded-2xl rounded-bl-sm border px-3 py-2 ${m.error ? 'border-rose-200 bg-rose-50 text-rose-800' : 'border-slate-200 bg-white text-slate-800'}`}><Rich text={m.content} /></div>
-                    {m.sources && m.sources.length > 0 && <p className="px-1 text-[11px] text-slate-500">From EduNexus help: {Array.from(new Set(m.sources)).join(' · ')}</p>}
-                    {m.actions && m.actions.length > 0 && (
-                      <div className="flex flex-wrap gap-1.5">
-                        {m.actions.map(a => <button key={a.route} type="button" onClick={() => onNavigate(a.route)} className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-800 hover:bg-emerald-100">{a.label}<ArrowRight className="h-3 w-3" /></button>)}
-                      </div>
+                    {typingMsgIndex === i && !m.error ? (
+                      <TypewriterBubble
+                        text={m.content}
+                        onDone={handleTypingDone}
+                        scrollRef={endRef}
+                        className={`rounded-2xl rounded-bl-sm border px-3 py-2 border-slate-200 bg-white text-slate-800`}
+                      />
+                    ) : (
+                      <div className={`rounded-2xl rounded-bl-sm border px-3 py-2 ${m.error ? 'border-rose-200 bg-rose-50 text-rose-800' : 'border-slate-200 bg-white text-slate-800'}`}><Rich text={m.content} /></div>
                     )}
-                    {m.followUps && m.followUps.length > 0 && i === messages.length - 1 && (
-                      <div className="flex flex-col gap-1">
-                        {m.followUps.map(f => <button key={f} type="button" onClick={() => void ask(f)} className="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-left text-xs text-slate-700 hover:bg-slate-100">{f}</button>)}
-                      </div>
-                    )}
-                    {m.id && (
-                      <div className="flex gap-1 px-1">
-                        <button type="button" aria-label="Helpful" onClick={() => void rate(m, 1)} className={m.rating === 1 ? 'text-emerald-600' : 'text-slate-300 hover:text-slate-500'}><ThumbsUp className="h-3.5 w-3.5" /></button>
-                        <button type="button" aria-label="Not helpful" onClick={() => void rate(m, -1)} className={m.rating === -1 ? 'text-rose-600' : 'text-slate-300 hover:text-slate-500'}><ThumbsDown className="h-3.5 w-3.5" /></button>
-                      </div>
+                    {/* Show extras only when not mid-typing */}
+                    {typingMsgIndex !== i && (
+                      <>
+                        {m.sources && m.sources.length > 0 && <p className="px-1 text-[11px] text-slate-500">From EduNexus help: {Array.from(new Set(m.sources)).join(' · ')}</p>}
+                        {m.actions && m.actions.length > 0 && (
+                          <div className="flex flex-wrap gap-1.5">
+                            {m.actions.map(a => <button key={a.route} type="button" onClick={() => onNavigate(a.route)} className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-800 hover:bg-emerald-100">{a.label}<ArrowRight className="h-3 w-3" /></button>)}
+                          </div>
+                        )}
+                        {m.followUps && m.followUps.length > 0 && i === messages.length - 1 && (
+                          <div className="flex flex-col gap-1">
+                            {m.followUps.map(f => <button key={f} type="button" onClick={() => void ask(f)} className="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-left text-xs text-slate-700 hover:bg-slate-100">{f}</button>)}
+                          </div>
+                        )}
+                        {m.id && (
+                          <div className="flex gap-1 px-1">
+                            <button type="button" aria-label="Helpful" onClick={() => void rate(m, 1)} className={m.rating === 1 ? 'text-emerald-600' : 'text-slate-300 hover:text-slate-500'}><ThumbsUp className="h-3.5 w-3.5" /></button>
+                            <button type="button" aria-label="Not helpful" onClick={() => void rate(m, -1)} className={m.rating === -1 ? 'text-rose-600' : 'text-slate-300 hover:text-slate-500'}><ThumbsDown className="h-3.5 w-3.5" /></button>
+                          </div>
+                        )}
+                      </>
                     )}
                   </div>
                 ))}

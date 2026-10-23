@@ -62,7 +62,7 @@ before(async () => {
   base = `http://127.0.0.1:${server.address().port}`;
   ids.coaching = await institution('coaching', 'COACHING_QR_MONTHLY', 'coach');
   ids.school = await institution('school', 'GROWTH_MONTHLY', 'school');
-  ids.coachNoPlan = await institution('coaching', 'GROWTH_MONTHLY', 'nopl');
+  ids.coachNoPlan = await institution('coaching', 'STARTER_MONTHLY', 'nopl');
   for (const key of ['coaching', 'school', 'coachNoPlan']) {
     ids[key].ownerToken = await signIn(ids[key].owner.email);
     ids[key].studentToken = await signIn(ids[key].studentUser.email);
@@ -105,17 +105,21 @@ test('schools and coaching institutes without the plan are refused', async () =>
   }
 });
 
-test('a school cannot buy the coaching plan', async () => {
+test('the retired coaching plan is not sold; Growth and Pro carry QR for coaching only', async () => {
   const plan = (await pool.query(`SELECT id FROM subscription_plans WHERE code = 'COACHING_QR_MONTHLY'`)).rows[0].id;
   const r = await call(ids.school.ownerToken, '/billing/subscription/proof', 'POST', {
     planId: plan, transactionReference: `UTR${Date.now()}`, paymentDate: '2026-10-20', fileName: 'proof.png',
     proofDataUrl: 'data:image/png;base64,iVBORw0KGgo=',
   });
-  assert.equal(r.status, 422);
-  assert.equal(r.error.code, 'PLAN_NOT_FOR_INSTITUTION');
+  assert.ok(r.status >= 400, 'a retired plan cannot be bought');
   const listed = async type => (await (await fetch(`${base}/api/v1/billing/plans?institutionType=${type}`)).json()).plans.map(p => p.code);
-  assert.ok(!(await listed('school')).includes('COACHING_QR_MONTHLY'));
-  assert.ok((await listed('coaching')).includes('COACHING_QR_MONTHLY'));
+  for (const type of ['school', 'coaching']) {
+    const codes = await listed(type);
+    assert.deepEqual(codes.slice(0, 3), ['STARTER_MONTHLY', 'GROWTH_MONTHLY', 'PRO_MONTHLY']);
+    assert.ok(!codes.includes('COACHING_QR_MONTHLY'));
+  }
+  // A school on Growth still has no QR (checked above); the coaching subscriber on the retired plan keeps it.
+  assert.deepEqual((await call(ids.coaching.ownerToken, '/auth/me')).data.institution.entitlements, ['qr_attendance']);
 });
 
 test('owner runs a session; enrolled student checks in by scan and code; others are rejected', async () => {

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   ArrowRight,
   BarChart3,
@@ -19,6 +19,8 @@ import {
   X,
 } from 'lucide-react';
 import { InstituteOnboardingModal } from '../../components/public/InstituteOnboardingModal';
+import { PublicAssistantWidget } from '../../components/ai/PublicAssistantWidget';
+import { apiClient } from '../../services/api/apiClient';
 
 interface LandingPageProps {
   onNavigate: (route: string) => void;
@@ -35,41 +37,25 @@ const modules = [
   { icon: Bus, title: 'Reports & control', text: 'Student, attendance, fee and exam reports with CSV export, role-based access and an audit trail.' },
 ];
 
-const plans = [
-  {
-    code: 'STARTER_MONTHLY',
-    name: 'Starter',
-    price: 2999,
-    period: 'month',
-    description: 'For small schools getting admissions, attendance and fees onto one system.',
-    features: ['Up to 250 students', 'Admissions and attendance', 'Fees, receipts and timetables'],
-  },
-  {
-    code: 'GROWTH_MONTHLY',
-    name: 'Growth',
-    price: 6999,
-    period: 'month',
-    description: 'For established schools that also run exams, homework and parent portals.',
-    features: ['Up to 1,000 students', 'Exams and report cards', 'Homework and parent portal'],
-    featured: true,
-  },
-  {
-    code: 'COACHING_QR_MONTHLY',
-    name: 'Coaching',
-    price: 6999,
-    period: 'month',
-    description: 'For coaching institutes. Students mark attendance by scanning a QR code on their phones.',
-    features: ['Up to 1,000 students', 'QR attendance from student phones', 'Tests, fees and homework'],
-  },
-  {
-    code: 'ENTERPRISE_YEARLY',
-    name: 'Enterprise',
-    price: 59999,
-    period: 'year',
-    description: 'For large institutions that want unlimited users and assisted setup.',
-    features: ['Unlimited students and staff', 'Assisted data import', 'Priority support'],
-  },
+type PlanCard = { code: string; name: string; price: number; period: string; description: string; features: string[]; featured?: boolean };
+
+// Shown until /billing/plans answers (or if the API is unreachable). The API is the
+// source of truth: the same plans are sold in onboarding and in Subscription.
+const FALLBACK_PLANS: PlanCard[] = [
+  { code: 'STARTER_MONTHLY', name: 'Starter', price: 1999, period: 'month', description: 'For small schools and coaching centres that want everything in one place on a tight budget.', features: ['Up to 300 active students', 'All modules: admissions, attendance, fees, exams, homework', 'Staff & HR with leave and payroll', 'Parent & student portals', 'AI assistant and email notices'] },
+  { code: 'GROWTH_MONTHLY', name: 'Growth', price: 3999, period: 'month', description: 'For growing schools and coaching institutes. Adds QR attendance from student phones for coaching batches.', features: ['Up to 1,000 active students', 'Everything in Starter', 'QR attendance for coaching batches', 'Excel import for students and staff', 'Reports with CSV export'], featured: true },
+  { code: 'PRO_MONTHLY', name: 'Pro', price: 6999, period: 'month', description: 'For large schools and multi-batch institutes that want no limits and hands-on help.', features: ['Unlimited students and staff', 'Everything in Growth', 'Assisted data import and setup', 'Priority support'] },
 ];
+
+const toCard = (p: any): PlanCard => ({
+  code: p.code,
+  name: p.name,
+  price: Number(p.price_amount) / 100,
+  period: p.billing_period === 'yearly' ? 'year' : 'month',
+  description: p.description || '',
+  features: Array.isArray(p.features) ? p.features : [],
+  featured: Boolean(p.is_featured),
+});
 
 const faqs = [
   {
@@ -110,10 +96,16 @@ const StatusPill = ({ children }: { children: React.ReactNode }) => (
 export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate, subRoute, autoOpenPlan }) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [faqOpen, setFaqOpen] = useState<number | null>(0);
+  const [plans, setPlans] = useState<PlanCard[]>(FALLBACK_PLANS);
+  useEffect(() => {
+    apiClient.request<{ plans: any[] }>('/api/v1/billing/plans')
+      .then(r => { if (r.data.plans?.length) setPlans(r.data.plans.map(toCard)); })
+      .catch(() => { /* keep the fallback list */ });
+  }, []);
+  const featuredPlan = plans.find(p => p.featured) || plans[0];
+  const choosePlan = (plan: PlanCard) => setOnboardingPlan({ code: plan.code, name: plan.name, price: plan.price, period: plan.period });
   const [onboardingPlan, setOnboardingPlan] = useState<null | { code: string; name: string; price: number; period: string }>(
-    autoOpenPlan || subRoute === 'signup'
-      ? { code: 'GROWTH_MONTHLY', name: 'Growth', price: 6999, period: 'month' }
-      : null,
+    autoOpenPlan || subRoute === 'signup' ? { ...FALLBACK_PLANS[1] } : null,
   );
 
   const scroll = (id: string) => {
@@ -121,8 +113,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate, subRoute, 
     setMenuOpen(false);
   };
 
-  const start = () => setOnboardingPlan({ code: 'GROWTH_MONTHLY', name: 'Growth', price: 6999, period: 'month' });
-  const choosePlan = (plan: typeof plans[number]) => setOnboardingPlan({ code: plan.code, name: plan.name, price: plan.price, period: plan.period });
+  const start = () => choosePlan(featuredPlan);
 
   return (
     <div className="public-landing min-h-screen overflow-x-hidden bg-[#f8f8f6] font-sans text-[#111827] selection:bg-violet-200 selection:text-slate-950">
@@ -232,7 +223,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate, subRoute, 
               <h2 className="mt-4 text-4xl font-black tracking-[-0.055em] text-slate-950 sm:text-6xl">Choose the operating depth your institute needs.</h2>
               <p className="mx-auto mt-5 max-w-2xl text-base leading-7 text-slate-600">Pay through the displayed bank or UPI account and upload proof during onboarding. Access begins after platform verification.</p>
             </div>
-            <div className="mt-14 grid items-stretch gap-5 md:grid-cols-2 xl:grid-cols-4">
+            <div className="mx-auto mt-14 grid max-w-5xl items-stretch gap-5 md:grid-cols-3">
               {plans.map((plan) => (
                 <article key={plan.code} className={`relative flex flex-col rounded-3xl border p-7 ${plan.featured ? 'border-violet-300 bg-[#f7f4ff] shadow-xl shadow-violet-100' : 'border-slate-200 bg-white'}`}>
                   {plan.featured && <span className="absolute right-5 top-5 rounded-full bg-violet-700 px-3 py-1 text-[10px] font-black uppercase tracking-wider text-white">Most popular</span>}
@@ -247,7 +238,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate, subRoute, 
                 </article>
               ))}
             </div>
-            <p className="mt-6 text-center text-xs leading-5 text-slate-500">Plan limits and enabled modules are confirmed during onboarding. Subscription activation requires successful payment-proof review.</p>
+            <p className="mt-6 text-center text-xs leading-5 text-slate-500">Every plan includes every module. Prices are per institution, not per student. Activation follows payment-proof review.</p>
           </div>
         </section>
 
@@ -269,6 +260,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate, subRoute, 
       <footer className="landing-dark bg-[#0c0f18] px-5 pb-10 pt-16 text-white sm:px-8">
         <div className="mx-auto max-w-6xl"><div className="grid gap-10 border-b border-white/10 pb-12 md:grid-cols-[1.5fr_1fr_1fr]"><div><Logo/><p className="mt-5 max-w-sm text-sm leading-6 text-slate-400">A unified operating system for institutions that want clear academic, financial and campus workflows.</p></div><div><p className="text-xs font-black uppercase tracking-widest text-slate-500">Explore</p><div className="mt-4 space-y-3 text-sm text-slate-300"><button className="block" onClick={()=>scroll('platform')}>Platform</button><button className="block" onClick={()=>scroll('roles')}>For your team</button><button className="block" onClick={()=>scroll('pricing')}>Pricing</button><button className="block" onClick={()=>scroll('security')}>Security</button></div></div><div><p className="text-xs font-black uppercase tracking-widest text-slate-500">Access</p><div className="mt-4 space-y-3 text-sm text-slate-300"><button className="block" onClick={()=>onNavigate('login')}>Sign in</button><button className="block" onClick={start}>Create institute</button><a className="block" href="mailto:contact@edunexus.app">Contact</a></div></div></div><div className="py-12 text-center"><p className="font-serif text-6xl italic tracking-[-0.05em] text-white sm:text-8xl lg:text-[132px]">EduNexus</p></div><div className="flex flex-col items-center justify-between gap-3 border-t border-white/10 pt-6 text-xs text-slate-500 sm:flex-row"><p>© {new Date().getFullYear()} EduNexus. All rights reserved.</p><p>Built for responsible institutional operations.</p></div></div>
       </footer>
+
+      <PublicAssistantWidget onNavigate={route => route === 'pricing' ? scroll('pricing') : route === 'signup' ? start() : onNavigate('login')} />
 
       {onboardingPlan && <InstituteOnboardingModal isOpen selectedPlan={onboardingPlan} onClose={()=>setOnboardingPlan(null)} onSuccessLoginRedirect={()=>onNavigate('login')} />}
     </div>

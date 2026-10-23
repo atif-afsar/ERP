@@ -26,8 +26,8 @@ Last updated: 2026-10-22, after the V1 scope reduction.
 | Reports | Student, attendance, fee and exam reports with CSV export |
 | School/Institute Setup | Profile, academic years, classes, sections, subjects, teacher assignments |
 | Users & Access | Invite users, fixed roles, activate/suspend, activity log |
-| Subscription | Plan, payment-proof upload, renew |
-| Assistant (floating button) | Gemini chatbot for any question. EduNexus how-to answers come from V1 help articles (migration 0049); owners add a School FAQ. It cannot read institution records |
+| Subscription | Plan, payment-proof upload, renew. Three public plans (migration 0050): Starter ₹1,999/mo (300 active students), Growth ₹3,999/mo (1,000, QR for coaching), Pro ₹6,999/mo (unlimited). Every plan has every module; `subscription_plans.max_students` is enforced on admission (`assertStudentCapacity`, 402 `PLAN_STUDENT_LIMIT`). The landing page reads `/billing/plans` |
+| Assistant (floating button) | Gemini chatbot for any question, in the app and on the public landing page (`/public-assistant/chat`: no sign-in, nothing stored, per-IP limit + daily cap, live plan prices). EduNexus how-to answers come from V1 help articles (migration 0049); owners add a School FAQ. It cannot read institution records |
 
   The parent portal, student portal, teacher view, Super Admin console, and the public landing/pricing/sign-up pages are also in V1.
 - **Staff & HR is back in V1 (owner's request, 2026-10-22):** leave and staff attendance were restored from the archive as `routes/hr.ts`; payroll was built new (migration 0048). The legacy `payroll_records` table is unused.
@@ -155,7 +155,7 @@ npm run build                      # tsc + vite build for both
 
 ## 7. QR attendance v2 (coaching only)
 
-- **Who gets it:** an institution with `tenant_type` of `coaching` or `hybrid` **and** an active plan whose `entitlements` include `qr_attendance`. Seeded plan: `COACHING_QR_MONTHLY` ("Coaching Plan", buyable only by coaching/hybrid). Schools never see it; the server returns 403 `FEATURE_NOT_IN_PLAN`.
+- **Who gets it:** an institution with `tenant_type` of `coaching` or `hybrid` **and** an active plan whose `entitlements` include `qr_attendance`. Plans with it: Growth and Pro. The retired `COACHING_QR_MONTHLY` keeps it for existing subscribers but is no longer sold. Schools never see it; the server returns 403 `FEATURE_NOT_IN_PLAN`.
 - **How it works:**
   - The teacher picks a batch (class + section) and starts a session for today, in the institute's timezone. The server stores a per-session `signing_secret` (migration 0047).
   - The displayed QR payload is `ENX-QR2.<sessionId>.<window>.<HMAC>`. The window is 15 seconds, and one previous window is accepted for network delay. A 6-digit code is derived the same way, as a fallback when the camera can't be used.
@@ -170,11 +170,11 @@ npm run build                      # tsc + vite build for both
 
 - PostgreSQL 16, UUID PKs, `tenant_id` on business tables. Tables for V2 modules still exist but are unused.
 - Student model: a permanent `students` identity + yearly `enrollments` (class and section live on the enrollment) + `parents`/`parent_students`.
-- **Adding a migration:** create `backend/sql/migrations/native_00NN_snake_name.sql`. The next number is **0050**. Make it idempotent. **Never edit or delete an applied migration**: the runner stores checksums and refuses to start if one is missing (0046 created the assistant tables; 0049 archived its stale V2 help articles).
+- **Adding a migration:** create `backend/sql/migrations/native_00NN_snake_name.sql`. The next number is **0051**. Make it idempotent. **Never edit or delete an applied migration**: the runner stores checksums and refuses to start if one is missing (0046 created the assistant tables; 0049 archived its stale V2 help articles).
 
 ## 9. Testing & QA
 
-- `npm run test:backend` runs all suites against a recreated `edunexus_erp_test` (localhost only). Status 2026-10-22: **189/189 passing** (incl. `staff-hr-payroll` and `ai-assistant`, which mocks Gemini). `resend-provider`'s "two competing workers" test can fail intermittently when other suites enqueue emails at the same time; CI runs with `--test-concurrency=1`.
+- `npm run test:backend` runs all suites against a recreated `edunexus_erp_test` (localhost only). Status 2026-10-22: **192/192 passing** (incl. `staff-hr-payroll`, `ai-assistant` (mocks Gemini) and `subscription-plans`). `resend-provider`'s "two competing workers" test can fail intermittently when other suites enqueue emails at the same time; CI runs with `--test-concurrency=1`.
 - CI runs an explicit list of suites in `.github/workflows/ci.yml`. Add new suites there.
 - Frontend: `tsc` + `vite build` both pass. Playwright specs live in `frontend/e2e` and `frontend/tests` and may reference removed screens.
 - `qa/` scripts are one-offs from earlier phases. Several still target V2 modules; treat them as stale.

@@ -166,6 +166,26 @@ test('owners add institution FAQ articles that only their institution retrieves'
   assert.ok(!after.data.citations.some(c => c.documentTitle === 'School timings'));
 });
 
+test('public website chat works without sign-in, quotes live prices and stores nothing', async () => {
+  geminiCalls.length = 0;
+  geminiReply = () => ({ status: 200, body: { candidates: [{ content: { parts: [{ text: JSON.stringify({ answer: 'Starter is ₹1,999 per month.', actions: [{ label: 'See plans', route: 'pricing' }, { label: 'Students', route: 'app/students' }] }) }] } }] } });
+  const before = (await pool.query('SELECT COUNT(*)::int n FROM ai_messages')).rows[0].n;
+  const r = await call(null, '/public-assistant/chat', 'POST', { message: 'How much does EduNexus cost?', history: [{ role: 'USER', content: 'hi' }, { role: 'ASSISTANT', content: 'Hello!' }] });
+  assert.equal(r.status, 200);
+  assert.equal(r.data.reply, 'Starter is ₹1,999 per month.');
+  assert.deepEqual(r.data.actions, [{ label: 'See plans', route: 'pricing' }], 'only public routes');
+  const sent = geminiCalls[0].body;
+  assert.match(sent.systemInstruction.parts[0].text, /visitor who is not signed in/);
+  const turn = sent.contents.at(-1).parts[0].text;
+  assert.match(turn, /Starter: ₹1,999 per month, up to 300 active students/);
+  assert.match(turn, /Pro: ₹6,999 per month, unlimited students/);
+  assert.doesNotMatch(turn, /Coaching Plan|Enterprise/);
+  assert.equal(sent.contents.length, 3);
+  assert.equal((await pool.query('SELECT COUNT(*)::int n FROM ai_messages')).rows[0].n, before);
+  assert.equal((await call(null, '/public-assistant/chat', 'POST', { message: 'x', history: Array(7).fill({ role: 'USER', content: 'a' }) })).status, 422);
+  geminiReply = () => ({ status: 200, body: { candidates: [{ content: { parts: [{ text: '{"answer":"ok"}' }] } }] } });
+});
+
 test('feedback and deleting a conversation are owner-only', async () => {
   const r = await call(t.parent.token, '/ai/chat', 'POST', { message: 'How do I pay fees by UPI?' });
   assert.equal((await call(t.teacher.token, '/ai/feedback', 'POST', { messageId: r.data.messageId, rating: 1 })).status, 404);
