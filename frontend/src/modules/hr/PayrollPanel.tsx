@@ -28,7 +28,7 @@ const ComponentList = ({ label, items, onChange }: { label: string; items: Salar
 );
 
 const PayslipView = ({ slip, institution }: { slip: any; institution: string }) => (
-  <div className="space-y-4 text-sm" id="payslip-print">
+  <div className="printable-area space-y-4 text-sm" id="payslip-print">
     <div className="border-b pb-3">
       <p className="font-bold text-slate-900">{institution}</p>
       <p className="text-xs text-slate-500">Payslip · {monthName(slip.year, slip.month)}</p>

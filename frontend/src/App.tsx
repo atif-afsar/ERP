@@ -29,6 +29,7 @@ const OrganizationModule = React.lazy(() => import('./modules/organization/Organ
 const SchoolMasterDataModule = React.lazy(() => import('./modules/masterData/SchoolMasterDataModule').then(m => ({ default: m.SchoolMasterDataModule })));
 const SaaSBillingModule = React.lazy(() => import('./modules/saasBilling/SaaSBillingModule').then(m => ({ default: m.SaaSBillingModule })));
 import { OwnerOnboardingView } from './components/auth/OwnerOnboardingView';
+import { ResetPasswordView } from './components/auth/ResetPasswordView';
 import { LandingPage } from './modules/public/LandingPage';
 
 const ROUTE_PERMISSIONS: Record<string, Permission> = {
@@ -259,6 +260,11 @@ const MainRouter: React.FC = () => {
     if (routeState.path === 'signup' || routeState.path === 'onboarding') {
       if (routeState.path === 'onboarding') return <OwnerOnboardingView initialToken={routeState.query.token} onComplete={() => navigateTo('login')} />;
       return <LandingPage onNavigate={navigateTo} subRoute="signup" autoOpenPlan={true} />;
+    }
+
+    // Password reset link from the PASSWORD_RESET email (works signed in or out).
+    if (routeState.path === 'reset-password') {
+      return <ResetPasswordView token={routeState.query.token} onDone={() => navigateTo('login')} />;
     }
 
     // 3. AUTHENTICATION & LOGIN (Doc 63)
