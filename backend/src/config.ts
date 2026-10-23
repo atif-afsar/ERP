@@ -20,6 +20,12 @@ const schema = z.object({
   EMAIL_FROM_ADDRESS: z.string().email().default('dev-notifications@edunexus.local'),
   RESEND_API_KEY: z.string().optional(),
   NOTIFICATION_POLL_MS: z.coerce.number().int().min(250).max(60000).default(5000),
+  GEMINI_API_KEY: z.string().optional(),
+  GEMINI_MODEL: z.string().min(1).default('gemini-flash-latest'),
+  // Tried when the main model is overloaded (503), rate limited or times out. Empty disables it.
+  GEMINI_FALLBACK_MODEL: z.string().default('gemini-3.1-flash-lite'),
+  // Per attempt. The whole request (main + fallback) can take up to twice this.
+  GEMINI_TIMEOUT_MS: z.coerce.number().int().min(2000).max(120000).default(25000),
 });
 const parsed = schema.safeParse(process.env);
 if (!parsed.success) {
@@ -51,6 +57,10 @@ export const config = {
   emailFromAddress: env.EMAIL_FROM_ADDRESS,
   resendApiKey: env.RESEND_API_KEY,
   notificationPollMs: env.NOTIFICATION_POLL_MS,
+  geminiApiKey: env.GEMINI_API_KEY || '',
+  geminiModel: env.GEMINI_MODEL,
+  geminiFallbackModel: env.GEMINI_FALLBACK_MODEL.trim(),
+  geminiTimeoutMs: env.GEMINI_TIMEOUT_MS,
 };
 export type AppConfig = typeof config;
 export default config;

@@ -23,6 +23,7 @@ import {
 import { canOpenModule } from '../../services/auth/permissionPolicy';
 import { useAuth } from '../../context/AuthContext';
 import { useTenant } from '../../context/TenantContext';
+import { AssistantWidget } from '../ai/AssistantWidget';
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -100,6 +101,8 @@ export const AppShell: React.FC<AppShellProps> = ({
           </main>
         </div>
       </div>
+
+      <AssistantWidget onNavigate={onNavigate} />
 
       {/* Mobile Bottom Navigation Bar */}
       <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-30 bg-white border-t border-slate-200 px-2 py-1.5 flex items-center justify-around shadow-lg">

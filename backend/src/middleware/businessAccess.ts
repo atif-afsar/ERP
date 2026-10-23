@@ -4,7 +4,7 @@ import { AppError } from './errorHandler.js';
 // Default-deny: only V1 modules are reachable. Each of these routers enforces
 // database-backed permissions (requirePermission) or its own role checks.
 const V1_MODULES = new Set([
-  'dashboard', 'tenants', 'students', 'parents', 'staff', 'hr', 'attendance', 'timetable',
+  'dashboard', 'tenants', 'students', 'parents', 'staff', 'hr', 'ai', 'attendance', 'timetable',
   'exams', 'homework', 'fees', 'communication', 'reports', 'organization', 'master-data', 'audit',
 ]);
 

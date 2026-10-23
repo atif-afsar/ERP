@@ -87,7 +87,8 @@ jobs:
             tests/fee-parent-portal.test.mjs \
             tests/communication-notifications.test.mjs \
             tests/qr-attendance-v2.test.mjs \
-            tests/staff-hr-payroll.test.mjs
+            tests/staff-hr-payroll.test.mjs \
+            tests/ai-assistant.test.mjs
 
       - name: Verify Report Completeness & Authorization Guard
         run: node --import tsx qa/verify-phase4-completeness.mjs

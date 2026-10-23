@@ -152,6 +152,10 @@ From the root directory, you can orchestrate tasks without changing directories:
 | `RESEND_API_KEY` | **Yes** | Resend API key (`re_…`) |
 | `EMAIL_FROM_ADDRESS` | **Yes** | Sender on a Resend-verified domain, e.g. `notifications@edunexus.network` |
 | `EMAIL_FROM_NAME` | Optional | Sender display name (default `EduNexus`) |
+| `GEMINI_API_KEY` | For the assistant | Google AI Studio key. Without it the chat replies "not configured" |
+| `GEMINI_MODEL` | Optional | Main model, e.g. `gemini-3.8-flash` (default `gemini-flash-latest`) |
+| `GEMINI_FALLBACK_MODEL` | Optional | Used when the main model is overloaded or slow (default `gemini-3.1-flash-lite`; empty disables) |
+| `GEMINI_TIMEOUT_MS` | Optional | Per attempt (default `25000`). Lower it (e.g. `15000`) to fall back sooner |
 
 Emails are sent only by the separate **worker** process (`dist/worker.js`). If the worker isn't running, notifications and emails stay queued in `notification_jobs`.
 

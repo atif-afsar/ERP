@@ -67,6 +67,8 @@ export type Permission =
   | 'hr.payroll.view'
   | 'hr.payroll.manage'
   | 'hr.payslip.view_own'
+  | 'ai.chat'
+  | 'ai.knowledge.manage'
   | 'staff.create'
   | 'staff.update'
   | 'staff.manage'

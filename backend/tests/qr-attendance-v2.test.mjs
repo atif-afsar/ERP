@@ -201,6 +201,6 @@ test('homework: owner posts for a section; only students in it see it; students 
 });
 
 test('removed V2 modules are not reachable', async () => {
-  for (const route of ['/finance/accounts', '/library', '/inventory', '/transport', '/hostel', '/mess', '/crm/leads', '/ai/conversations', '/health-records', '/payments'])
+  for (const route of ['/finance/accounts', '/library', '/inventory', '/transport', '/hostel', '/mess', '/crm/leads', '/health-records', '/payments'])
     assert.equal((await call(ids.coaching.ownerToken, route)).status, 404, route);
 });

@@ -27,10 +27,11 @@ Last updated: 2026-10-22, after the V1 scope reduction.
 | School/Institute Setup | Profile, academic years, classes, sections, subjects, teacher assignments |
 | Users & Access | Invite users, fixed roles, activate/suspend, activity log |
 | Subscription | Plan, payment-proof upload, renew |
+| Assistant (floating button) | Gemini chatbot for any question. EduNexus how-to answers come from V1 help articles (migration 0049); owners add a School FAQ. It cannot read institution records |
 
   The parent portal, student portal, teacher view, Super Admin console, and the public landing/pricing/sign-up pages are also in V1.
 - **Staff & HR is back in V1 (owner's request, 2026-10-22):** leave and staff attendance were restored from the archive as `routes/hr.ts`; payroll was built new (migration 0048). The legacy `payroll_records` table is unused.
-- **Removed from V1 (planned for V2):** finance/accounting screens, library, inventory, transport, hostel, mess, CRM, AI assistant, health records, custom roles, multiple branches, student ID card, and homework submissions/grading. Their code was **deleted from `main`**. The full pre-V1 code, including an unfinished Gemini AI assistant, is preserved on the local branch **`archive/full-erp-before-v1`** (commit `aaeea88`). Their **database tables still exist** (unused), so V2 can be restored without data migration.
+- **Removed from V1 (planned for V2):** finance/accounting screens, library, inventory, transport, hostel, mess, CRM, health records, custom roles, multiple branches, student ID card, and homework submissions/grading. Their code was **deleted from `main`**. The full pre-V1 code is preserved on the local branch **`archive/full-erp-before-v1`** (commit `aaeea88`). Their **database tables still exist** (unused), so V2 can be restored without data migration.
 - **Payments are manual by design.** Payers transfer by bank or UPI, upload proof (screenshot + UTR), and an admin approves. This applies to SaaS subscriptions (Super Admin approves; the subscription activates) and to school fees (accountant/owner approves; a payment, a receipt `REC-YYYY-XXXXXX` and balanced journal lines are created). There is no payment gateway. Do not add one unless asked.
 
 ## 2. Repository layout
@@ -78,7 +79,7 @@ npm run build                      # tsc + vite build for both
 ```
 
 - `start-all.ps1` starts all three in separate windows.
-- Required backend env: `DATABASE_URL`, `JWT_SECRET` (≥32 chars), `FRONTEND_URL`. Optional: `CORS_ORIGIN`, `EMAIL_DELIVERY_MODE=LOG|LIVE`, `RESEND_API_KEY`. The only frontend env is `VITE_API_URL`. Never put secrets in `VITE_*`.
+- Required backend env: `DATABASE_URL`, `JWT_SECRET` (≥32 chars), `FRONTEND_URL`. Optional: `CORS_ORIGIN`, `EMAIL_DELIVERY_MODE=LOG|LIVE`, `RESEND_API_KEY`, `GEMINI_API_KEY`, `GEMINI_MODEL` (default `gemini-flash-latest`), `GEMINI_FALLBACK_MODEL` (default `gemini-3.1-flash-lite`), `GEMINI_TIMEOUT_MS` (per attempt). The only frontend env is `VITE_API_URL`. Never put secrets in `VITE_*`.
 - The camera-based QR scanner needs a secure context: `localhost` or HTTPS. A phone opening the LAN IP over plain HTTP cannot use the camera; it falls back to the 6-digit code.
 - Test logins are in `LOGINS.md`. Don't copy them into code or new docs.
 
@@ -132,6 +133,7 @@ npm run build                      # tsc + vite build for both
 | `/parents` | `parents.ts` | parent portal: children, results |
 | `/staff` | `academicOperations.ts` | staff, teaching assignments, `teaching-context` (misleading filename) |
 | `/hr` | `hr.ts` | leave types/balances/requests, staff attendance (`PUT /attendance/bulk`), payroll (`/payroll/salaries`, `/payroll/runs` Draft→Finalized→Paid, `/payroll/my-payslips`). Permissions `hr.*`; loss of pay = ABSENT days + approved unpaid leave |
+| `/ai` | `ai.ts` | assistant: `POST /chat` (Gemini via `services/geminiService.ts`, main model + fallback on 429/5xx/timeout), conversations (owner-only), feedback, `/knowledge` school FAQ (`ai.knowledge.manage`). Retrieval: `services/aiKnowledgeService.ts` (Postgres full-text) |
 | `/attendance/qr` | `qrAttendance.ts` | QR attendance v2, coaching plans only (§7). Mounted before `/attendance` |
 | `/attendance` | `attendanceOperations.ts` | roster, bulk mark, corrections, history, self/children, reports |
 | `/timetable` | `timetableOperations.ts` | CRUD with clash detection; `GET /self` for students |
@@ -168,11 +170,11 @@ npm run build                      # tsc + vite build for both
 
 - PostgreSQL 16, UUID PKs, `tenant_id` on business tables. Tables for V2 modules still exist but are unused.
 - Student model: a permanent `students` identity + yearly `enrollments` (class and section live on the enrollment) + `parents`/`parent_students`.
-- **Adding a migration:** create `backend/sql/migrations/native_00NN_snake_name.sql`. The next number is **0049**. Make it idempotent. **Never edit or delete an applied migration**: the runner stores checksums and refuses to start if one is missing (that's why `native_0046_ai_rag_assistant.sql` stays even though AI was removed).
+- **Adding a migration:** create `backend/sql/migrations/native_00NN_snake_name.sql`. The next number is **0050**. Make it idempotent. **Never edit or delete an applied migration**: the runner stores checksums and refuses to start if one is missing (0046 created the assistant tables; 0049 archived its stale V2 help articles).
 
 ## 9. Testing & QA
 
-- `npm run test:backend` runs all suites against a recreated `edunexus_erp_test` (localhost only). Status 2026-10-22: **180/180 passing** with `--test-concurrency=1` (incl. `staff-hr-payroll.test.mjs`). `resend-provider`'s "two competing workers" test can fail intermittently when other suites enqueue emails at the same time; CI runs with `--test-concurrency=1`.
+- `npm run test:backend` runs all suites against a recreated `edunexus_erp_test` (localhost only). Status 2026-10-22: **189/189 passing** (incl. `staff-hr-payroll` and `ai-assistant`, which mocks Gemini). `resend-provider`'s "two competing workers" test can fail intermittently when other suites enqueue emails at the same time; CI runs with `--test-concurrency=1`.
 - CI runs an explicit list of suites in `.github/workflows/ci.yml`. Add new suites there.
 - Frontend: `tsc` + `vite build` both pass. Playwright specs live in `frontend/e2e` and `frontend/tests` and may reference removed screens.
 - `qa/` scripts are one-offs from earlier phases. Several still target V2 modules; treat them as stale.
