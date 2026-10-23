@@ -3,6 +3,7 @@
 /**
  * Super Admin Account Creation & Password Reset CLI Utility
  * Usage: node create-admin.mjs [email] [password] [displayName]
+ * (or ADMIN_EMAIL / ADMIN_PASSWORD / ADMIN_NAME env vars)
  */
 
 import pg from 'pg';
@@ -23,8 +24,9 @@ async function main() {
   if (!email || !/^\S+@\S+\.\S+$/.test(email)) {
     throw new Error('Provide a valid admin email as argument 1 or ADMIN_EMAIL.');
   }
-  if (password.length < 12 || !/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/\d/.test(password)) {
-    throw new Error('Provide a password of at least 12 characters containing upper-case, lower-case, and numeric characters.');
+  // Same minimum as the app's change-password and reset-password forms.
+  if (password.length < 8 || password.length > 72) {
+    throw new Error('Provide a password of 8 to 72 characters.');
   }
   console.log('--- EduNexus VPS Administrator Provisioning ---');
   console.log(`Target Email: ${email}`);
@@ -33,8 +35,7 @@ async function main() {
   const client = await pool.connect();
 
   try {
-    const salt = await bcrypt.genSalt(10);
-    const hash = await bcrypt.hash(password, salt);
+    const hash = await bcrypt.hash(password, 12);
 
     await client.query('BEGIN');
 
@@ -45,6 +46,7 @@ async function main() {
        ON CONFLICT (email) DO UPDATE SET
          password_hash = EXCLUDED.password_hash,
          status = 'ACTIVE',
+         auth_version = users.auth_version + 1,
          updated_at = NOW()
        RETURNING id, email`,
       [email, hash]
@@ -74,19 +76,14 @@ async function main() {
       superAdminRoleId = insertRole.rows[0].id;
     }
 
-    // 4. Ensure demo tenant exists
-    const tenantRes = await client.query('SELECT id FROM tenants LIMIT 1');
-    let tenantId = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890';
-    if (tenantRes.rows.length > 0) {
-      tenantId = tenantRes.rows[0].id;
-    } else {
-      await client.query(
-        `INSERT INTO tenants (id, name, slug, tenant_type, status)
-         VALUES ($1, 'Default Institution', 'default-institution', 'school', 'active')
-         ON CONFLICT DO NOTHING`,
-        [tenantId]
-      );
-    }
+    // 4. Super Admins sit in their own platform tenant, never inside a customer's institution
+    const tenantRes = await client.query(
+      `INSERT INTO tenants (name, slug, tenant_type, status)
+       VALUES ('EduNexus Platform', 'edunexus-platform', 'school', 'active')
+       ON CONFLICT (slug) DO UPDATE SET status = 'active'
+       RETURNING id`
+    );
+    const tenantId = tenantRes.rows[0].id;
 
     // 5. Ensure membership
     await client.query(
