@@ -141,7 +141,8 @@ npm run build                      # tsc + vite build for both
 | `/homework` | `homework.ts` | list (role-scoped), post, delete. Permissions `homework.view` / `homework.manage` |
 | `/fees` | `feeManagement.ts` | structures, assignments, proofs, verify, receipts, settings, reports |
 | `/communication` | `communication.ts` | templates, deliveries, fee reminders |
-| `/reports`, `/audit`, `/organization`, `/master-data` | same names | organization: users, invitations, memberships, `GET /roles` only |
+| `/reports` | `reports.ts` | overview, students, attendance, fees, exams, and `GET /payments` (+ `/payments/export`): approved payments in an Indian financial year (1 Apr–31 Mar, institute timezone, by `paid_at`), owners/accountants only |
+| `/audit`, `/organization`, `/master-data` | same names | organization: users, invitations, memberships, `GET /roles` only |
 
 ## 6. Frontend architecture
 
@@ -174,7 +175,7 @@ npm run build                      # tsc + vite build for both
 
 ## 9. Testing & QA
 
-- `npm run test:backend` runs all suites against a recreated `edunexus_erp_test` (localhost only). Status 2026-10-22: **192/192 passing** (incl. `staff-hr-payroll`, `ai-assistant` (mocks Gemini) and `subscription-plans`). `resend-provider`'s "two competing workers" test can fail intermittently when other suites enqueue emails at the same time; CI runs with `--test-concurrency=1`.
+- `npm run test:backend` runs all suites against a recreated `edunexus_erp_test` (localhost only). Status 2026-10-24: **197/197 passing** (incl. `staff-hr-payroll`, `ai-assistant` (mocks Gemini), `subscription-plans` and `financial-year-payments`). `resend-provider`'s "two competing workers" test can fail intermittently when other suites enqueue emails at the same time; CI runs with `--test-concurrency=1`.
 - CI runs an explicit list of suites in `.github/workflows/ci.yml`. Add new suites there.
 - Frontend: `tsc` + `vite build` both pass. Playwright specs live in `frontend/e2e` and `frontend/tests` and may reference removed screens.
 - `qa/` scripts are one-offs from earlier phases. Several still target V2 modules; treat them as stale.

@@ -89,7 +89,8 @@ jobs:
             tests/qr-attendance-v2.test.mjs \
             tests/staff-hr-payroll.test.mjs \
             tests/ai-assistant.test.mjs \
-            tests/subscription-plans.test.mjs
+            tests/subscription-plans.test.mjs \
+            tests/financial-year-payments.test.mjs
 
       - name: Verify Report Completeness & Authorization Guard
         run: node --import tsx qa/verify-phase4-completeness.mjs

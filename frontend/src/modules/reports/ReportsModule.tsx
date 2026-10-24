@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useTenant } from '../../context/TenantContext';
 import { reportsService } from '../../services/reportsService';
+import { useAuth } from '../../context/AuthContext';
+import { FinancialYearPayments } from './FinancialYearPayments';
 import { 
   BarChart3, 
   TrendingUp, 
@@ -21,7 +23,9 @@ import { Badge } from '../../components/ui/Badge';
 
 export const ReportsModule: React.FC = () => {
   const { currentTenant, getLabel, isSchool } = useTenant();
-  const [activeTab, setActiveTab] = useState<'overview' | 'students' | 'attendance' | 'finance' | 'academics'>('overview');
+  const { can } = useAuth();
+  const canSeePayments = can('fee_reports.view');
+  const [activeTab, setActiveTab] = useState<'overview' | 'students' | 'attendance' | 'finance' | 'payments' | 'academics'>('overview');
   const [selectedRange, setSelectedRange] = useState<'week' | 'month' | 'term' | 'year'>('month');
 
   // Loading & Error States
@@ -141,7 +145,7 @@ export const ReportsModule: React.FC = () => {
               Authoritative PostgreSQL Analytics
             </span>
           </div>
-          <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">Institutional Reports & Intelligence</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">Institutional Reports & Intelligence</h1>
           <p className="text-xs text-slate-400 mt-0.5">
             Audit metrics, demographic breakdowns, fee cashflows, and performance insights backed by PostgreSQL.
           </p>
@@ -192,6 +196,7 @@ export const ReportsModule: React.FC = () => {
           { id: 'overview', label: 'Executive Summary', icon: TrendingUp },
           { id: 'students', label: `${getLabel('studentPlural')} & Admissions`, icon: Users },
           { id: 'finance', label: 'Fee Cashflow & Aging', icon: CreditCard },
+          ...(canSeePayments ? [{ id: 'payments', label: 'Payments by Financial Year', icon: Calendar }] : []),
           { id: 'attendance', label: 'Attendance & Regularity', icon: CalendarCheck },
           { id: 'academics', label: `${getLabel('examPlural')} & Results`, icon: Award },
         ].map((tab) => {
@@ -216,7 +221,7 @@ export const ReportsModule: React.FC = () => {
       </div>
 
       {/* Loading Skeleton */}
-      {loading && (
+      {loading && activeTab !== 'payments' && (
         <div className="p-12 text-center rounded-3xl bg-slate-900/40 border border-slate-800">
           <RefreshCw className="w-8 h-8 animate-spin text-sky-400 mx-auto mb-3" />
           <p className="text-sm font-medium text-slate-300">Loading authoritative report metrics...</p>
@@ -432,6 +437,10 @@ export const ReportsModule: React.FC = () => {
       )}
 
       {/* FINANCE TAB */}
+      {activeTab === 'payments' && canSeePayments && (
+        <FinancialYearPayments tenantId={currentTenant.id} currency={currentTenant.currencySymbol || '₹'} />
+      )}
+
       {!loading && activeTab === 'finance' && (
         <div className="p-6 rounded-3xl bg-slate-900/60 border border-slate-800 backdrop-blur-xl space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">

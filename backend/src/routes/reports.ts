@@ -622,6 +622,139 @@ router.get('/fees/export', requireFinanceReportsAccess, asyncHandler(async (req:
 }));
 
 // =========================================================================
+// 4b. PAYMENTS BY FINANCIAL YEAR (India: 1 April – 31 March)
+// =========================================================================
+const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+function financialYearOf(date: Date, timeZone: string): number {
+  const parts = new Intl.DateTimeFormat('en-CA', { timeZone, year: 'numeric', month: 'numeric' }).formatToParts(date);
+  const year = Number(parts.find(p => p.type === 'year')!.value);
+  const month = Number(parts.find(p => p.type === 'month')!.value);
+  return month >= 4 ? year : year - 1;
+}
+
+function financialYearLabel(startYear: number) {
+  return `${startYear}-${String((startYear + 1) % 100).padStart(2, '0')}`;
+}
+
+async function fetchFinancialYearPayments(tenantId: string, filters: any, limit = 5000) {
+  const boundedLimit = Math.min(Math.max(limit, 1), 5000);
+  const tenant = await query(`SELECT COALESCE(NULLIF(timezone, ''), 'Asia/Kolkata') AS tz FROM tenants WHERE id = $1`, [tenantId]);
+  let timeZone = tenant.rows[0]?.tz || 'Asia/Kolkata';
+  try { new Intl.DateTimeFormat('en-CA', { timeZone }); } catch { timeZone = 'Asia/Kolkata'; }
+
+  const currentYear = financialYearOf(new Date(), timeZone);
+  const requested = filters.financialYear === undefined || filters.financialYear === '' ? currentYear : Number(filters.financialYear);
+  if (!Number.isInteger(requested) || requested < 2000 || requested > currentYear + 1) {
+    throw new AppError('Choose a valid financial year, for example 2026 for 2026-27.', 422, 'INVALID_FINANCIAL_YEAR');
+  }
+  const from = `${requested}-04-01`;
+  const toExclusive = `${requested + 1}-04-01`;
+
+  // Payment dates are compared as local calendar dates in the institute's timezone.
+  const params: any[] = [tenantId, timeZone, from, toExclusive];
+  let where = `p.tenant_id = $1 AND p.status = 'COMPLETED'
+    AND (p.paid_at AT TIME ZONE $2)::date >= $3::date AND (p.paid_at AT TIME ZONE $2)::date < $4::date`;
+  if (filters.classId) {
+    if (!/^[0-9a-f-]{36}$/i.test(String(filters.classId))) throw new AppError('Invalid class.', 422, 'INVALID_CLASS');
+    params.push(filters.classId);
+    where += ` AND e.class_id = $${params.length}`;
+  }
+
+  const fromClause = `
+    FROM payments p
+    JOIN students s ON s.id = p.student_id AND s.tenant_id = p.tenant_id
+    LEFT JOIN fee_assignments a ON a.id = p.fee_assignment_id AND a.tenant_id = p.tenant_id
+    LEFT JOIN enrollments e ON e.id = COALESCE(p.enrollment_id, a.enrollment_id) AND e.tenant_id = p.tenant_id
+    LEFT JOIN classes c ON c.id = e.class_id AND c.tenant_id = p.tenant_id
+    LEFT JOIN sections sec ON sec.id = e.section_id AND sec.tenant_id = p.tenant_id
+    LEFT JOIN fee_structures f ON f.id = a.fee_structure_id AND f.tenant_id = p.tenant_id
+    LEFT JOIN profiles approver ON approver.id = p.received_by
+    WHERE ${where}`;
+
+  const summaryRes = await query(
+    `SELECT COALESCE(SUM(p.amount), 0)::numeric AS total, COUNT(*)::int AS count, COUNT(DISTINCT p.student_id)::int AS students ${fromClause}`,
+    params);
+  const monthlyRes = await query(
+    `SELECT to_char((p.paid_at AT TIME ZONE $2)::date, 'YYYY-MM') AS month, SUM(p.amount)::numeric AS collected, COUNT(*)::int AS count
+     ${fromClause} GROUP BY 1`,
+    params);
+  const yearsRes = await query(
+    `SELECT DISTINCT EXTRACT(YEAR FROM ((p.paid_at AT TIME ZONE $2)::date - interval '3 months'))::int AS fy
+     FROM payments p WHERE p.tenant_id = $1 AND p.status = 'COMPLETED'`,
+    [tenantId, timeZone]);
+
+  const listParams = [...params, boundedLimit];
+  const paymentsRes = await query(
+    `SELECT p.id, p.receipt_no, to_char((p.paid_at AT TIME ZONE $2)::date, 'YYYY-MM-DD') AS paid_on,
+            p.amount::numeric AS amount, p.payment_method, p.reference_number,
+            s.admission_no, s.first_name || ' ' || COALESCE(s.last_name, '') AS student_name,
+            COALESCE(c.name, '') AS class_name, COALESCE(sec.name, '') AS section_name,
+            COALESCE(f.name, '') AS structure_name, COALESCE(approver.display_name, '') AS approved_by
+     ${fromClause}
+     ORDER BY p.paid_at DESC, p.receipt_no DESC
+     LIMIT $${listParams.length}`,
+    listParams);
+
+  // All 12 months in order (Apr → Mar), including months with no payments.
+  const byMonth = new Map(monthlyRes.rows.map((m: any) => [m.month, m]));
+  const monthly = Array.from({ length: 12 }, (_, i) => {
+    const monthIndex = (3 + i) % 12;
+    const year = i < 9 ? requested : requested + 1;
+    const key = `${year}-${String(monthIndex + 1).padStart(2, '0')}`;
+    const row: any = byMonth.get(key);
+    return { month: key, label: `${MONTH_NAMES[monthIndex]} ${year}`, collected: Number(row?.collected || 0), count: Number(row?.count || 0) };
+  });
+
+  const years = new Set<number>(yearsRes.rows.map((r: any) => Number(r.fy)));
+  years.add(currentYear);
+  years.add(requested);
+  const total = Number(summaryRes.rows[0].total);
+  const count = Number(summaryRes.rows[0].count);
+
+  return {
+    financialYear: { startYear: requested, label: financialYearLabel(requested), from, to: `${requested + 1}-03-31`, timeZone },
+    availableYears: [...years].sort((a, b) => b - a).map(y => ({ startYear: y, label: financialYearLabel(y) })),
+    summary: { totalCollected: total, paymentsCount: count, studentsCount: Number(summaryRes.rows[0].students), averagePayment: count ? Math.round(total / count) : 0 },
+    monthly,
+    payments: paymentsRes.rows.map((r: any) => ({
+      id: r.id,
+      receiptNo: r.receipt_no,
+      paidOn: r.paid_on,
+      amount: Number(r.amount),
+      method: r.payment_method,
+      reference: r.reference_number || '',
+      admissionNo: r.admission_no,
+      studentName: r.student_name.trim(),
+      className: r.class_name,
+      sectionName: r.section_name,
+      structureName: r.structure_name,
+      approvedBy: r.approved_by,
+    })),
+    truncated: count > boundedLimit,
+  };
+}
+
+router.get('/payments', requireFinanceReportsAccess, asyncHandler(async (req: Request, res: Response) => {
+  const report = await fetchFinancialYearPayments(req.tenantId!, req.query, Number(req.query.limit) || 5000);
+  res.json({ data: report, requestId: req.id, timestamp: new Date().toISOString() });
+}));
+
+router.get('/payments/export', requireFinanceReportsAccess, asyncHandler(async (req: Request, res: Response) => {
+  const report = await fetchFinancialYearPayments(req.tenantId!, req.query, 5000);
+  const headers = ['Date', 'Receipt No', 'Adm No', 'Student Name', 'Class', 'Section', 'Fee Structure', 'Amount', 'Method', 'UTR / Reference', 'Approved By'];
+  const lines = [headers.join(',')];
+  for (const p of report.payments) {
+    lines.push([p.paidOn, p.receiptNo, p.admissionNo, p.studentName, p.className, p.sectionName, p.structureName, p.amount, p.method, p.reference, p.approvedBy]
+      .map(sanitizeCsv).join(','));
+  }
+  lines.push(['', '', '', '', '', '', 'Total', report.summary.totalCollected, '', '', ''].map(sanitizeCsv).join(','));
+  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+  res.setHeader('Content-Disposition', `attachment; filename="payments_FY_${report.financialYear.label}.csv"`);
+  res.send(lines.join('\n'));
+}));
+
+// =========================================================================
 // 5. PUBLISHED EXAMINATION RESULTS REPORT
 // =========================================================================
 async function fetchExamResultsReport(tenantId: string, filters: any, limit = 1000) {

@@ -67,6 +67,18 @@ export const reportsService = {
     await triggerDownload(blob, `fee_ledger_report_${new Date().toISOString().slice(0, 10)}.csv`);
   },
 
+  getPayments: async (tenantId: string, filters?: Record<string, any>) => {
+    const qs = toQueryString(filters);
+    const res = await apiClient.request<any>(`${BASE}/payments${qs}`, { tenantId });
+    return res.data;
+  },
+
+  downloadPaymentsCsv: async (tenantId: string, filters: Record<string, any>, yearLabel: string) => {
+    const qs = toQueryString(filters);
+    const blob = await apiClient.requestBlob(`${BASE}/payments/export${qs}`, tenantId);
+    await triggerDownload(blob, `payments_FY_${yearLabel}.csv`);
+  },
+
   getExams: async (tenantId: string, filters?: Record<string, any>) => {
     const qs = toQueryString(filters);
     const res = await apiClient.request<{ exams: any[]; selectedExam: any; results: any[] }>(`${BASE}/exams${qs}`, { tenantId });
