@@ -93,6 +93,9 @@ router.post('/onboard-institute', asyncHandler(async (req, res) => {
   if (!instituteName || !adminEmail || !actualPassword || !transactionReference || !actualProofData || (!planId && !planCode)) {
     throw new AppError('Institute name, administrator email, password, plan, transaction reference, and payment receipt are required.', 422, 'VALIDATION_ERROR');
   }
+  if (String(actualPassword).length < 8 || String(actualPassword).length > 72) {
+    throw new AppError('Password must be 8 to 72 characters.', 422, 'VALIDATION_ERROR');
+  }
 
   const cleanEmail = String(adminEmail).trim().toLowerCase();
   const existingUser = await query('SELECT id FROM users WHERE LOWER(email) = $1', [cleanEmail]);

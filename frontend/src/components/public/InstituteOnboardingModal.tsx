@@ -238,8 +238,8 @@ export const InstituteOnboardingModal: React.FC<InstituteOnboardingModalProps> =
         setError('Please enter a valid email address.');
         return;
       }
-      if (!adminPassword || adminPassword.length < 6) {
-        setError('Password must be at least 6 characters.');
+      if (!adminPassword || adminPassword.length < 8) {
+        setError('Password must be at least 8 characters.');
         return;
       }
       setCurrentScreen(5);
@@ -289,7 +289,8 @@ export const InstituteOnboardingModal: React.FC<InstituteOnboardingModalProps> =
         }
       });
 
-      setSubmittedData(res.data.data);
+      // apiClient already unwraps the response's `data` field.
+      setSubmittedData(res.data);
       setCurrentScreen(6);
     } catch (err: any) {
       setError(err.message || 'Failed to submit onboarding application.');
@@ -331,7 +332,7 @@ export const InstituteOnboardingModal: React.FC<InstituteOnboardingModalProps> =
                 </span>
               </div>
               <p className="text-[11px] font-medium text-slate-500">
-                {currentScreen <= 5 ? `Step ${currentScreen} of 5: ${getStepTitle()}` : 'Setup Completed'}
+                {currentScreen <= 5 ? `Step ${currentScreen} of 5: ${getStepTitle()}` : 'Application submitted'}
               </p>
             </div>
           </div>
@@ -378,7 +379,7 @@ export const InstituteOnboardingModal: React.FC<InstituteOnboardingModalProps> =
                   What is the name of your institution?
                 </h3>
                 <p className="text-xs text-slate-500">
-                  This will appear across your student ID cards, fee receipts, and portal header.
+                  This will appear on fee receipts, report cards and your portal header.
                 </p>
               </div>
 
@@ -710,7 +711,7 @@ export const InstituteOnboardingModal: React.FC<InstituteOnboardingModalProps> =
                     <input
                       type={showPassword ? 'text' : 'password'}
                       required
-                      placeholder="Minimum 6 characters"
+                      placeholder="Minimum 8 characters"
                       value={adminPassword}
                       onChange={(e) => setAdminPassword(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && goToNextScreen()}
@@ -905,7 +906,7 @@ export const InstituteOnboardingModal: React.FC<InstituteOnboardingModalProps> =
                   </div>
 
                   <div className="p-3 bg-amber-50 rounded-xl border border-amber-200 text-amber-900 text-[11px] leading-relaxed">
-                    <strong>Auto-Verification:</strong> Once submitted, our team verifies your UTR and activates your tenant dashboard instantly.
+                    <strong>What happens next:</strong> our team matches your UTR with the payment and activates your institute, usually within a few hours. You can sign in as soon as it's approved.
                   </div>
                 </div>
               </div>
@@ -942,56 +943,82 @@ export const InstituteOnboardingModal: React.FC<InstituteOnboardingModalProps> =
           )}
 
           {/* ================= SCREEN 6: CONFIRMATION SUCCESS ================= */}
-          {currentScreen === 6 && submittedData && (
-            <div className="text-center py-6 px-2 max-w-lg mx-auto space-y-5 animate-fade-in">
-              <div className="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto shadow-md">
-                <CheckCircle2 className="w-8 h-8" />
-              </div>
-
-              <div className="space-y-1.5">
+          {currentScreen === 6 && (() => {
+            // Fall back to what the user typed so this screen never renders empty.
+            const summary = {
+              tenantName: submittedData?.tenantName || instituteName.trim(),
+              planName: submittedData?.planName || selectedPlan.name,
+              adminEmail: submittedData?.adminEmail || adminEmail.trim().toLowerCase(),
+              transactionReference: submittedData?.transactionReference || transactionRef.trim(),
+            };
+            const nextSteps = [
+              { title: 'Application received', desc: 'Your institute details and payment proof are with us.', done: true },
+              { title: 'Payment verification', desc: 'We match your UTR with the payment, usually within a few hours.', done: false },
+              { title: 'Sign in and set up', desc: `Use ${summary.adminEmail} and your password to add classes, students and staff.`, done: false },
+            ];
+            return (
+            <div className="max-w-lg mx-auto space-y-6 animate-fade-in">
+              <div className="text-center space-y-3">
+                <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto ring-8 ring-emerald-50">
+                  <CheckCircle2 className="w-9 h-9" />
+                </div>
                 <h3 className="text-2xl font-extrabold text-slate-900 tracking-tight">
-                  Application Submitted!
+                  Application submitted
                 </h3>
-                <p className="text-xs text-slate-600 leading-relaxed">
-                  Thank you, <strong>{adminName || 'Principal'}</strong>. We have received your onboarding registration for <strong>{submittedData.tenantName}</strong> with payment reference <span className="font-mono font-bold text-emerald-800">{submittedData.transactionReference}</span>.
+                <p className="text-sm text-slate-600 leading-relaxed">
+                  Thank you{adminName.trim() ? `, ${adminName.trim()}` : ''}. <strong className="text-slate-900">{summary.tenantName}</strong> is registered and waiting for payment verification.
                 </p>
               </div>
 
-              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 text-left text-xs space-y-2">
-                <div className="flex justify-between py-1 border-b border-slate-200/60">
-                  <span className="text-slate-500">Institution:</span>
-                  <span className="font-bold text-slate-900">{submittedData.tenantName}</span>
+              <div className="bg-slate-50 border border-slate-200 rounded-2xl divide-y divide-slate-200/70 text-sm">
+                <div className="flex justify-between gap-4 px-4 py-2.5">
+                  <span className="text-slate-500">Institution</span>
+                  <span className="font-semibold text-slate-900 text-right">{summary.tenantName}</span>
                 </div>
-                <div className="flex justify-between py-1 border-b border-slate-200/60">
-                  <span className="text-slate-500">Selected Plan:</span>
-                  <span className="font-bold text-emerald-700">{submittedData.planName}</span>
+                <div className="flex justify-between gap-4 px-4 py-2.5">
+                  <span className="text-slate-500">Plan</span>
+                  <span className="font-semibold text-emerald-700">{summary.planName}</span>
                 </div>
-                <div className="flex justify-between py-1 border-b border-slate-200/60">
-                  <span className="text-slate-500">Admin Login Email:</span>
-                  <span className="font-mono font-bold text-slate-900">{submittedData.adminEmail}</span>
+                <div className="flex justify-between gap-4 px-4 py-2.5">
+                  <span className="text-slate-500">Login email</span>
+                  <span className="font-semibold text-slate-900 break-all text-right">{summary.adminEmail}</span>
                 </div>
-                <div className="flex justify-between py-1">
-                  <span className="text-slate-500">Verification Status:</span>
-                  <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-extrabold uppercase text-[10px]">
-                    Pending Activation
+                <div className="flex justify-between gap-4 px-4 py-2.5">
+                  <span className="text-slate-500">Payment reference</span>
+                  <span className="font-mono font-semibold text-slate-900">{summary.transactionReference}</span>
+                </div>
+                <div className="flex justify-between items-center gap-4 px-4 py-2.5">
+                  <span className="text-slate-500">Status</span>
+                  <span className="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 font-bold text-xs">
+                    Awaiting verification
                   </span>
                 </div>
               </div>
 
-              <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-200 text-xs text-emerald-900 text-left space-y-1">
-                <p className="font-bold">Next Steps:</p>
-                <p className="text-[11px] leading-relaxed">
-                  Our platform Super Admin is reviewing your payment receipt. Once approved, you can log in immediately using your email <strong>{submittedData.adminEmail}</strong> and your chosen password to access your dedicated ERP dashboard!
-                </p>
+              <div>
+                <p className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-3">What happens next</p>
+                <ol className="space-y-3">
+                  {nextSteps.map((step, i) => (
+                    <li key={step.title} className="flex gap-3">
+                      <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${step.done ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-600'}`}>
+                        {step.done ? <Check className="w-3.5 h-3.5" /> : i + 1}
+                      </span>
+                      <div>
+                        <p className="text-sm font-semibold text-slate-900">{step.title}</p>
+                        <p className="text-xs text-slate-500 break-words">{step.desc}</p>
+                      </div>
+                    </li>
+                  ))}
+                </ol>
               </div>
 
-              <div className="flex justify-center gap-3 pt-2">
+              <div className="flex flex-col-reverse sm:flex-row justify-center gap-3 pt-2">
                 <button
                   type="button"
                   onClick={onClose}
-                  className="px-5 py-2.5 border border-slate-300 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-50"
+                  className="px-5 py-2.5 border border-slate-300 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-50"
                 >
-                  Return to Home
+                  Back to home
                 </button>
                 <button
                   type="button"
@@ -999,14 +1026,15 @@ export const InstituteOnboardingModal: React.FC<InstituteOnboardingModalProps> =
                     onClose();
                     onSuccessLoginRedirect();
                   }}
-                  className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-md flex items-center gap-1.5"
+                  className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-semibold shadow-md flex items-center justify-center gap-1.5"
                 >
-                  <span>Go to Login Screen</span>
+                  <span>Go to sign in</span>
                   <ArrowRight className="w-4 h-4" />
                 </button>
               </div>
             </div>
-          )}
+            );
+          })()}
 
         </div>
       </div>

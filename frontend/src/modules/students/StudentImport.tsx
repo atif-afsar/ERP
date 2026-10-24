@@ -124,7 +124,7 @@ function prepare(rows: string[][], m: HeaderMapping<Key>, master: Master, defaul
   });
 }
 
-export const StudentImport: React.FC<{ tenantId: string; master: Master; onComplete: () => void }> = ({ tenantId, master, onComplete }) => {
+export const StudentImport: React.FC<{ tenantId: string; master: Master; onComplete: () => void; onClose?: () => void }> = ({ tenantId, master, onComplete, onClose }) => {
   const [rows, setRows] = useState<string[][] | null>(null);
   const [mapping, setMapping] = useState<HeaderMapping<Key> | null>(null);
   const [fileName, setFileName] = useState('');
@@ -171,34 +171,77 @@ export const StudentImport: React.FC<{ tenantId: string; master: Master; onCompl
     }
   };
 
-  const select = (label: string, value: string, set: (v: string) => void, items: any[]) => (
-    <label key={label} className="text-sm">{label}
-      <select disabled={busy} value={value} onChange={e => set(e.target.value)} className="block rounded border p-2">
-        <option value="">Select</option>
+  const select = (label: string, value: string, set: (v: string) => void, items: any[], placeholder: string, emptyText = 'None set up yet') => (
+    <label key={label} className="block text-sm font-medium text-slate-700">{label}
+      <select disabled={busy || !items.length} value={value} onChange={e => set(e.target.value)}
+        className="mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 disabled:bg-slate-50 disabled:text-slate-400">
+        <option value="">{items.length ? placeholder : emptyText}</option>
         {items.map((x: any) => <option key={x.id} value={x.id}>{x.name}</option>)}
       </select>
     </label>
   );
+  const stepBadge = (n: number) => <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-xs font-bold text-white">{n}</span>;
+  const setupMissing = !master.years.length || !master.classes.length;
 
   return (
-    <section className="rounded-xl border bg-white p-4 space-y-3">
-      <h3 className="font-bold">Import students from Excel or CSV</h3>
-      <p className="text-sm text-slate-600">
-        Upload an Excel workbook (.xlsx) or a CSV file from any software. Column order doesn't matter and common names are recognised
-        (for example "Adm No", "Student Name", "DOB", "Mobile", "Father's Name"). Columns that don't match a field are kept in the student's notes, so no data is lost.
-        Each row is admitted separately; existing students are never overwritten.
-      </p>
-      <div className="flex flex-wrap items-center gap-3">
-        <button type="button" disabled={busy} onClick={() => downloadCsv('student-import-template.csv', TEMPLATE)} className="text-emerald-800 underline">Download template</button>
-        <input aria-label="Student spreadsheet file" disabled={busy} type="file" accept={SPREADSHEET_ACCEPT} onChange={e => { if (e.target.files?.[0]) void read(e.target.files[0]); e.target.value = ''; }} />
+    <section className="rounded-xl border bg-white">
+      <div className="flex items-start justify-between gap-3 border-b px-5 py-4">
+        <div>
+          <h3 className="text-lg font-bold text-slate-900">Import students from Excel or CSV</h3>
+          <p className="text-sm text-slate-500">Add many students at once. Existing students are never overwritten.</p>
+        </div>
+        {onClose && <button type="button" disabled={busy} onClick={onClose} className="rounded-lg px-3 py-1.5 text-sm text-slate-500 hover:bg-slate-100 hover:text-slate-800">Close</button>}
       </div>
-      <div className="flex flex-wrap gap-3">
-        {select('Academic year', year, setYear, master.years)}
-        {select('Default class', klass, v => { setClass(v); setSection(''); }, master.classes)}
-        {select('Default section', section, setSection, master.sections.filter((s: any) => s.class_id === klass))}
-      </div>
-      <p className="text-xs text-slate-500">If the file has Class and Section columns, those are used for each row and the defaults are only a fallback.</p>
-      {error && <p role="alert" className="text-red-700">{error}</p>}
+
+      <div className="space-y-6 p-5">
+        {setupMissing && (
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+            <span>Add an <strong>academic year</strong> and your <strong>classes and sections</strong> first, so students have somewhere to go.</span>
+            <a href="#/app/master-data" className="rounded-lg bg-amber-600 px-3 py-1.5 font-semibold text-white hover:bg-amber-700">Open School Setup</a>
+          </div>
+        )}
+
+        <div className="flex gap-3">
+          {stepBadge(1)}
+          <div className="flex-1 space-y-3">
+            <div>
+              <p className="font-semibold text-slate-900">Choose where the students go</p>
+              <p className="text-sm text-slate-500">If your file has Class and Section columns, those are used instead for each row.</p>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-3">
+              {select('Academic year', year, setYear, master.years, 'Select year')}
+              {select('Class', klass, v => { setClass(v); setSection(''); }, master.classes, 'Select class')}
+              {select('Section', section, setSection, master.sections.filter((s: any) => s.class_id === klass), 'Select section', klass ? 'None set up yet' : 'Pick a class first')}
+            </div>
+          </div>
+        </div>
+
+        <div className="flex gap-3">
+          {stepBadge(2)}
+          <div className="flex-1 space-y-3">
+            <div className="flex flex-wrap items-end justify-between gap-2">
+              <div>
+                <p className="font-semibold text-slate-900">Upload your file</p>
+                <p className="text-sm text-slate-500">Any column order works. Names like "Adm No", "Student Name", "DOB" and "Father's Name" are recognised; other columns are kept in notes.</p>
+              </div>
+              <button type="button" disabled={busy} onClick={() => downloadCsv('student-import-template.csv', TEMPLATE)}
+                className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50">Download template</button>
+            </div>
+            <label className={`flex cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed px-4 py-6 text-center transition-colors ${busy ? 'cursor-not-allowed opacity-60' : 'border-slate-300 hover:border-emerald-500 hover:bg-emerald-50/40'}`}>
+              <span className="text-sm font-semibold text-emerald-700">{fileName ? `Selected: ${fileName}` : 'Click to choose an Excel or CSV file'}</span>
+              <span className="text-xs text-slate-500">{fileName ? 'Click to choose a different file' : '.xlsx or .csv, up to 2,000 students'}</span>
+              <input aria-label="Student spreadsheet file" disabled={busy} type="file" accept={SPREADSHEET_ACCEPT} className="sr-only"
+                onChange={e => { if (e.target.files?.[0]) void read(e.target.files[0]); e.target.value = ''; }} />
+            </label>
+            {error && <p role="alert" className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">{error}</p>}
+          </div>
+        </div>
+
+        <div className="flex gap-3">
+          {stepBadge(3)}
+          <div className="flex-1 space-y-3">
+            <p className="font-semibold text-slate-900">Check and import</p>
+            {!mapping && !results.length && <p className="text-sm text-slate-500">After you choose a file, you'll see which rows are ready before anything is saved.</p>}
 
       {mapping && rows && (
         <div className="space-y-3 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm">
@@ -228,6 +271,9 @@ export const StudentImport: React.FC<{ tenantId: string; master: Master; onCompl
           {results.map((r, i) => <p key={i} className={r.ok ? 'text-slate-700' : 'text-rose-700'}>{r.label}: {r.message}</p>)}
         </div>
       )}
+          </div>
+        </div>
+      </div>
     </section>
   );
 };
