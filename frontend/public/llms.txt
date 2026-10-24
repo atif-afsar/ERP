@@ -1,0 +1,46 @@
+# EduNexus
+
+> EduNexus (https://www.edunexus.network) is a cloud ERP and school management software for K-12 schools and coaching institutes in India. One system covers admissions, attendance (including QR check-in for coaching batches), fee collection by UPI or bank transfer with receipts, exams and report cards, timetable, homework, notices, staff leave and payroll, reports, and parent and student portals. Plans start at ₹1,999 per month.
+
+## What EduNexus is
+
+- Product type: web-based, multi-tenant SaaS school ERP. Nothing to install; works on phones, tablets and computers.
+- Who it's for: K-12 schools (CBSE, ICSE, state boards), coaching institutes (JEE, NEET, foundation, test prep), and institutes that run both.
+- Country: India. Prices in Indian rupees (₹, INR).
+- Website: https://www.edunexus.network
+- Sign up: institutes create an account on the website, pay by UPI or bank transfer, upload the payment proof, and are activated after verification.
+
+## Modules
+
+- Dashboard: key numbers for each role, such as attendance percentage and fees collected and outstanding.
+- Students: admission, profiles, parents and guardians, yearly enrollment, documents, and Excel/CSV import with flexible column names.
+- Attendance: daily class roster, corrections with history, reports. Coaching institutes on Growth or Pro can use QR attendance: the teacher shows a QR code that changes every 15 seconds and students scan it from their phones.
+- Examinations: grade scales, exam schedules, marks entry, automatic results, CBSE-style report cards, publishing to parents and students.
+- Timetable: weekly periods with teacher and room clash detection.
+- Homework: teachers post homework; parents and students see their class's homework.
+- Fees: fee structures, installments, concessions, the institute's own UPI QR and bank details, parent payment-proof upload (screenshot and UTR), approval, numbered receipts, reminders and reports. No payment-gateway commission.
+- Notices: templates, in-app and email delivery, delivery log.
+- Staff & HR: staff records, teacher invitations, leave types and approvals, staff attendance, monthly payroll and payslips.
+- Reports: student, attendance, fee and exam reports with CSV export.
+- Setup and access: academic years, classes, sections, subjects, user invitations, fixed roles, activity log.
+- AI assistant: answers how-to questions about EduNexus inside the app and on the website.
+
+## Roles
+
+Platform owner (Super Admin), institute owner or principal, teacher, accountant, staff, parent, student. Each role sees only what it needs; teachers are limited to their assigned classes and subjects.
+
+## Pricing (monthly)
+
+- Starter: ₹1,999 per month, up to 300 active students, all modules.
+- Growth: ₹3,999 per month, up to 1,000 active students, adds QR attendance for coaching batches.
+- Pro: ₹6,999 per month, unlimited students.
+
+Every plan includes every module. Plans differ by student limit and QR attendance.
+
+## Frequently asked questions
+
+- Who is EduNexus built for? Schools and coaching institutes that want one simple system for students, attendance, fees, exams and parent communication.
+- How are fee payments handled? Schools publish their bank or UPI details. Parents pay through their banking app, upload proof, and receive a receipt after an authorized administrator verifies the payment.
+- Does EduNexus support parents and students? Yes. Linked parent and student accounts see their own attendance, homework, published results and fee status.
+- Can we bring our existing data? Yes. Students and staff can be imported from Excel or CSV files.
+- Is student data kept separate between institutes? Yes. Each institute's data is isolated, and access is checked on the server for every request.

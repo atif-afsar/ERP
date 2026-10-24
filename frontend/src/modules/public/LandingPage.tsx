@@ -165,7 +165,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate, subRoute, 
           <div className="landing-hero-copy relative mx-auto max-w-4xl text-center">
             <div className="mb-6 flex flex-wrap justify-center gap-2">
               <StatusPill>Built for education teams</StatusPill>
-              <span className="rounded-full border border-white bg-white/70 px-3 py-1 text-[11px] font-bold text-slate-600">School · Coaching · Multi-campus</span>
+              <span className="rounded-full border border-white bg-white/70 px-3 py-1 text-[11px] font-bold text-slate-600">EduNexus · School &amp; coaching ERP for India</span>
             </div>
             <h1 className="text-balance text-[2.7rem] font-black leading-[0.98] tracking-[-0.06em] text-slate-950 min-[390px]:text-5xl sm:text-7xl sm:tracking-[-0.065em] lg:text-[88px]">
               One operating system for{' '}

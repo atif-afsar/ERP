@@ -1,0 +1,13 @@
+{
+  "name": "EduNexus – School & Coaching ERP",
+  "short_name": "EduNexus",
+  "description": "School and coaching institute management software for India.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#059669",
+  "icons": [
+    { "src": "/logo.png", "sizes": "1024x1024", "type": "image/png", "purpose": "any" },
+    { "src": "/favicon.png", "type": "image/png" }
+  ]
+}
