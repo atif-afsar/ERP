@@ -8,4 +8,4 @@ async function tick(){if(running||stopping)return;running=true;try{await process
 export function startNotificationWorker(){console.log(JSON.stringify({level:'info',event:'notification_worker_started',pollMs:config.notificationPollMs}));void tick();timer=setInterval(()=>void tick(),config.notificationPollMs);}
 export async function stopNotificationWorker(signal='shutdown'){stopping=true;if(timer)clearInterval(timer);while(running)await new Promise(resolve=>setTimeout(resolve,25));await pool.end();console.log(JSON.stringify({level:'info',event:'notification_worker_stopped',signal}));}
 
-if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href){startNotificationWorker();process.once('SIGTERM',()=>void stopNotificationWorker('SIGTERM'));process.once('SIGINT',()=>void stopNotificationWorker('SIGINT'));}
+if(process.env.pm_id!==undefined||(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href)){startNotificationWorker();process.once('SIGTERM',()=>void stopNotificationWorker('SIGTERM'));process.once('SIGINT',()=>void stopNotificationWorker('SIGINT'));}
