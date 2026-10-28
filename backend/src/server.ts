@@ -165,7 +165,7 @@ app.use(errorHandler);
 if (process.env.NODE_ENV !== 'test' || Boolean(process.env.RC_STATE)) {
   const server = app.listen(PORT, () => {
     console.log(`====================================================`);
-    console.log(`EduNexus VPS Backend Service running on port ${PORT}`);
+    console.log(`EzyAura VPS Backend Service running on port ${PORT}`);
     console.log(`Health check: http://127.0.0.1:${PORT}/health`);
     console.log(`API base:     http://127.0.0.1:${PORT}/api/v1`);
     console.log(`====================================================`);

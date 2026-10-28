@@ -175,7 +175,7 @@ router.put('/payment-settings', asyncHandler(async (req, res) => {
        RETURNING id, payee_name, bank_name, account_number, ifsc_code, branch_name, upi_id, instructions, 
                  (qr_image_data IS NOT NULL) as has_qr, qr_mime_type, updated_at`,
       [
-        payeeName || 'EduNexus Technologies', bankName || 'HDFC Bank',
+        payeeName || 'EzyAura Technologies', bankName || 'HDFC Bank',
         accountNumber || '50200098765432', ifscCode || 'HDFC0001234',
         branchName || 'Main Branch', upiId || 'edunexus@upi',
         instructions || 'Scan QR code or transfer via NEFT/IMPS.',

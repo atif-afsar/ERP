@@ -15,6 +15,6 @@ export async function requireFeeAccounting(client: any, tenantId: string) {
   await ensureDefaultFeeAccounts(client, tenantId);
   const income = await client.query("SELECT id FROM finance_accounts WHERE tenant_id=$1 AND code='INC-FEE' AND account_type='INCOME' AND is_active=true FOR SHARE", [tenantId]);
   const asset = await client.query(`SELECT a.id FROM finance_cash_bank_accounts b JOIN finance_accounts a ON a.id=b.ledger_account_id AND a.tenant_id=b.tenant_id WHERE b.tenant_id=$1 AND b.is_active=true AND a.is_active=true AND a.account_type='ASSET' ORDER BY b.created_at,b.id LIMIT 1 FOR SHARE OF a,b`, [tenantId]);
-  if (!income.rowCount || !asset.rowCount) throw new AppError('The fee income or cash account for this school is inactive. Contact EduNexus support.', 422, 'ACCOUNTING_NOT_INITIALIZED');
+  if (!income.rowCount || !asset.rowCount) throw new AppError('The fee income or cash account for this school is inactive. Contact EzyAura support.', 422, 'ACCOUNTING_NOT_INITIALIZED');
   return { incomeAccountId: income.rows[0].id, assetAccountId: asset.rows[0].id };
 }

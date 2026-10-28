@@ -7,7 +7,7 @@ Last updated: 2026-10-22, after the V1 scope reduction.
 
 ## 1. What this is
 
-**EduNexus** is a multi-tenant SaaS ERP for **schools and coaching institutes**. It is India-focused: UPI and bank-transfer payments, CBSE-style report cards, prices in ₹.
+**EzyAura** (renamed from EduNexus in migration 0051; internal identifiers such as DB names, PM2 processes, localStorage keys and the `edunexus-platform` slug keep the old name) is a multi-tenant SaaS ERP for **schools and coaching institutes**. It is India-focused: UPI and bank-transfer payments, CBSE-style report cards, prices in ₹.
 
 - One platform owner (**Super Admin**) sells subscriptions to institutions (**tenants**). Each tenant has a type: `school`, `coaching` or `hybrid`.
 - **Version 1 is deliberately small.** The owner chose these modules only:
@@ -171,7 +171,7 @@ npm run build                      # tsc + vite build for both
 
 - PostgreSQL 16, UUID PKs, `tenant_id` on business tables. Tables for V2 modules still exist but are unused.
 - Student model: a permanent `students` identity + yearly `enrollments` (class and section live on the enrollment) + `parents`/`parent_students`.
-- **Adding a migration:** create `backend/sql/migrations/native_00NN_snake_name.sql`. The next number is **0051**. Make it idempotent. **Never edit or delete an applied migration**: the runner stores checksums and refuses to start if one is missing (0046 created the assistant tables; 0049 archived its stale V2 help articles).
+- **Adding a migration:** create `backend/sql/migrations/native_00NN_snake_name.sql`. The next number is **0052**. Make it idempotent. **Never edit or delete an applied migration**: the runner stores checksums and refuses to start if one is missing (0046 created the assistant tables; 0049 archived its stale V2 help articles).
 
 ## 9. Testing & QA
 

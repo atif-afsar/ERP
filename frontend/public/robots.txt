@@ -1,4 +1,4 @@
-# EduNexus – https://www.edunexus.network
+# EzyAura – https://www.edunexus.network
 # Search engines and AI assistants are welcome to read the public site.
 
 User-agent: *

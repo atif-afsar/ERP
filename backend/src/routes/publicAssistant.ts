@@ -29,7 +29,7 @@ let day = '', usedToday = 0;
 function takeDailyQuota() {
   const today = new Date().toISOString().slice(0, 10);
   if (today !== day) { day = today; usedToday = 0; }
-  if (usedToday >= DAILY_CAP) throw new AppError('The assistant has answered a lot of questions today. Please try again tomorrow or contact the EduNexus team.', 429, 'AI_DAILY_LIMIT');
+  if (usedToday >= DAILY_CAP) throw new AppError('The assistant has answered a lot of questions today. Please try again tomorrow or contact the EzyAura team.', 429, 'AI_DAILY_LIMIT');
   usedToday++;
 }
 
@@ -43,10 +43,10 @@ async function plansArticle() {
     const limit = p.max_students ? `up to ${Number(p.max_students).toLocaleString('en-IN')} active students` : 'unlimited students';
     return `- ${p.name}: ${price}, ${limit}. Includes: ${(p.features || []).join('; ')}.`;
   });
-  return `EduNexus plans (current prices, set by the EduNexus team):\n${lines.join('\n')}\n` +
+  return `EzyAura plans (current prices, set by the EzyAura team):\n${lines.join('\n')}\n` +
     'Every plan includes all modules: admissions and Excel import, attendance, timetable, homework, fees with UPI proof approval and receipts, examinations and report cards, notices and email, Staff & HR with leave and payroll, reports, parent and student portals and the AI assistant. ' +
     'QR attendance from student phones is for coaching institutes on Growth or Pro. ' +
-    'How to start: click "Create institute" (or Choose a plan), fill in the institute and owner details, pay the plan amount by UPI or bank transfer to the EduNexus account shown, and upload the payment screenshot with the UTR number. The EduNexus team verifies the payment and activates the account, then the owner signs in. ' +
+    'How to start: click "Create institute" (or Choose a plan), fill in the institute and owner details, pay the plan amount by UPI or bank transfer to the EzyAura account shown, and upload the payment screenshot with the UTR number. The EzyAura team verifies the payment and activates the account, then the owner signs in. ' +
     'There is no card or online payment gateway. Plans can be upgraded later from the Subscription screen inside the app.';
 }
 
@@ -61,7 +61,7 @@ router.post('/chat', visitorLimiter, validateBody(z.object({
     audience: 'visitor',
     question: req.body.message,
     role: 'VISITOR',
-    tenantName: 'EduNexus website',
+    tenantName: 'EzyAura website',
     institutionType: 'public website',
     history: req.body.history,
     sources,

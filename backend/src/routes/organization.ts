@@ -57,7 +57,7 @@ router.post('/invitations', requirePermission('users.invite'), validateBody(invi
     const tInfo = await client.query(`SELECT name FROM tenants WHERE id=$1`, [req.tenantId]);
     await enqueueNotification({ eventType:'OWNER_INVITATION', templateCode:'OWNER_INVITATION', tenantId:req.tenantId!,
       sourceType:'USER_INVITATION', sourceId:created.rows[0].id,
-      payload:{name:req.body.displayName,school_name:tInfo.rows[0]?.name||'EduNexus',setup_url:`${config.appPublicUrl}/#/onboarding?token=${rawToken}`},priority:'HIGH' },
+      payload:{name:req.body.displayName,school_name:tInfo.rows[0]?.name||'EzyAura',setup_url:`${config.appPublicUrl}/#/onboarding?token=${rawToken}`},priority:'HIGH' },
       [{externalEmail:email}],client);
 
     return created.rows[0];

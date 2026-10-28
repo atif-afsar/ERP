@@ -72,11 +72,11 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar, onNavigate }) =
         <div className="flex items-center gap-2.5 shrink-0">
           <img
             src="/logo.png"
-            alt="EduNexus"
+            alt="EzyAura"
             className="w-9 h-9 rounded-xl object-contain shadow-xs border border-slate-200/80 p-0.5 bg-white shrink-0"
           />
           <span className="font-extrabold text-slate-900 text-sm tracking-tight hidden sm:inline">
-            EduNexus
+            EzyAura
           </span>
         </div>
 

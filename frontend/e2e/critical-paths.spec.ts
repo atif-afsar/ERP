@@ -23,7 +23,7 @@ const ADMIN_PASSWORD = testState?.password || 'Admin123!';
 const PARENT_EMAIL = testState?.accounts?.PARENT?.email || 'parent@edunexus.app';
 const ACCOUNTANT_EMAIL = testState?.accounts?.ACCOUNTANT?.email || 'accountant@edunexus.app';
 
-test.describe('EduNexus ERP Critical Paths E2E Acceptance Suite', () => {
+test.describe('EzyAura ERP Critical Paths E2E Acceptance Suite', () => {
 
   test.beforeEach(async ({ page }) => {
     // Clear cookies and local storage before each test

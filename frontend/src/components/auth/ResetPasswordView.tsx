@@ -28,7 +28,7 @@ export const ResetPasswordView: React.FC<{ token?: string; onDone: () => void }>
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-6">
-          <img src="/logo.png" alt="EduNexus ERP" className="w-16 h-16 rounded-2xl object-contain shadow-md border border-slate-200 p-1 bg-white mx-auto mb-3" />
+          <img src="/logo.png" alt="EzyAura ERP" className="w-16 h-16 rounded-2xl object-contain shadow-md border border-slate-200 p-1 bg-white mx-auto mb-3" />
           <h1 className="text-2xl font-bold text-slate-900">Set a new password</h1>
         </div>
         <div className="bg-white border border-slate-200 p-7 shadow-sm rounded-2xl space-y-4">

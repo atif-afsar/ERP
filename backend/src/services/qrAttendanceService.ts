@@ -45,7 +45,7 @@ export function currentToken(session: { id: string; signing_secret: string; rota
   };
 }
 
-/** Splits a scanned payload. Returns null for anything that is not a v2 EduNexus QR. */
+/** Splits a scanned payload. Returns null for anything that is not a v2 EzyAura QR. */
 export function parsePayload(payload: string): { sessionId: string; window: number; signature: string } | null {
   const match = /^ENX-QR2\.([0-9a-f-]{36})\.(\d{1,12})\.([A-Za-z0-9_-]{22})$/.exec(payload.trim());
   if (!match) return null;

@@ -116,7 +116,7 @@ export const QrSessionPanel: React.FC = () => {
           <div className="rounded-lg bg-emerald-50 p-2 text-emerald-700"><QrCode className="h-5 w-5" /></div>
           <div>
             <h3 className="font-semibold text-slate-900">Start QR attendance</h3>
-            <p className="text-sm text-slate-500">Show the QR on the classroom screen. {getLabel('studentPlural')} scan it from the EduNexus app to mark themselves present.</p>
+            <p className="text-sm text-slate-500">Show the QR on the classroom screen. {getLabel('studentPlural')} scan it from the EzyAura app to mark themselves present.</p>
           </div>
         </div>
         {notice && <p role="status" className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">{notice}</p>}
@@ -152,7 +152,7 @@ export const QrSessionPanel: React.FC = () => {
     <div className={fullscreen ? 'flex h-full flex-col items-center justify-center gap-6 p-6' : 'space-y-4'}>
       <div className={`text-center ${fullscreen ? 'space-y-1' : ''}`}>
         <p className={`font-semibold text-slate-900 ${fullscreen ? 'text-3xl' : 'text-lg'}`}>{live ? `${live.session.className} – ${live.session.sectionName}` : 'Loading…'}</p>
-        <p className={`text-slate-500 ${fullscreen ? 'text-lg' : 'text-sm'}`}>Open EduNexus → Attendance → Scan QR</p>
+        <p className={`text-slate-500 ${fullscreen ? 'text-lg' : 'text-sm'}`}>Open EzyAura → Attendance → Scan QR</p>
       </div>
       {running && qrImage ? (
         <img src={qrImage} alt="Attendance QR code" className={`mx-auto rounded-xl border border-slate-200 bg-white p-2 ${fullscreen ? 'h-[min(60vh,60vw)] w-[min(60vh,60vw)]' : 'h-72 w-72'}`} />

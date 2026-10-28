@@ -28,7 +28,7 @@ async function main() {
   if (password.length < 8 || password.length > 72) {
     throw new Error('Provide a password of 8 to 72 characters.');
   }
-  console.log('--- EduNexus VPS Administrator Provisioning ---');
+  console.log('--- EzyAura VPS Administrator Provisioning ---');
   console.log(`Target Email: ${email}`);
 
   const pool = new Pool({ connectionString });
@@ -79,7 +79,7 @@ async function main() {
     // 4. Super Admins sit in their own platform tenant, never inside a customer's institution
     const tenantRes = await client.query(
       `INSERT INTO tenants (name, slug, tenant_type, status)
-       VALUES ('EduNexus Platform', 'edunexus-platform', 'school', 'active')
+       VALUES ('EzyAura Platform', 'edunexus-platform', 'school', 'active')
        ON CONFLICT (slug) DO UPDATE SET status = 'active'
        RETURNING id`
     );

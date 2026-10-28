@@ -16,7 +16,7 @@ const schema = z.object({
   APP_PUBLIC_URL: z.string().url().optional(),
   EMAIL_DELIVERY_MODE: z.enum(['LOG', 'LIVE']).default('LOG'),
   EMAIL_PROVIDER: z.enum(['RESEND']).default('RESEND'),
-  EMAIL_FROM_NAME: z.string().min(1).default('EduNexus'),
+  EMAIL_FROM_NAME: z.string().min(1).default('EzyAura'),
   EMAIL_FROM_ADDRESS: z.string().email().default('dev-notifications@edunexus.local'),
   RESEND_API_KEY: z.string().optional(),
   NOTIFICATION_POLL_MS: z.coerce.number().int().min(250).max(60000).default(5000),

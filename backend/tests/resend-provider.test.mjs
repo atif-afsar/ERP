@@ -75,7 +75,7 @@ test('Resend Provider Contract: Successful email dispatch marks job and recipien
 
   const processResult = await processNotificationJobs({ provider: fakeProvider, workerId: 'worker-unit-1' });
   assert.ok(processResult.processed >= 1);
-  assert.ok(sentDispatches.some(d => d.to === userEmail && d.subject.includes('Reset your EduNexus password')));
+  assert.ok(sentDispatches.some(d => d.to === userEmail && d.subject.includes('Reset your EzyAura password')));
 
   // Verify delivery record in PostgreSQL
   const delivery = await query(

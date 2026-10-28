@@ -144,9 +144,9 @@ export function SaaSBillingModule() {
 
     // Generate UPI QR Code string
     const payeeUpi = paymentSettings?.upi_id || 'edunexus@upi';
-    const payeeName = paymentSettings?.payee_name || 'EduNexus ERP';
+    const payeeName = paymentSettings?.payee_name || 'EzyAura ERP';
     const amountVal = plan.price_amount / 100;
-    const upiUri = `upi://pay?pa=${payeeUpi}&pn=${encodeURIComponent(payeeName)}&am=${amountVal}&cu=INR&tn=EduNexus_${plan.code}`;
+    const upiUri = `upi://pay?pa=${payeeUpi}&pn=${encodeURIComponent(payeeName)}&am=${amountVal}&cu=INR&tn=EzyAura_${plan.code}`;
 
     try {
       const qrUrl = await QRCode.toDataURL(upiUri, { width: 280, margin: 2 });

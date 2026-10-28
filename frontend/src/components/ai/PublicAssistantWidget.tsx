@@ -8,7 +8,7 @@ type Msg = { role: 'USER' | 'ASSISTANT'; content: string; followUps?: string[]; 
 const STARTERS = [
   'Which plan is right for a school with 400 students?',
   'How does payment and activation work?',
-  'Does EduNexus support coaching institutes?',
+  'Does EzyAura support coaching institutes?',
 ];
 
 // Typewriter for the public widget (mirrors the in-app version).
@@ -81,24 +81,24 @@ export const PublicAssistantWidget: React.FC<{ onNavigate: (route: 'pricing' | '
   return (
     <>
       {!open && (
-        <button type="button" aria-label="Open EduNexus Assistant" onClick={() => setOpen(true)}
+        <button type="button" aria-label="Open EzyAura Assistant" onClick={() => setOpen(true)}
           className="fixed bottom-5 right-5 z-[60] flex items-center gap-2 rounded-full bg-emerald-600 px-4 py-3 text-sm font-bold text-white shadow-xl shadow-emerald-900/20 hover:bg-emerald-700">
           <Bot className="h-5 w-5" /><span>Ask us anything</span>
         </button>
       )}
       {open && (
-        <section role="dialog" aria-label="EduNexus Assistant"
+        <section role="dialog" aria-label="EzyAura Assistant"
           className="fixed bottom-5 right-5 z-[60] flex w-[min(25rem,calc(100vw-2.5rem))] h-[min(36rem,calc(100dvh-6rem))] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white text-slate-800 shadow-2xl">
           <header className="flex items-center gap-2 bg-emerald-600 px-3 py-2.5">
             <Bot className="h-5 w-5 text-white" />
-            <div className="flex-1 leading-tight"><p className="text-sm font-bold text-white">EduNexus Assistant</p><p className="text-[11px] text-emerald-100">Questions about plans, features or getting started</p></div>
+            <div className="flex-1 leading-tight"><p className="text-sm font-bold text-white">EzyAura Assistant</p><p className="text-[11px] text-emerald-100">Questions about plans, features or getting started</p></div>
             {messages.length > 0 && <button type="button" title="Start over" aria-label="Start over" className="rounded-lg p-1.5 text-white hover:bg-white/15" onClick={() => { setMessages([]); setTypingMsgIndex(null); }}><RotateCcw className="h-4 w-4" /></button>}
             <button type="button" title="Close" aria-label="Close assistant" className="rounded-lg p-1.5 text-white hover:bg-white/15" onClick={() => setOpen(false)}><X className="h-4 w-4" /></button>
           </header>
           <div className="flex-1 overflow-y-auto bg-slate-50 p-3 space-y-3 text-sm">
             {messages.length === 0 && (
               <div className="space-y-3 pt-2">
-                <p className="text-slate-700">Hi! I can explain EduNexus plans and features, or help you decide what fits your school or coaching institute.</p>
+                <p className="text-slate-700">Hi! I can explain EzyAura plans and features, or help you decide what fits your school or coaching institute.</p>
                 <div className="flex flex-col gap-2">
                   {STARTERS.map(s => <button key={s} type="button" onClick={() => void ask(s)} className="rounded-xl border border-emerald-200 bg-white px-3 py-2 text-left text-xs text-emerald-800 hover:bg-emerald-50">{s}</button>)}
                 </div>

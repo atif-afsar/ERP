@@ -43,12 +43,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeNav, onNavigate, isOpen,
         <div className="p-4 border-b border-slate-200 flex items-center gap-3 bg-slate-50/50">
           <img
             src="/logo.png"
-            alt="EduNexus SaaS"
+            alt="EzyAura SaaS"
             className="w-11 h-11 rounded-xl object-contain shadow-sm border border-slate-200/80 p-0.5 bg-white shrink-0"
           />
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-1.5">
-              <h1 className="font-extrabold text-slate-900 text-base tracking-tight leading-tight">EduNexus</h1>
+              <h1 className="font-extrabold text-slate-900 text-base tracking-tight leading-tight">EzyAura</h1>
               <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-amber-50 text-amber-800 border border-amber-200">
                 SaaS
               </span>
@@ -117,12 +117,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeNav, onNavigate, isOpen,
       <div className="p-3.5 border-b border-slate-200 flex items-center gap-3 bg-slate-50/50">
         <img
           src="/logo.png"
-          alt="EduNexus ERP"
+          alt="EzyAura ERP"
           className="w-11 h-11 rounded-xl object-contain shadow-sm border border-slate-200/80 p-0.5 bg-white shrink-0"
         />
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5">
-            <span className="font-extrabold text-slate-900 text-base tracking-tight truncate">EduNexus</span>
+            <span className="font-extrabold text-slate-900 text-base tracking-tight truncate">EzyAura</span>
             <span className="text-[9px] px-1.5 py-0.2 font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 rounded shrink-0">
               {currentTenant.institutionLabel}
             </span>

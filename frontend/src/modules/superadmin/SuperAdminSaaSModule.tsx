@@ -890,7 +890,7 @@ export function SuperAdminSaaSModule() {
 
                   {previewProof.use_case_reason && (
                     <div className="pt-1">
-                      <span className="text-amber-800/80 block font-semibold mb-0.5">Why they want to use EduNexus:</span>
+                      <span className="text-amber-800/80 block font-semibold mb-0.5">Why they want to use EzyAura:</span>
                       <p className="font-medium italic bg-white/80 p-2.5 rounded-xl border border-amber-200/60 text-slate-800">
                         "{previewProof.use_case_reason}"
                       </p>

@@ -64,7 +64,7 @@ const SuspendedTenantView: React.FC<{ tenantName: string }> = ({ tenantName }) =
       This institution's SaaS subscription is currently suspended or under billing review. Access to operational features has been temporarily disabled.
     </p>
     <div className="p-4 rounded-2xl bg-white border border-slate-200 text-xs text-slate-700 max-w-sm shadow-sm">
-      Please contact EduNexus Platform Support at <span className="text-rose-600 font-semibold">billing@edunexus.io</span> to reactivate your instance.
+      Please contact EzyAura Platform Support at <span className="text-rose-600 font-semibold">ezyaura.support@gmail.com</span> to reactivate your instance.
     </div>
   </div>
 );

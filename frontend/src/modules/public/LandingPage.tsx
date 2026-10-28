@@ -59,8 +59,8 @@ const toCard = (p: any): PlanCard => ({
 
 const faqs = [
   {
-    q: 'Who is EduNexus built for?',
-    a: 'EduNexus is designed for schools and coaching institutes that want one simple system for students, attendance, fees, exams and parent communication.',
+    q: 'Who is EzyAura built for?',
+    a: 'EzyAura is designed for schools and coaching institutes that want one simple system for students, attendance, fees, exams and parent communication.',
   },
   {
     q: 'Can each role see only what it needs?',
@@ -75,15 +75,15 @@ const faqs = [
     a: 'Yes. Set up your academic year, classes, sections and subjects first, then import or admit students and assign teachers.',
   },
   {
-    q: 'Does EduNexus support parents and students?',
+    q: 'Does EzyAura support parents and students?',
     a: 'Yes. Linked parent and student accounts see their own attendance, homework, published results and fee status.',
   },
 ];
 
 const Logo = () => (
   <div className="flex items-center gap-2.5">
-    <img src="/logo.png" alt="EduNexus" className="h-8 w-8 rounded-xl bg-white object-contain p-1 shadow-sm" />
-    <span className="text-sm font-black tracking-[-0.03em] text-white">EduNexus</span>
+    <img src="/logo.png" alt="EzyAura" className="h-8 w-8 rounded-xl bg-white object-contain p-1 shadow-sm" />
+    <span className="text-sm font-black tracking-[-0.03em] text-white">EzyAura</span>
   </div>
 );
 
@@ -165,7 +165,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate, subRoute, 
           <div className="landing-hero-copy relative mx-auto max-w-4xl text-center">
             <div className="mb-6 flex flex-wrap justify-center gap-2">
               <StatusPill>Built for education teams</StatusPill>
-              <span className="rounded-full border border-white bg-white/70 px-3 py-1 text-[11px] font-bold text-slate-600">EduNexus · School &amp; coaching ERP for India</span>
+              <span className="rounded-full border border-white bg-white/70 px-3 py-1 text-[11px] font-bold text-slate-600">EzyAura · School &amp; coaching ERP for India</span>
             </div>
             <h1 className="text-balance text-[2.7rem] font-black leading-[0.98] tracking-[-0.06em] text-slate-950 min-[390px]:text-5xl sm:text-7xl sm:tracking-[-0.065em] lg:text-[88px]">
               One operating system for{' '}
@@ -245,7 +245,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate, subRoute, 
         <section id="security" className="landing-dark relative overflow-hidden bg-[#11131c] px-5 py-24 text-white sm:px-8 lg:py-32">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_22%_20%,rgba(124,58,237,.22),transparent_35%),radial-gradient(circle_at_78%_70%,rgba(250,204,21,.13),transparent_32%)]" />
           <div className="relative mx-auto grid max-w-6xl items-center gap-14 lg:grid-cols-[.85fr_1.15fr]">
-            <div><span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] font-bold text-violet-200"><ShieldCheck className="h-3.5 w-3.5"/>Security built into daily work</span><h2 className="mt-6 text-4xl font-black tracking-[-0.055em] text-white sm:text-6xl" style={{color:'#ffffff'}}>Control access without slowing your team.</h2><p className="mt-6 text-base leading-7 text-slate-300" style={{color:'#cbd5e1'}}>EduNexus checks the signed-in user, institution, role and resource relationship before protected data is returned or changed.</p></div>
+            <div><span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] font-bold text-violet-200"><ShieldCheck className="h-3.5 w-3.5"/>Security built into daily work</span><h2 className="mt-6 text-4xl font-black tracking-[-0.055em] text-white sm:text-6xl" style={{color:'#ffffff'}}>Control access without slowing your team.</h2><p className="mt-6 text-base leading-7 text-slate-300" style={{color:'#cbd5e1'}}>EzyAura checks the signed-in user, institution, role and resource relationship before protected data is returned or changed.</p></div>
             <div className="rounded-3xl border border-white/10 bg-white/[0.06] p-6 backdrop-blur sm:p-8"><div className="flex items-center gap-3 border-b border-white/10 pb-5"><div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-400/15"><LockKeyhole className="h-5 w-5 text-violet-200"/></div><div><p className="font-black">Access decision</p><p className="text-xs text-slate-400">Verified on the backend</p></div></div><div className="mt-6 space-y-3">{['Authenticated account','Active institution membership','Role and permission granted','Tenant and ownership scope matched','Action recorded in audit history'].map((x)=><div key={x} className="flex items-center gap-3 rounded-xl border border-white/5 bg-black/10 px-4 py-3 text-sm text-slate-200"><Check className="h-4 w-4 text-emerald-400"/>{x}</div>)}</div></div>
           </div>
         </section>
@@ -258,7 +258,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate, subRoute, 
       </main>
 
       <footer className="landing-dark bg-[#0c0f18] px-5 pb-28 pt-16 text-white sm:px-8">
-        <div className="mx-auto max-w-6xl"><div className="grid gap-10 border-b border-white/10 pb-12 md:grid-cols-[1.5fr_1fr_1fr]"><div><Logo/><p className="mt-5 max-w-sm text-sm leading-6 text-slate-400">A unified operating system for institutions that want clear academic, financial and campus workflows.</p></div><div><p className="text-xs font-black uppercase tracking-widest text-slate-500">Explore</p><div className="mt-4 space-y-3 text-sm text-slate-300"><button className="block" onClick={()=>scroll('platform')}>Platform</button><button className="block" onClick={()=>scroll('roles')}>For your team</button><button className="block" onClick={()=>scroll('pricing')}>Pricing</button><button className="block" onClick={()=>scroll('security')}>Security</button></div></div><div><p className="text-xs font-black uppercase tracking-widest text-slate-500">Access</p><div className="mt-4 space-y-3 text-sm text-slate-300"><button className="block" onClick={()=>onNavigate('login')}>Sign in</button><button className="block" onClick={start}>Create institute</button><a className="block" href="mailto:contact@edunexus.app">Contact</a></div></div></div><div className="py-12 text-center"><p className="font-serif text-6xl italic tracking-[-0.05em] text-white sm:text-8xl lg:text-[132px]">EduNexus</p></div><div className="flex flex-col items-center justify-between gap-3 border-t border-white/10 pt-6 text-xs text-slate-500 sm:flex-row"><p>© {new Date().getFullYear()} EduNexus. All rights reserved.</p><p>Designed &amp; built with <span className="text-rose-400" aria-label="love">♥</span> by <a href="https://portfolio-rgzt.vercel.app/" target="_blank" rel="noopener" className="font-bold text-slate-300 underline decoration-emerald-400/60 underline-offset-4 transition-colors hover:text-emerald-300 hover:decoration-emerald-300">Atif Afsar</a></p></div></div>
+        <div className="mx-auto max-w-6xl"><div className="grid gap-10 border-b border-white/10 pb-12 md:grid-cols-[1.5fr_1fr_1fr]"><div><Logo/><p className="mt-5 max-w-sm text-sm leading-6 text-slate-400">A unified operating system for institutions that want clear academic, financial and campus workflows.</p></div><div><p className="text-xs font-black uppercase tracking-widest text-slate-500">Explore</p><div className="mt-4 space-y-3 text-sm text-slate-300"><button className="block" onClick={()=>scroll('platform')}>Platform</button><button className="block" onClick={()=>scroll('roles')}>For your team</button><button className="block" onClick={()=>scroll('pricing')}>Pricing</button><button className="block" onClick={()=>scroll('security')}>Security</button></div></div><div><p className="text-xs font-black uppercase tracking-widest text-slate-500">Access</p><div className="mt-4 space-y-3 text-sm text-slate-300"><button className="block" onClick={()=>onNavigate('login')}>Sign in</button><button className="block" onClick={start}>Create institute</button><a className="block" href="mailto:ezyaura.support@gmail.com">Contact</a></div></div></div><div className="py-12 text-center"><p className="font-serif text-6xl italic tracking-[-0.05em] text-white sm:text-8xl lg:text-[132px]">EzyAura</p></div><div className="flex flex-col items-center justify-between gap-3 border-t border-white/10 pt-6 text-xs text-slate-500 sm:flex-row"><p>© {new Date().getFullYear()} EzyAura. All rights reserved.</p><p>Designed &amp; built with <span className="text-rose-400" aria-label="love">♥</span> by <a href="https://portfolio-rgzt.vercel.app/" target="_blank" rel="noopener" className="font-bold text-slate-300 underline decoration-emerald-400/60 underline-offset-4 transition-colors hover:text-emerald-300 hover:decoration-emerald-300">Atif Afsar</a></p></div></div>
       </footer>
 
       <PublicAssistantWidget onNavigate={route => route === 'pricing' ? scroll('pricing') : route === 'signup' ? start() : onNavigate('login')} />

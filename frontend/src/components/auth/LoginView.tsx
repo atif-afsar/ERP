@@ -28,11 +28,11 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, redirectUr
     <div className="min-h-screen bg-[#f8faf9] flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md">
         <div className="text-center mb-6">
-          <img src="/logo.png" alt="EduNexus ERP" className="w-20 h-20 rounded-2xl object-contain shadow-md border border-slate-200 p-1 bg-white mx-auto mb-3" />
+          <img src="/logo.png" alt="EzyAura ERP" className="w-20 h-20 rounded-2xl object-contain shadow-md border border-slate-200 p-1 bg-white mx-auto mb-3" />
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold">
             <ShieldCheck className="w-3.5 h-3.5" /> Secure backend authentication
           </div>
-          <h1 className="mt-3 text-2xl font-bold text-slate-900">Sign in to EduNexus</h1>
+          <h1 className="mt-3 text-2xl font-bold text-slate-900">Sign in to EzyAura</h1>
           <p className="mt-1 text-xs text-slate-500">Use the credentials issued by your institution administrator.</p>
           {redirectUrl && <p className="mt-2 text-[11px] text-slate-500">You will return to {redirectUrl} after sign-in.</p>}
         </div>

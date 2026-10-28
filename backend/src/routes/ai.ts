@@ -1,4 +1,4 @@
-// EduNexus Assistant: Gemini chat with retrieval over verified help articles plus
+// EzyAura Assistant: Gemini chat with retrieval over verified help articles plus
 // each institution's own FAQ documents. Conversations are private to their user.
 import { Router, Request, Response } from 'express';
 import rateLimit from 'express-rate-limit';
@@ -60,7 +60,7 @@ router.post('/chat', requirePermission('ai.chat'), chatLimiter, validateBody(cha
   const generated = await generateAssistantAnswer({
     question: req.body.message,
     role: req.user.role,
-    tenantName: req.user.isSuperAdmin ? 'EduNexus platform' : tenant?.name || 'your institution',
+    tenantName: req.user.isSuperAdmin ? 'EzyAura platform' : tenant?.name || 'your institution',
     institutionType: req.user.isSuperAdmin ? 'platform administration' : tenant?.tenant_type || 'school',
     currentRoute: req.body.currentRoute,
     history,
@@ -127,7 +127,7 @@ router.post('/feedback', requirePermission('ai.chat'), validateBody(z.object({
 }));
 
 // Institution FAQ: the school's own answers (timings, uniform, fee late policy…)
-// that the assistant searches alongside the EduNexus help articles.
+// that the assistant searches alongside the EzyAura help articles.
 router.get('/knowledge', requirePermission('ai.knowledge.manage'), asyncHandler(async (req, res) => {
   send(req, res, (await query(
     `SELECT d.id,d.title,d.allowed_roles,d.source_type,d.created_at,(d.tenant_id IS NULL) AS platform,

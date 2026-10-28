@@ -230,7 +230,7 @@ router.post('/check-in', checkInLimiter, validateBody(checkInSchema), asyncHandl
     let session: any;
     if (req.body.payload) {
       const parsed = parsePayload(req.body.payload);
-      if (!parsed) throw new AppError('This is not an EduNexus attendance QR code.', 422, 'INVALID_QR');
+      if (!parsed) throw new AppError('This is not an EzyAura attendance QR code.', 422, 'INVALID_QR');
       session = (await c.query(`SELECT * FROM attendance_qr_sessions WHERE id = $1 AND tenant_id = $2 AND qr_version = 2 FOR SHARE`, [parsed.sessionId, req.tenantId])).rows[0];
       if (!session) throw new AppError('This QR code belongs to another institute or session.', 404, 'INVALID_QR');
       if (session.status !== 'ACTIVE' || new Date(session.expires_at) <= new Date()) throw new AppError('This attendance session has ended.', 410, 'QR_SESSION_ENDED');

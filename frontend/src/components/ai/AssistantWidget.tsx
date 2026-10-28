@@ -162,17 +162,17 @@ export const AssistantWidget: React.FC<{ onNavigate: (route: string) => void }> 
   return (
     <>
       {!open && (
-        <button type="button" aria-label="Open EduNexus Assistant" onClick={() => setOpen(true)}
+        <button type="button" aria-label="Open EzyAura Assistant" onClick={() => setOpen(true)}
           className="no-print fixed bottom-20 right-4 lg:bottom-6 lg:right-6 z-40 flex items-center gap-2 rounded-full bg-emerald-600 px-4 py-3 text-sm font-semibold text-white shadow-lg hover:bg-emerald-700">
           <Bot className="h-5 w-5" /><span className="hidden sm:inline">Ask Assistant</span>
         </button>
       )}
       {open && (
-        <section role="dialog" aria-label="EduNexus Assistant"
+        <section role="dialog" aria-label="EzyAura Assistant"
           className="no-print fixed bottom-20 right-4 lg:bottom-6 lg:right-6 z-40 flex w-[min(26rem,calc(100vw-2rem))] h-[min(38rem,calc(100dvh-7rem))] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
           <header className="flex items-center gap-2 bg-emerald-600 px-3 py-2.5 text-white">
             <Bot className="h-5 w-5" />
-            <div className="flex-1 leading-tight"><p className="text-sm font-semibold text-white">EduNexus Assistant</p><p className="text-[11px] text-emerald-100">Ask anything · powered by Gemini</p></div>
+            <div className="flex-1 leading-tight"><p className="text-sm font-semibold text-white">EzyAura Assistant</p><p className="text-[11px] text-emerald-100">Ask anything · powered by Gemini</p></div>
             <button type="button" title="New chat" aria-label="New chat" className={headerButton} onClick={newChat}><Plus className="h-4 w-4" /></button>
             <button type="button" title="Past chats" aria-label="Past chats" className={headerButton} onClick={() => void showHistory()}><History className="h-4 w-4" /></button>
             {can('ai.knowledge.manage') && <button type="button" title="School FAQ" aria-label="School FAQ" className={headerButton} onClick={() => setView('faq')}><BookOpen className="h-4 w-4" /></button>}
@@ -200,7 +200,7 @@ export const AssistantWidget: React.FC<{ onNavigate: (route: string) => void }> 
               <div className="flex-1 overflow-y-auto bg-slate-50 p-3 space-y-3 text-sm">
                 {messages.length === 0 && (
                   <div className="space-y-3 pt-2">
-                    <p className="text-slate-700">Hi! Ask me how to do something in EduNexus, or anything else: drafting notices, teaching ideas, study help, Excel…</p>
+                    <p className="text-slate-700">Hi! Ask me how to do something in EzyAura, or anything else: drafting notices, teaching ideas, study help, Excel…</p>
                     <div className="flex flex-col gap-2">
                       {starters.map(s => <button key={s} type="button" onClick={() => void ask(s)} className="rounded-xl border border-emerald-200 bg-white px-3 py-2 text-left text-xs text-emerald-800 hover:bg-emerald-50">{s}</button>)}
                     </div>
@@ -223,7 +223,7 @@ export const AssistantWidget: React.FC<{ onNavigate: (route: string) => void }> 
                     {/* Show extras only when not mid-typing */}
                     {typingMsgIndex !== i && (
                       <>
-                        {m.sources && m.sources.length > 0 && <p className="px-1 text-[11px] text-slate-500">From EduNexus help: {Array.from(new Set(m.sources)).join(' · ')}</p>}
+                        {m.sources && m.sources.length > 0 && <p className="px-1 text-[11px] text-slate-500">From EzyAura help: {Array.from(new Set(m.sources)).join(' · ')}</p>}
                         {m.actions && m.actions.length > 0 && (
                           <div className="flex flex-wrap gap-1.5">
                             {m.actions.map(a => <button key={a.route} type="button" onClick={() => onNavigate(a.route)} className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-800 hover:bg-emerald-100">{a.label}<ArrowRight className="h-3 w-3" /></button>)}

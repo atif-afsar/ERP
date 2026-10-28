@@ -2,7 +2,7 @@ import test, { before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { randomBytes } from 'node:crypto';
 
-// EduNexus Assistant: Gemini is mocked by intercepting fetch to the Google API.
+// EzyAura Assistant: Gemini is mocked by intercepting fetch to the Google API.
 process.env.GEMINI_API_KEY = 'test-gemini-key';
 process.env.GEMINI_MODEL = 'gemini-test-model';
 let pool, server, base;
@@ -71,11 +71,18 @@ after(async () => {
   await pool.end();
 });
 
+test('stored templates, help articles and permissions use the EzyAura name', async () => {
+  const r = await pool.query(`SELECT 'template ' || code AS item FROM notification_templates WHERE subject_template LIKE '%EduNexus%' OR body_template LIKE '%EduNexus%'
+    UNION ALL SELECT 'help ' || heading FROM ai_knowledge_chunks WHERE tenant_id IS NULL AND (heading LIKE '%EduNexus%' OR content LIKE '%EduNexus%')
+    UNION ALL SELECT 'permission ' || key FROM permissions WHERE description LIKE '%EduNexus%'`);
+  assert.deepEqual(r.rows.map(x => x.item), []);
+});
+
 test('chat requires authentication', async () => {
   assert.equal((await call(null, '/ai/chat', 'POST', { message: 'hi' })).status, 401);
 });
 
-test('an EduNexus question is answered with V1 help articles and saved to a private conversation', async () => {
+test('an EzyAura question is answered with V1 help articles and saved to a private conversation', async () => {
   geminiCalls.length = 0;
   const r = await call(t.teacher.token, '/ai/chat', 'POST', { message: 'How do I import students from an Excel file?', currentRoute: '#/app/students' });
   assert.equal(r.status, 200);
@@ -170,7 +177,7 @@ test('public website chat works without sign-in, quotes live prices and stores n
   geminiCalls.length = 0;
   geminiReply = () => ({ status: 200, body: { candidates: [{ content: { parts: [{ text: JSON.stringify({ answer: 'Starter is ₹1,999 per month.', actions: [{ label: 'See plans', route: 'pricing' }, { label: 'Students', route: 'app/students' }] }) }] } }] } });
   const before = (await pool.query('SELECT COUNT(*)::int n FROM ai_messages')).rows[0].n;
-  const r = await call(null, '/public-assistant/chat', 'POST', { message: 'How much does EduNexus cost?', history: [{ role: 'USER', content: 'hi' }, { role: 'ASSISTANT', content: 'Hello!' }] });
+  const r = await call(null, '/public-assistant/chat', 'POST', { message: 'How much does EzyAura cost?', history: [{ role: 'USER', content: 'hi' }, { role: 'ASSISTANT', content: 'Hello!' }] });
   assert.equal(r.status, 200);
   assert.equal(r.data.reply, 'Starter is ₹1,999 per month.');
   assert.deepEqual(r.data.actions, [{ label: 'See plans', route: 'pricing' }], 'only public routes');

@@ -157,7 +157,7 @@ export const InstituteOnboardingModal: React.FC<InstituteOnboardingModalProps> =
 
       if (s) {
         const amt = matched ? matched.price_amount / 100 : selectedPlan.price;
-        const uri = `upi://pay?pa=${s.upi_id}&pn=${encodeURIComponent(s.payee_name)}&am=${amt}&cu=INR&tn=EduNexus_${selectedPlan.code}`;
+        const uri = `upi://pay?pa=${s.upi_id}&pn=${encodeURIComponent(s.payee_name)}&am=${amt}&cu=INR&tn=EzyAura_${selectedPlan.code}`;
         const qr = await QRCode.toDataURL(uri, { width: 260, margin: 2 });
         setGeneratedQr(qr);
       }
@@ -321,12 +321,12 @@ export const InstituteOnboardingModal: React.FC<InstituteOnboardingModalProps> =
           <div className="flex items-center gap-3">
             <img
               src="/logo.png"
-              alt="EduNexus"
+              alt="EzyAura"
               className="w-9 h-9 rounded-xl object-contain shadow-xs border border-slate-200/80 p-0.5 bg-white shrink-0"
             />
             <div>
               <div className="flex items-center gap-2">
-                <span className="font-extrabold text-slate-900 text-sm tracking-tight">EduNexus Setup</span>
+                <span className="font-extrabold text-slate-900 text-sm tracking-tight">EzyAura Setup</span>
                 <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 uppercase tracking-wide">
                   {selectedPlan.name}
                 </span>
@@ -373,7 +373,7 @@ export const InstituteOnboardingModal: React.FC<InstituteOnboardingModalProps> =
               <div className="space-y-1 text-center md:text-left">
                 <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[11px] font-bold tracking-wide mb-1">
                   <Sparkles className="w-3.5 h-3.5" />
-                  <span>Welcome to EduNexus</span>
+                  <span>Welcome to EzyAura</span>
                 </div>
                 <h3 className="text-xl md:text-2xl font-extrabold text-slate-900 tracking-tight">
                   What is the name of your institution?
